@@ -1,4 +1,4 @@
-import { Share2 } from 'lucide-react';
+import { Calendar, Mail, Share2, Shield } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useTimetable } from '../../context/TimetableContext';
@@ -7,7 +7,11 @@ import { showError, showSuccess } from '../../utils/errorHandler';
 import { parseHeuristicExcel } from '../../utils/heuristicParser';
 import { decodeState, encodeState } from '../../utils/sharingUtils';
 import { validateFile } from '../../utils/validation';
+import ContactModal from '../ContactModal';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
+import Footer from '../Footer';
+import PrivacyModal from '../PrivacyModal';
+import SocialProof from '../SocialProof';
 import AdditionalCourses from './AdditionalCourses';
 import CourseSelection from './CourseSelection';
 import DisplayOptions from './DisplayOptions';
@@ -24,6 +28,8 @@ const MainLayout = () => {
   const [error, setError] = useState('');
   const [isExtraOpen, setIsExtraOpen] = useState(false);
   const [userName, setUserName] = useState('');
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const fileInputRef = useRef();
 
   // URL state restoration
@@ -36,12 +42,11 @@ const MainLayout = () => {
         if (decoded.activeSection) setActiveSection(decoded.activeSection);
         if (decoded.selectedCourseIds) setSelectedCourseIds(decoded.selectedCourseIds);
         if (decoded.extraSelections) setExtraSelections(decoded.extraSelections);
-        // Clean URL after restoration
         window.history.replaceState({}, document.title, window.location.pathname);
         showSuccess(`Restored ${decoded.userName ? decoded.userName + "'s" : "shared"} timetable!`);
       }
     }
-  }, []);
+  }, [setActiveSection, setSelectedCourseIds, setExtraSelections]);
 
   const handleShare = useCallback(() => {
     const state = {
@@ -54,7 +59,7 @@ const MainLayout = () => {
     const url = `${window.location.origin}${window.location.pathname}?s=${encoded}`;
 
     navigator.clipboard.writeText(url).then(() => {
-      showSuccess('Link copied to clipboard!');
+      showSuccess('Share link copied to clipboard!');
     }).catch(() => {
       showError('Failed to copy link.');
     });
@@ -85,7 +90,7 @@ const MainLayout = () => {
               for (let C = merge.s.c; C <= merge.e.c; ++C) {
                 const cellRef = XLSX.utils.encode_cell({ c: C, r: R });
                 if (!ws[cellRef]) {
-                  ws[cellRef] = { ...startVal }; // Clone the cell
+                  ws[cellRef] = { ...startVal };
                 }
               }
             }
@@ -102,7 +107,7 @@ const MainLayout = () => {
           const data = XLSX.utils.sheet_to_json(ws);
           processData(data, {});
         }
-        showSuccess('Timetable loaded successfully');
+        showSuccess('Timetable parsed and loaded successfully!');
       } catch (err) { showError(err.message); } finally { setIsLoading(false); }
     };
     reader.readAsBinaryString(file);
@@ -133,45 +138,103 @@ const MainLayout = () => {
   const hasSelectedCourses = selectedCourseIds.length > 0 || extraSelections.filter(s => s.courseId).length > 0;
 
   return (
-    <div className="app-card">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-        <h1>Timetable Generator</h1>
-        {hasSelectedCourses && (
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="Your Name (Optional)"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              className="btn btn-secondary"
-              style={{
-                padding: '4px 10px',
-                fontSize: '0.8rem',
-                textAlign: 'left',
-                height: '32px',
-                width: '140px'
-              }}
-            />
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={handleShare}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', height: '32px' }}
-            >
-              <Share2 size={16} /> Share Link
-            </button>
+    <div className="main-layout-container">
+      {/* Top Navbar */}
+      <nav className="top-navbar">
+        <div className="nav-brand">
+          <div className="brand-icon"><Calendar size={20} /></div>
+          <span className="brand-title">Academic Timetable Generator</span>
+        </div>
+        <div className="nav-actions">
+          <button type="button" className="nav-btn" onClick={() => setIsContactOpen(true)}>
+            <Mail size={16} /> Contact
+          </button>
+          <button type="button" className="nav-btn" onClick={() => setIsPrivacyOpen(true)}>
+            <Shield size={16} /> Privacy
+          </button>
+        </div>
+      </nav>
+
+      <div className="app-card">
+        <header className="hero-header">
+          <div className="hero-title-group">
+            <h1>Academic Timetable Generator</h1>
+            <p className="hero-description">
+              Upload your university schedule spreadsheet, select your section, and instantly generate a clean visual timetable.
+            </p>
           </div>
+
+          {hasSelectedCourses && (
+            <div className="share-actions-bar">
+              <input
+                type="text"
+                placeholder="Your Name (Optional)"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className="input-field name-input"
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleShare}
+              >
+                <Share2 size={16} /> Share Link
+              </button>
+            </div>
+          )}
+        </header>
+
+        <FileUpload
+          rawData={rawData}
+          isLoading={isLoading}
+          error={error}
+          fileInputRef={fileInputRef}
+          handleFileUpload={handleFileUpload}
+          resetUpload={resetUpload}
+          processData={processData}
+        />
+
+        {rawData.length > 0 && (
+          <main className="builder-content">
+            <CourseSelection
+              sectionOptions={sectionOptions}
+              activeSection={activeSection}
+              handleSectionChange={handleSectionChange}
+              coursesInActiveSection={coursesInActiveSection}
+              selectedCourseIds={selectedCourseIds}
+              toggleCourse={toggleCourse}
+            />
+
+            <AdditionalCourses
+              isExtraOpen={isExtraOpen}
+              setIsExtraOpen={setIsExtraOpen}
+              extraSelections={extraSelections}
+              getCoursesForSection={getCoursesForSection}
+              updateExtra={updateExtra}
+              removeExtra={removeExtra}
+              addExtra={addExtra}
+            />
+
+            <DisplayOptions
+              displayOptions={displayOptions}
+              setDisplayOptions={setDisplayOptions}
+              displayOptionsList={displayOptionsList}
+            />
+
+            {hasSelectedCourses && <EditableTimetable />}
+          </main>
         )}
-      </header>
-      <FileUpload rawData={rawData} isLoading={isLoading} error={error} fileInputRef={fileInputRef} handleFileUpload={handleFileUpload} resetUpload={resetUpload} />
-      {rawData.length > 0 && (
-        <>
-          <CourseSelection sectionOptions={sectionOptions} activeSection={activeSection} handleSectionChange={handleSectionChange} coursesInActiveSection={coursesInActiveSection} selectedCourseIds={selectedCourseIds} toggleCourse={toggleCourse} />
-          <AdditionalCourses isExtraOpen={isExtraOpen} setIsExtraOpen={setIsExtraOpen} extraSelections={extraSelections} getCoursesForSection={getCoursesForSection} updateExtra={updateExtra} removeExtra={removeExtra} addExtra={addExtra} />
-          <DisplayOptions displayOptions={displayOptions} setDisplayOptions={setDisplayOptions} displayOptionsList={displayOptionsList} />
-          {hasSelectedCourses && <EditableTimetable />}
-        </>
-      )}
+
+        <SocialProof />
+      </div>
+
+      <Footer
+        onOpenPrivacy={() => setIsPrivacyOpen(true)}
+        onOpenContact={() => setIsContactOpen(true)}
+      />
+
+      <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </div>
   );
 };

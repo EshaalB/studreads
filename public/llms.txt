@@ -1,0 +1,10 @@
+# Academic Timetable Generator
+
+The Academic Timetable Generator is a web application that parses university timetable spreadsheets (Excel format .xlsx and .xls) and generates interactive, conflict-free visual weekly schedules. Users can filter courses by section, add custom/additional electives, customize color codes, resolve schedule overlaps, and export finalized timetables as high-resolution images or shareable links. All data processing occurs locally within the browser.
+
+## Key Links & Features
+- [Homepage & Timetable Builder](https://university-timetable-gen.vercel.app/)
+- [Upload Spreadsheet](https://university-timetable-gen.vercel.app/#upload)
+- [Privacy Policy](https://university-timetable-gen.vercel.app/#privacy)
+- [Contact Support](https://university-timetable-gen.vercel.app/#contact)
+- [GitHub Repository](https://github.com/EshaalB/University-timetable-gen)

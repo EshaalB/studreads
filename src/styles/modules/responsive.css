@@ -1,87 +1,98 @@
 @media print {
-  .no-print {
+  .no-print,
+  .top-navbar,
+  .app-footer,
+  .file-upload-section,
+  .social-proof-section {
     display: none !important;
   }
 
   body {
     padding: 0;
+    background: #ffffff;
+  }
+
+  .main-layout-container {
+    padding: 0;
+    max-width: 100%;
   }
 
   .app-card {
     border: none;
+    box-shadow: none;
+    padding: 0;
   }
 }
 
 @media (max-width: 768px) {
-  #root {
-    padding: var(--spacing-md);
+  .main-layout-container {
+    padding: 0.85rem;
+    gap: 1rem;
+  }
+
+  .top-navbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .nav-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .hero-header h1 {
+    font-size: 1.6rem;
   }
 
   .app-card {
-    padding: var(--spacing-lg);
+    padding: 1.25rem;
   }
 
-  h1 {
-    font-size: 1.5rem;
+  .cta-action-bar {
+    flex-direction: column;
+    width: 100%;
   }
 
-  .mixed-row {
-    grid-template-columns: 1fr;
+  .cta-btn {
+    width: 100%;
   }
 
-  .tick-grid {
-    grid-template-columns: 1fr;
+  .share-actions-bar {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .name-input {
+    width: 100%;
   }
 
   .preview-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.75rem;
   }
 
-  .timetable-wrapper {
-    padding: var(--spacing-md);
+  .preview-header .btn {
+    width: 100%;
   }
 
-  .col-day {
-    width: 15%;
-  }
-
-  .col-course {
-    width: 40%;
-  }
-
-  .col-time {
-    width: 22%;
-  }
-
-  .col-venue {
-    width: 18%;
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
 @media (max-width: 480px) {
   .app-card {
-    padding: var(--spacing-md);
+    padding: 1rem;
   }
 
-  h1 {
-    font-size: 1.25rem;
+  .hero-header h1 {
+    font-size: 1.35rem;
   }
 
-  .course-color-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .course-color-label {
-    width: 100%;
-  }
-
-  .preview-header {
-    flex-direction: column;
-  }
-
-  .preview-header .btn {
-    width: 100%;
+  .upload-dropzone {
+    padding: 1.5rem 1rem;
   }
 }
