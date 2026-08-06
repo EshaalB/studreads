@@ -104,19 +104,28 @@ export const TimetableProvider = ({ children }) => {
 
   const processData = useCallback((data, mapping) => {
     const sanitizedData = Array.isArray(data) ? data.map(item => sanitizeObject(item)) : [];
-    const sanitizedMapping = sanitizeObject(mapping);
+    // Keep internal keys like _combinedTime in the mapping (sanitizeObject would strip them)
+    const sanitizedMapping = { ...sanitizeObject(mapping) };
+    if (mapping._combinedTime) sanitizedMapping._combinedTime = mapping._combinedTime;
 
     setRawData(sanitizedData);
     setColumnMapping(sanitizedMapping);
 
     const sectionCol = sanitizedMapping.section;
     const rootsSet = new Set();
-    sanitizedData.forEach(item => {
-      const val = item[sectionCol]?.toString().trim();
-      if (val && validateSection(val)) {
-        rootsSet.add(sanitizeString(val));
-      }
-    });
+
+    if (sectionCol) {
+      // Section column exists: discover unique section values
+      sanitizedData.forEach(item => {
+        const val = item[sectionCol]?.toString().trim();
+        if (val && validateSection(val)) {
+          rootsSet.add(sanitizeString(val));
+        }
+      });
+    } else {
+      // No section column: use a default "All Courses" section
+      rootsSet.add('All');
+    }
 
     const sortedRoots = Array.from(rootsSet).sort((a, b) =>
       a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
@@ -142,31 +151,53 @@ export const TimetableProvider = ({ children }) => {
   }, [colorMap, currentThemeColors]);
 
   const getCoursesForSection = useCallback((section) => {
-    if (!section || !rawData.length || !columnMapping.section) return [];
+    if (!section || !rawData.length) return [];
 
     const sanitizedSection = sanitizeString(section).toUpperCase();
     const sectionCol = columnMapping.section;
+    const hasCombinedTime = columnMapping._combinedTime && columnMapping.startTime === columnMapping.endTime;
 
     return rawData
       .filter(item => {
+        // If no section column mapped, all items match (they were assigned 'All')
+        if (!sectionCol) return true;
         const itemSection = sanitizeString(item[sectionCol]?.toString() || '').toUpperCase();
         return itemSection && (itemSection.includes(sanitizedSection) || sanitizedSection.includes(itemSection) || itemSection === 'ALL');
       })
       .filter(item => {
         const name = sanitizeString(item[columnMapping.courseName]?.toString() || '').toUpperCase();
-        return !EXCLUDED_COURSES.some(word => name.includes(word));
+        return name.length > 0 && !EXCLUDED_COURSES.some(word => name.includes(word));
       })
-      .map((item, idx) => ({
-        id: `${sanitizeString(item[columnMapping.courseName]?.toString() || '')}-${sanitizeString(item[columnMapping.day]?.toString() || '')}-${sanitizeString(item[columnMapping.startTime]?.toString() || '')}-${idx}`,
-        name: sanitizeString(item[columnMapping.courseName]?.toString() || ''),
-        section: sanitizeString(item[columnMapping.section]?.toString() || ''),
-        day: sanitizeString(item[columnMapping.day]?.toString() || ''),
-        startTime: sanitizeString(item[columnMapping.startTime]?.toString() || ''),
-        endTime: sanitizeString(item[columnMapping.endTime]?.toString() || ''),
-        teacher: sanitizeString(item[columnMapping.instructor]?.toString() || ''),
-        room: sanitizeString(item[columnMapping.room]?.toString() || ''),
-        credits: sanitizeString(item[columnMapping.credits]?.toString() || '')
-      }));
+      .map((item, idx) => {
+        let startTime = '';
+        let endTime = '';
+
+        if (hasCombinedTime) {
+          // Split combined time like "8:30 AM - 9:50 AM" or "8:30 AM to 9:50 AM"
+          const timeVal = sanitizeString(item[columnMapping.startTime]?.toString() || '');
+          const parts = timeVal.split(/\s*(?:-|–|to|TO|To)\s*/i);
+          startTime = parts[0]?.trim() || '';
+          endTime = parts[1]?.trim() || '';
+        } else {
+          startTime = columnMapping.startTime ? sanitizeString(item[columnMapping.startTime]?.toString() || '') : '';
+          endTime = columnMapping.endTime ? sanitizeString(item[columnMapping.endTime]?.toString() || '') : '';
+        }
+
+        const courseName = sanitizeString(item[columnMapping.courseName]?.toString() || '');
+        const day = columnMapping.day ? sanitizeString(item[columnMapping.day]?.toString() || '') : '';
+
+        return {
+          id: `${courseName}-${day}-${startTime}-${idx}`,
+          name: courseName,
+          section: sectionCol ? sanitizeString(item[sectionCol]?.toString() || '') : 'All',
+          day: day,
+          startTime: startTime,
+          endTime: endTime,
+          teacher: columnMapping.instructor ? sanitizeString(item[columnMapping.instructor]?.toString() || '') : '',
+          room: columnMapping.room ? sanitizeString(item[columnMapping.room]?.toString() || '') : '',
+          credits: columnMapping.credits ? sanitizeString(item[columnMapping.credits]?.toString() || '') : ''
+        };
+      });
   }, [rawData, columnMapping]);
 
   const finalActiveClasses = useMemo(() => {

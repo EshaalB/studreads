@@ -6,6 +6,7 @@ import { TIME_REGEX } from '../../utils/constants';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { parseHeuristicExcel } from '../../utils/heuristicParser';
 import { decodeState, encodeState } from '../../utils/sharingUtils';
+import { autoDetectColumnMapping } from '../../utils/columnDetector';
 import { validateFile } from '../../utils/validation';
 import ContactModal from '../ContactModal';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
@@ -103,10 +104,28 @@ const MainLayout = () => {
 
         if (hasGrid) {
           const parsed = parseHeuristicExcel(rawMatrix);
-          processData(parsed, { courseName: 'courseName', section: 'section', day: 'day', startTime: 'startTime', endTime: 'endTime', instructor: 'instructor', room: 'room' });
+          if (parsed.length === 0) {
+            showError('Could not extract any courses from this spreadsheet layout. Check the file format.');
+            return;
+          }
+          processData(parsed, { courseName: 'courseName', section: 'section', day: 'day', startTime: 'startTime', endTime: 'endTime', instructor: 'instructor', room: 'room', credits: 'credits' });
         } else {
+          // Flat table: auto-detect column mapping from header names
           const data = XLSX.utils.sheet_to_json(ws);
-          processData(data, {});
+          if (data.length === 0) {
+            showError('No data rows found in spreadsheet.');
+            return;
+          }
+
+          const headers = Object.keys(data[0]);
+          const mapping = autoDetectColumnMapping(headers);
+
+          if (!mapping.courseName) {
+            showError('Could not detect a course name column. Expected headers like "Course", "Subject", "Course Name", etc.');
+            return;
+          }
+
+          processData(data, mapping);
         }
         showSuccess('Timetable parsed and loaded successfully!');
       } catch (err) { showError(err.message); } finally { setIsLoading(false); }

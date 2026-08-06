@@ -156,10 +156,13 @@ export const parseHeuristicExcel = (jsonData) => {
     const row = jsonData[i];
     if (!row || row.length === 0) continue;
 
-    // Check if this row starts a new day
-    const firstCell = sanitizeString(row[0]?.toString() || '').toUpperCase().replace(/[^A-Z]/g, '');
-    if (firstCell && DAY_VARIANTS.includes(firstCell)) {
-      currentDay = DAY_MAP[firstCell] || '';
+    // Check if this row starts a new day — check columns 0-2
+    for (let col = 0; col < Math.min(row.length, 3); col++) {
+      const cellText = sanitizeString(row[col]?.toString() || '').toUpperCase().replace(/[^A-Z]/g, '');
+      if (cellText && DAY_VARIANTS.includes(cellText)) {
+        currentDay = DAY_MAP[cellText] || '';
+        break;
+      }
     }
 
     // Skip rows before we've found a day
