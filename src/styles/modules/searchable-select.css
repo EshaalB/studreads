@@ -13,15 +13,15 @@
   display: flex;
   align-items: center;
   color: var(--text-muted);
-  transition: color 0.2s;
+  transition: color 0.15s;
 }
 
 .searchable-select-clear:hover {
-  color: var(--text);
+  color: var(--error);
 }
 
 .chevron {
-  transition: transform 0.2s;
+  transition: transform 0.2s ease;
   color: var(--text-muted);
 }
 
@@ -31,25 +31,34 @@
 
 .searchable-select-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
-  margin-top: 4px;
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--border);
+  border-top: 2px solid var(--primary);
+  border-radius: var(--radius-sm);
   z-index: 1000;
   max-height: 300px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: dropDownIn 0.15s ease-out;
+}
+
+@keyframes dropDownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .searchable-select-search {
-  padding: var(--spacing-sm);
+  padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 0.5rem;
+  background: var(--surface-subtle);
 }
 
 .searchable-select-input {
@@ -57,35 +66,43 @@
   border: none;
   outline: none;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: var(--text);
   background: transparent;
 }
 
 .searchable-select-options {
   overflow-y: auto;
-  max-height: 250px;
+  max-height: 240px;
 }
 
 .searchable-select-option {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0.55rem 0.85rem;
   border: none;
   background: transparent;
   text-align: left;
   cursor: pointer;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   color: var(--text);
-  transition: background 0.2s;
+  transition: background 0.12s ease;
 }
 
 .searchable-select-option:hover {
-  background: var(--surface);
+  background: var(--primary-light);
+  color: var(--primary);
 }
 
 .searchable-select-option.selected {
-  background: #eff6ff;
+  background: var(--primary-light);
   color: var(--primary);
-  font-weight: 500;
+  font-weight: 700;
+}
+
+.searchable-select-empty {
+  padding: 0.85rem;
+  font-size: 0.825rem;
+  color: var(--text-muted);
+  text-align: center;
 }

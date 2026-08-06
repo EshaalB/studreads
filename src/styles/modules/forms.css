@@ -5,26 +5,27 @@
 
 .label-text {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .label-with-tooltip {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .tooltip-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
+  color: var(--text-muted);
   cursor: help;
 }
 
@@ -34,42 +35,74 @@
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: 0.35rem 0.65rem;
   background: var(--text);
-  color: var(--bg);
+  color: #ffffff;
   font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s;
+  transition: opacity 0.15s ease;
   z-index: 1000;
+  box-shadow: var(--shadow-sm);
 }
 
 .tooltip-wrapper:hover .tooltip {
   opacity: 1;
 }
 
-select {
+/* Custom Search Input Wrapper */
+.search-input-wrapper {
+  position: relative;
+  width: 220px;
+}
+
+.search-input-wrapper .search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input-wrapper .search-input {
+  padding-left: 2.2rem;
+  height: 34px;
+  font-size: 0.825rem;
+}
+
+/* Select & Inputs */
+select,
+input[type="text"],
+input[type="email"],
+textarea {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0.55rem 0.85rem;
   border: 1px solid var(--border);
-  background: var(--bg);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--text);
   outline: none;
-  cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.15s ease;
 }
 
-select:focus {
+select:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
   border-color: var(--primary);
-  outline: 2px solid rgba(37, 99, 235, 0.1);
-  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
 }
 
-select:disabled {
-  background: var(--surface);
+select:disabled,
+input:disabled,
+textarea:disabled {
+  background: var(--surface-subtle);
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -77,8 +110,20 @@ select:disabled {
 .error-text {
   margin-top: var(--spacing-md);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: #fee2e2;
+  background: var(--error-light);
   color: var(--error);
   border: 1px solid #fca5a5;
-  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.empty-state {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.75rem;
+  text-align: center;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  grid-column: 1 / -1;
 }

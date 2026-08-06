@@ -31,14 +31,13 @@ const CourseSelection = ({
               <span className="tooltip">Select your main section to automatically load courses</span>
             </div>
           </label>
-          {(selectedCourseIds.length > 0) && (
+          {selectedCourseIds.length > 0 && (
             <button
               type="button"
-              className="btn btn-sm btn-danger"
+              className="btn btn-sm btn-danger-outline"
               onClick={clearAllSelections}
-              style={{ padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}
             >
-              <Trash2 size={14} /> Clear All
+              <Trash2 size={13} /> Clear Selections
             </button>
           )}
         </div>
@@ -46,30 +45,23 @@ const CourseSelection = ({
           options={sectionOptions}
           value={activeSection}
           onChange={handleSectionChange}
-          placeholder="Select your main section"
+          placeholder="Select your main section (e.g. BSCS-3A)"
           ariaLabel="Select primary section"
         />
       </div>
 
       {activeSection && (
-        <div className="form-group">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <label className="label-text" style={{ marginBottom: 0 }}>Select Courses</label>
-            <div style={{ position: 'relative', width: '200px' }}>
-              <Search size={14} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        <div className="form-group" style={{ marginTop: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+            <label className="label-text" style={{ marginBottom: 0 }}>Available Section Courses</label>
+            <div className="search-input-wrapper">
+              <Search size={14} className="search-icon" />
               <input
                 type="text"
-                placeholder="Search courses..."
+                placeholder="Filter courses..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="btn btn-secondary"
-                style={{
-                  width: '100%',
-                  padding: '4px 8px 4px 28px',
-                  fontSize: '0.8rem',
-                  textAlign: 'left',
-                  height: '32px'
-                }}
+                className="input-field search-input"
               />
             </div>
           </div>
@@ -83,7 +75,7 @@ const CourseSelection = ({
                 aria-pressed={selectedCourseIds.includes(c.id)}
               >
                 <div className="tick-indicator">
-                  {selectedCourseIds.includes(c.id) && <Check size={14} />}
+                  {selectedCourseIds.includes(c.id) && <Check size={13} />}
                 </div>
                 <span>{c.name}</span>
               </button>
