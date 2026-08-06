@@ -1,8 +1,8 @@
 .main-layout-container {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -12,7 +12,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.85rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -26,8 +26,8 @@
 }
 
 .brand-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
   background: var(--primary);
   color: #ffffff;
@@ -53,7 +53,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.85rem;
+  padding: 0.4rem 0.8rem;
   font-size: 0.825rem;
   font-weight: 600;
   color: var(--secondary);
@@ -76,10 +76,10 @@
   border-top: 4px solid var(--primary);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xl);
+  gap: 1.5rem;
 }
 
 .hero-header {
@@ -87,7 +87,7 @@
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 1.25rem;
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border);
 }
@@ -97,7 +97,7 @@
 }
 
 .hero-title-group h1 {
-  font-size: 1.85rem;
+  font-size: 1.75rem;
   font-weight: 800;
   color: var(--text);
   margin-bottom: 0.35rem;
@@ -105,9 +105,9 @@
 }
 
 .hero-description {
-  font-size: 0.925rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
 .share-actions-bar {
@@ -115,7 +115,7 @@
   align-items: center;
   gap: 0.5rem;
   background: var(--surface-subtle);
-  padding: 0.45rem 0.65rem;
+  padding: 0.4rem 0.6rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }
@@ -125,11 +125,65 @@
   font-size: 0.85rem;
 }
 
+/* Custom Accordion Trigger Bars */
+.section-divider.accordion-trigger,
+.accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin: 1.25rem 0 0.75rem 0;
+  text-align: left;
+}
+
+.section-divider.accordion-trigger:hover,
+.accordion-trigger:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-border);
+  border-left-color: var(--primary-hover);
+  color: var(--primary);
+}
+
+.accordion-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.mixed-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr auto;
+  gap: var(--spacing-md);
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+}
+
+.extra-selections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: 0.75rem;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+}
+
 /* Modals */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(2px);
   z-index: 999;
   display: flex;
@@ -141,7 +195,7 @@
 .modal-card {
   background: var(--surface);
   width: 100%;
-  max-width: 620px;
+  max-width: 600px;
   max-height: 85vh;
   overflow-y: auto;
   border-radius: var(--radius-md);
@@ -151,7 +205,7 @@
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1rem;
 }
 
 .modal-header {
@@ -163,23 +217,23 @@
 .modal-title {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .modal-title h2 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
 }
 
 .modal-body {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: var(--text);
   line-height: 1.6;
 }
 
 .modal-body h3 {
-  font-size: 0.975rem;
-  margin: 1rem 0 0.35rem 0;
+  font-size: 0.95rem;
+  margin: 0.85rem 0 0.35rem 0;
   color: var(--text);
   font-weight: 700;
 }
@@ -193,6 +247,6 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  padding-top: 1rem;
+  padding-top: 0.85rem;
   border-top: 1px solid var(--border);
 }
