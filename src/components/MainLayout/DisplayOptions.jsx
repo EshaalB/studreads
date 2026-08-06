@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 
 const DisplayOptions = ({ displayOptions, setDisplayOptions, displayOptionsList }) => {
   return (
-    <div className="display-options" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '12px', margin: '15px 0' }}>
+    <div className="display-options-bar">
       {displayOptionsList.map(opt => (
         <button
           key={opt.key}
@@ -10,7 +10,6 @@ const DisplayOptions = ({ displayOptions, setDisplayOptions, displayOptionsList 
           className={`tick-item ${displayOptions[opt.key] ? 'selected' : ''}`}
           onClick={() => setDisplayOptions(prev => ({ ...prev, [opt.key]: !prev[opt.key] }))}
           aria-pressed={displayOptions[opt.key]}
-          style={{ justifyContent: 'center' }}
         >
           <div className="tick-indicator">
             {displayOptions[opt.key] && <Check size={14} />}

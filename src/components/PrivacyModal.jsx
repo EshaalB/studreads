@@ -21,7 +21,7 @@ const PrivacyModal = ({ isOpen, onClose }) => {
           
           <h3>1. What Personal Information We Collect</h3>
           <p>
-            The Academic Timetable Generator operates strictly with a <strong>privacy-first, client-side model</strong>. 
+            The <strong>StudReads</strong> app operates strictly with a <strong>privacy-first, client-side model</strong>. 
             Optional input fields (such as your name for custom timetable exports or email provided in feedback forms) remain local in your browser memory.
           </p>
 

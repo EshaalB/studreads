@@ -1,10 +1,17 @@
-# Academic Timetable Generator
+# StudReads
 
-The Academic Timetable Generator is a web application that parses university timetable spreadsheets (Excel format .xlsx and .xls) and generates interactive, conflict-free visual weekly schedules. Users can filter courses by section, add custom/additional electives, customize color codes, resolve schedule overlaps, and export finalized timetables as high-resolution images or shareable links. All data processing occurs locally within the browser.
+StudReads is a web application that parses university timetable spreadsheets (Excel format .xlsx and .xls) and generates interactive, conflict-free visual weekly schedules. Users can filter courses by section, add custom/additional electives, customize color codes, resolve schedule overlaps, and export finalized timetables as high-resolution images or shareable links. All data processing occurs locally within the browser.
 
-## Key Links & Features
-- [Homepage & Timetable Builder](https://university-timetable-gen.vercel.app/)
-- [Upload Spreadsheet](https://university-timetable-gen.vercel.app/#upload)
-- [Privacy Policy](https://university-timetable-gen.vercel.app/#privacy)
-- [Contact Support](https://university-timetable-gen.vercel.app/#contact)
-- [GitHub Repository](https://github.com/EshaalB/University-timetable-gen)
+## Key Pages
+
+- [Home](https://university-timetable-gen.vercel.app/): Upload a spreadsheet and generate your timetable
+- [Privacy Policy](https://university-timetable-gen.vercel.app/#privacy): How user data is handled (client-side only)
+- [Contact / Support](https://university-timetable-gen.vercel.app/#contact): Reach the developer
+
+## Core Features
+
+- Heuristic Excel timetable parser (client-side via xlsx library)
+- Section-aware course filtering and selection
+- Conflict detection and visual highlighting
+- Color customization with preset themes
+- Export to high-resolution PNG image

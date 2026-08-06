@@ -6,8 +6,8 @@ const Footer = ({ onOpenPrivacy, onOpenContact, onOpenReviews }) => {
       <div className="footer-content">
         <div className="footer-brand">
           <div className="footer-logo">
-            <span className="logo-badge">TT</span>
-            <h3>Academic Timetable Generator</h3>
+            <span className="logo-badge">SR</span>
+            <h3>StudReads</h3>
           </div>
           <p className="footer-tagline">
             Minimal, client-side weekly timetable parser & schedule generator for university students and faculty. Built by <a href="https://github.com/EshaalB" target="_blank" rel="noopener noreferrer" className="link-text">Eshaal B</a>.
@@ -60,7 +60,7 @@ const Footer = ({ onOpenPrivacy, onOpenContact, onOpenReviews }) => {
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Eshaal B — Academic Timetable Generator. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Eshaal B — StudReads. All rights reserved.</p>
       </div>
     </footer>
   );

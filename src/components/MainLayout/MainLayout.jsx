@@ -144,7 +144,7 @@ const MainLayout = () => {
       <nav className="top-navbar">
         <div className="nav-brand">
           <div className="brand-icon"><Calendar size={20} /></div>
-          <span className="brand-title">Academic Timetable Generator</span>
+          <span className="brand-title">StudReads</span>
         </div>
         <div className="nav-actions">
           <button type="button" className="nav-btn" onClick={() => setIsReviewsOpen(true)}>
@@ -160,11 +160,12 @@ const MainLayout = () => {
       </nav>
 
       <div className="app-card">
+        {/* Simplified hero — no bloat, straight to the point */}
         <header className="hero-header">
           <div className="hero-title-group">
-            <h1>Academic Timetable Generator</h1>
+            <h1>Generate Your Timetable</h1>
             <p className="hero-description">
-              Upload your university schedule spreadsheet, select your section, and instantly generate a clean visual timetable.
+              Upload your university spreadsheet → pick your section → get your timetable. That's it.
             </p>
           </div>
 
@@ -188,6 +189,7 @@ const MainLayout = () => {
           )}
         </header>
 
+        {/* Step 1: Upload */}
         <FileUpload
           rawData={rawData}
           isLoading={isLoading}
@@ -200,6 +202,7 @@ const MainLayout = () => {
 
         {rawData.length > 0 && (
           <main className="builder-content">
+            {/* Step 2: Select your section & courses */}
             <CourseSelection
               sectionOptions={sectionOptions}
               activeSection={activeSection}
@@ -209,6 +212,7 @@ const MainLayout = () => {
               toggleCourse={toggleCourse}
             />
 
+            {/* Optional: Additional courses from other sections */}
             <AdditionalCourses
               isExtraOpen={isExtraOpen}
               setIsExtraOpen={setIsExtraOpen}
@@ -219,12 +223,14 @@ const MainLayout = () => {
               addExtra={addExtra}
             />
 
+            {/* Display toggles */}
             <DisplayOptions
               displayOptions={displayOptions}
               setDisplayOptions={setDisplayOptions}
               displayOptionsList={displayOptionsList}
             />
 
+            {/* Step 3: View & export timetable */}
             {hasSelectedCourses && <EditableTimetable />}
           </main>
         )}

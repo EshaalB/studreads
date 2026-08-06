@@ -1,11 +1,12 @@
 import html2canvas from 'html2canvas';
-import { ChevronDown, ChevronUp, Download, Palette } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Grid3X3, List, Palette } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/TimetableContext';
 import { DAY_ORDER } from '../../utils/constants';
 import { showError } from '../../utils/errorHandler';
 import { parseTime } from '../../utils/timeUtils';
 import ColorCustomization from '../ColorCustomization';
+import TimetableGrid from './TimetableGrid';
 import TimetableTable from './TimetableTable';
 
 const EditableTimetable = () => {
@@ -15,6 +16,7 @@ const EditableTimetable = () => {
   const [editingCell, setEditingCell] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [isColorPaletteOpen, setIsColorPaletteOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
 
   const sortedClasses = useMemo(() => {
     return [...finalActiveClasses].sort((a, b) => {
@@ -60,7 +62,7 @@ const EditableTimetable = () => {
         useCORS: true,
         logging: false,
         onclone: (clonedDoc) => {
-          const content = clonedDoc.querySelector('.timetable-wrapper');
+          const content = clonedDoc.querySelector('.timetable-wrapper') || clonedDoc.querySelector('.timetable-grid-wrapper');
           if (content) {
             content.style.overflow = 'visible';
             content.style.width = 'fit-content';
@@ -68,7 +70,7 @@ const EditableTimetable = () => {
             content.style.padding = '20px';
           }
         },
-        windowWidth: 1200 // Use a desktop-like width during capture
+        windowWidth: 1200
       });
       const link = document.createElement('a');
       link.download = `timetable-${Date.now()}.png`;
@@ -82,22 +84,57 @@ const EditableTimetable = () => {
   return (
     <div className="timetable-preview-section">
       <div className="preview-header">
-        <h2>Timetable Preview</h2>
-        <button type="button" className="btn btn-primary" onClick={exportAsPng} disabled={isExporting}>
-          <Download size={16} /> {isExporting ? 'Exporting...' : 'Export as PNG'}
-        </button>
+        <h2>Your Timetable</h2>
+        <div className="preview-actions">
+          <div className="view-toggle">
+            <button
+              type="button"
+              className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              aria-label="List view"
+              title="List view"
+            >
+              <List size={16} />
+            </button>
+            <button
+              type="button"
+              className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+              onClick={() => setViewMode('grid')}
+              aria-label="Grid view"
+              title="Grid view"
+            >
+              <Grid3X3 size={16} />
+            </button>
+          </div>
+          <button type="button" className="btn btn-primary" onClick={exportAsPng} disabled={isExporting}>
+            <Download size={16} /> {isExporting ? 'Exporting...' : 'Export PNG'}
+          </button>
+        </div>
       </div>
-      <div className="color-palette-section">
-        <button type="button" className="section-divider accordion-trigger" onClick={() => setIsColorPaletteOpen(!isColorPaletteOpen)}>
-          <div className="accordion-label"><Palette size={16} /><span>Colour Palette</span></div>
-          {isColorPaletteOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        {isColorPaletteOpen && <div className="accordion-content"><ColorCustomization /></div>}
-      </div>
-      <TimetableTable
-        tableRef={tableRef} sortedClasses={sortedClasses} getOrAssignColor={getOrAssignColor} getContrastYIQ={getContrastYIQ}
-        displayOptions={displayOptions} editingCell={editingCell} editValue={editValue} setEditValue={setEditValue} startEdit={startEdit} saveEdit={saveEdit} cancelEdit={cancelEdit}
-      />
+
+      <button
+        type="button"
+        className="accordion-trigger"
+        onClick={() => setIsColorPaletteOpen(!isColorPaletteOpen)}
+      >
+        <div className="accordion-label"><Palette size={16} /><span>Colour Palette</span></div>
+        {isColorPaletteOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+      {isColorPaletteOpen && <div className="accordion-content"><ColorCustomization /></div>}
+
+      {viewMode === 'list' ? (
+        <TimetableTable
+          tableRef={tableRef} sortedClasses={sortedClasses} getOrAssignColor={getOrAssignColor} getContrastYIQ={getContrastYIQ}
+          displayOptions={displayOptions} editingCell={editingCell} editValue={editValue} setEditValue={setEditValue} startEdit={startEdit} saveEdit={saveEdit} cancelEdit={cancelEdit}
+        />
+      ) : (
+        <div ref={tableRef}>
+          <TimetableGrid
+            sortedClasses={sortedClasses} getOrAssignColor={getOrAssignColor} getContrastYIQ={getContrastYIQ}
+            displayOptions={displayOptions}
+          />
+        </div>
+      )}
     </div>
   );
 };

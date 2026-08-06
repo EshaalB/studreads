@@ -21,6 +21,48 @@
   margin: 0;
 }
 
+.preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* View Toggle (List / Grid) */
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 34px;
+  border: none;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-toggle-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.view-toggle-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.view-toggle-btn + .view-toggle-btn {
+  border-left: 1px solid var(--border);
+}
+
+/* List View Table */
 .timetable-wrapper {
   background: #ffffff;
   padding: var(--spacing-lg);
@@ -57,21 +99,10 @@
   vertical-align: top;
 }
 
-.col-day {
-  width: 12%;
-}
-
-.col-course {
-  width: 45%;
-}
-
-.col-time {
-  width: 20%;
-}
-
-.col-venue {
-  width: 15%;
-}
+.col-day { width: 12%; }
+.col-course { width: 45%; }
+.col-time { width: 20%; }
+.col-venue { width: 15%; }
 
 .day-cell {
   font-weight: 700;
@@ -90,4 +121,113 @@
   display: block;
   margin-bottom: var(--spacing-xs);
   color: var(--text);
+}
+
+/* Grid View */
+.timetable-grid-wrapper {
+  background: #ffffff;
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  width: 100%;
+  overflow-x: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.timetable-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  table-layout: fixed;
+}
+
+.grid-time-header {
+  width: 80px;
+  min-width: 80px;
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+}
+
+.grid-day-header {
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--primary);
+  padding: 0.65rem 0.5rem;
+  text-align: center;
+}
+
+.grid-time-cell {
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-align: center;
+  padding: 0.4rem 0.35rem;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.grid-empty-cell {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0.4rem;
+}
+
+.grid-row-even .grid-empty-cell {
+  background: var(--surface);
+}
+
+.grid-row-odd .grid-empty-cell {
+  background: #fafbfc;
+}
+
+.grid-class-cell {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.5rem;
+  vertical-align: top;
+  border-radius: 2px;
+}
+
+.grid-class-name {
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  margin-bottom: 0.2rem;
+}
+
+.grid-class-time {
+  font-size: 0.68rem;
+  opacity: 0.85;
+  margin-bottom: 0.15rem;
+}
+
+.grid-class-teacher {
+  font-size: 0.68rem;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+.grid-class-room {
+  font-size: 0.68rem;
+  opacity: 0.8;
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+
+/* Accordion content area */
+.accordion-content {
+  margin-bottom: 1rem;
 }
