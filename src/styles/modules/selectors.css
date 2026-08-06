@@ -1,52 +1,55 @@
 .tick-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: var(--spacing-sm);
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.5rem;
   width: 100%;
 }
 
 .tick-item {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.875rem;
+  transition: all 0.15s ease;
+  font-size: 0.85rem;
   text-align: left;
   font-family: inherit;
+  color: var(--text);
 }
 
 .tick-item:hover {
-  border-color: var(--primary);
-  background: var(--surface);
+  border-color: var(--primary-border);
+  background: var(--primary-light);
 }
 
 .tick-item.selected {
-  background: #eff6ff;
+  background: var(--primary-light);
   border-color: var(--primary);
   color: var(--primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .tick-indicator {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--border);
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--secondary);
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: var(--surface);
   flex-shrink: 0;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .tick-item.selected .tick-indicator {
   background: var(--primary);
   border-color: var(--primary);
-  color: white;
+  color: #ffffff;
 }
 
 .searchable-select {
@@ -56,27 +59,30 @@
 
 .searchable-select-trigger {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 0.55rem 0.85rem;
   border: 1px solid var(--border);
-  background: var(--bg);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.9rem;
   color: var(--text);
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: border-color 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: space-between;
   text-align: left;
 }
 
-.searchable-select-trigger:hover:not(:disabled) {
+.searchable-select-trigger:hover:not(:disabled),
+.searchable-select-trigger:focus-visible {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
 }
 
 .searchable-select.disabled .searchable-select-trigger {
-  background: var(--surface);
+  background: var(--surface-subtle);
   cursor: not-allowed;
   opacity: 0.6;
 }

@@ -1,16 +1,16 @@
 .btn {
-  padding: 0.55rem 1.1rem;
+  padding: 0.5rem 1.1rem;
   font-weight: 600;
   font-size: 0.875rem;
   font-family: inherit;
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.15s ease-in-out;
   white-space: nowrap;
   background: var(--surface);
   color: var(--text);
@@ -23,13 +23,13 @@
 }
 
 .btn-lg {
-  padding: 0.75rem 1.4rem;
-  font-size: 0.95rem;
+  padding: 0.7rem 1.35rem;
+  font-size: 0.925rem;
   border-radius: var(--radius-md);
 }
 
 .btn-sm {
-  padding: 0.35rem 0.75rem;
+  padding: 0.35rem 0.7rem;
   font-size: 0.8rem;
   border-radius: var(--radius-sm);
 }
@@ -43,7 +43,7 @@
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
 }
 
 .btn-secondary {
@@ -53,7 +53,7 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--surface);
+  background: #e2e8f0;
   border-color: var(--secondary);
 }
 
@@ -64,8 +64,9 @@
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: var(--surface-subtle);
-  border-color: var(--text-muted);
+  background: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary);
 }
 
 .btn-danger-outline {
@@ -81,8 +82,8 @@
 
 .btn-icon {
   padding: 0;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
@@ -91,7 +92,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-icon:hover {

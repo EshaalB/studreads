@@ -1,18 +1,18 @@
 .main-layout-container {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .top-navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 1.25rem;
+  padding: 0.85rem 1.25rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -22,58 +22,60 @@
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
 }
 
 .brand-icon {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
-  background: var(--primary-light);
-  color: var(--primary);
+  background: var(--primary);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .brand-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 700;
   font-size: 1rem;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
 }
 
 .nav-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.4rem 0.85rem;
+  padding: 0.45rem 0.85rem;
   font-size: 0.825rem;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-weight: 600;
+  color: var(--secondary);
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .nav-btn:hover {
   color: var(--primary);
   background: var(--primary-light);
+  border-color: var(--primary-border);
 }
 
 .app-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  border-top: 4px solid var(--primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   padding: var(--spacing-xl);
   display: flex;
   flex-direction: column;
@@ -86,7 +88,7 @@
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 1.5rem;
-  padding-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border);
 }
 
@@ -95,16 +97,17 @@
 }
 
 .hero-title-group h1 {
-  font-size: 2.1rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: var(--text);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.02em;
 }
 
 .hero-description {
-  font-size: 0.95rem;
+  font-size: 0.925rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .share-actions-bar {
@@ -112,7 +115,7 @@
   align-items: center;
   gap: 0.5rem;
   background: var(--surface-subtle);
-  padding: 0.5rem;
+  padding: 0.45rem 0.65rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }
@@ -126,14 +129,13 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(2px);
   z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  animation: fadeIn 0.2s ease-out;
 }
 
 .modal-card {
@@ -142,13 +144,14 @@
   max-width: 620px;
   max-height: 85vh;
   overflow-y: auto;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
+  border-top: 4px solid var(--primary);
   box-shadow: var(--shadow-lg);
-  padding: 1.75rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.15rem;
 }
 
 .modal-header {
@@ -164,7 +167,8 @@
 }
 
 .modal-title h2 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
+  font-weight: 700;
 }
 
 .modal-body {
@@ -174,9 +178,10 @@
 }
 
 .modal-body h3 {
-  font-size: 1rem;
+  font-size: 0.975rem;
   margin: 1rem 0 0.35rem 0;
   color: var(--text);
+  font-weight: 700;
 }
 
 .modal-body p {
@@ -190,9 +195,4 @@
   gap: 0.75rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
 }
