@@ -1,4 +1,4 @@
-import { Calendar, Mail, Share2, Shield } from 'lucide-react';
+import { Calendar, Mail, Share2, Shield, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { useTimetable } from '../../context/TimetableContext';
@@ -11,7 +11,7 @@ import ContactModal from '../ContactModal';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
 import Footer from '../Footer';
 import PrivacyModal from '../PrivacyModal';
-import SocialProof from '../SocialProof';
+import ReviewsModal from '../ReviewsModal';
 import AdditionalCourses from './AdditionalCourses';
 import CourseSelection from './CourseSelection';
 import DisplayOptions from './DisplayOptions';
@@ -30,6 +30,7 @@ const MainLayout = () => {
   const [userName, setUserName] = useState('');
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const fileInputRef = useRef();
 
   // URL state restoration
@@ -146,6 +147,9 @@ const MainLayout = () => {
           <span className="brand-title">Academic Timetable Generator</span>
         </div>
         <div className="nav-actions">
+          <button type="button" className="nav-btn" onClick={() => setIsReviewsOpen(true)}>
+            <Star size={16} /> Reviews
+          </button>
           <button type="button" className="nav-btn" onClick={() => setIsContactOpen(true)}>
             <Mail size={16} /> Contact
           </button>
@@ -224,17 +228,17 @@ const MainLayout = () => {
             {hasSelectedCourses && <EditableTimetable />}
           </main>
         )}
-
-        <SocialProof />
       </div>
 
       <Footer
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
         onOpenContact={() => setIsContactOpen(true)}
+        onOpenReviews={() => setIsReviewsOpen(true)}
       />
 
       <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <ReviewsModal isOpen={isReviewsOpen} onClose={() => setIsReviewsOpen(false)} />
     </div>
   );
 };

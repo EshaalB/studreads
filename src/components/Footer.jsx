@@ -1,6 +1,6 @@
-import { Building2, FileText, Mail, Phone, Shield } from 'lucide-react';
+import { FileText, Github, Mail, Shield, Star } from 'lucide-react';
 
-const Footer = ({ onOpenPrivacy, onOpenContact }) => {
+const Footer = ({ onOpenPrivacy, onOpenContact, onOpenReviews }) => {
   return (
     <footer className="app-footer" id="contact">
       <div className="footer-content">
@@ -10,17 +10,18 @@ const Footer = ({ onOpenPrivacy, onOpenContact }) => {
             <h3>Academic Timetable Generator</h3>
           </div>
           <p className="footer-tagline">
-            Minimal, client-side weekly timetable parser & schedule generator for university students and educators.
+            Minimal, client-side weekly timetable parser & schedule generator for university students and faculty. Built by <a href="https://github.com/EshaalB" target="_blank" rel="noopener noreferrer" className="link-text">Eshaal B</a>.
           </p>
-          <div className="footer-location">
-            <Building2 size={16} />
-            <span>Sydney / Melbourne Campus, Australia</span>
-          </div>
         </div>
 
         <div className="footer-links-group">
-          <h4>Navigation & Privacy</h4>
+          <h4>Navigation & Pages</h4>
           <ul>
+            <li>
+              <button type="button" className="footer-link-btn" onClick={onOpenReviews}>
+                <Star size={14} /> Reviews & Proof
+              </button>
+            </li>
             <li>
               <button type="button" className="footer-link-btn" onClick={onOpenPrivacy}>
                 <Shield size={14} /> Privacy Policy
@@ -36,16 +37,11 @@ const Footer = ({ onOpenPrivacy, onOpenContact }) => {
                 <FileText size={14} /> /llms.txt
               </a>
             </li>
-            <li>
-              <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" className="footer-link-a">
-                GitHub Repository
-              </a>
-            </li>
           </ul>
         </div>
 
         <div className="footer-contact-group">
-          <h4>Direct Contact</h4>
+          <h4>Connect & Source</h4>
           <ul className="contact-list">
             <li>
               <Mail size={15} className="footer-icon" />
@@ -54,9 +50,9 @@ const Footer = ({ onOpenPrivacy, onOpenContact }) => {
               </a>
             </li>
             <li>
-              <Phone size={15} className="footer-icon" />
-              <a href="tel:+61400000000" className="footer-contact-link">
-                +61 (04) 0000 0000
+              <Github size={15} className="footer-icon" />
+              <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" className="footer-contact-link">
+                GitHub: EshaalB
               </a>
             </li>
           </ul>
@@ -64,8 +60,7 @@ const Footer = ({ onOpenPrivacy, onOpenContact }) => {
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Academic Timetable Generator. All rights reserved.</p>
-        <p className="privacy-act-note">Compliant with the Australian Privacy Act 1988.</p>
+        <p>&copy; {new Date().getFullYear()} Eshaal B — Academic Timetable Generator. All rights reserved.</p>
       </div>
     </footer>
   );

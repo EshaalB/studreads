@@ -1,4 +1,4 @@
-import { Building2, Mail, Phone, Send, X } from 'lucide-react';
+import { Mail, Send, X } from 'lucide-react';
 import { useState } from 'react';
 import { showSuccess } from '../utils/errorHandler';
 
@@ -9,7 +9,7 @@ const ContactModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    showSuccess('Thank you! Your message has been sent to our team.');
+    showSuccess('Thank you! Your message has been sent.');
     setFormData({ name: '', email: '', message: '' });
     onClose();
   };
@@ -32,14 +32,6 @@ const ContactModal = ({ isOpen, onClose }) => {
             <div className="info-chip">
               <Mail size={16} />
               <span>Email: <a href="mailto:support@timetablegen.org" className="link-text">support@timetablegen.org</a></span>
-            </div>
-            <div className="info-chip">
-              <Phone size={16} />
-              <span>Phone: <a href="tel:+61400000000" className="link-text">+61 (04) 0000 0000</a></span>
-            </div>
-            <div className="info-chip">
-              <Building2 size={16} />
-              <span>Location: Sydney / Melbourne Campus, Australia</span>
             </div>
           </div>
 
