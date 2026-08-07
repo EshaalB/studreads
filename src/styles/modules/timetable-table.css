@@ -82,7 +82,7 @@
 
 .view-toggle-btn.active {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--text);
 }
 
 .view-toggle-btn + .view-toggle-btn {

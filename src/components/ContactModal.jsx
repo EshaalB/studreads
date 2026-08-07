@@ -13,7 +13,7 @@ const ContactModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     const subject = encodeURIComponent(`StudReads feedback from ${formData.name}`);
     const body = encodeURIComponent(`${formData.message}\n\nReply to: ${formData.email}`);
-    window.location.href = `mailto:support@timetablegen.org?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:eshaalrehamat@gmail.com?subject=${subject}&body=${body}`;
     showSuccess('Your email app is opening.');
     setFormData({ name: '', email: '', message: '' });
     onClose();
@@ -36,7 +36,7 @@ const ContactModal = ({ isOpen, onClose }) => {
           <div className="contact-quick-info">
             <div className="info-chip">
               <Mail size={16} />
-              <span>Email: <a href="mailto:support@timetablegen.org" className="link-text">support@timetablegen.org</a></span>
+              <span>Email: <a href="mailto:eshaalrehamat@gmail.com" className="link-text">eshaalrehamat@gmail.com</a></span>
             </div>
           </div>
 

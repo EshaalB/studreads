@@ -44,7 +44,7 @@
 .tick-indicator {
   width: 16px;
   height: 16px;
-  border: 1.5px solid var(--secondary);
+  border: 1.5px solid var(--primary-border);
   border-radius: 3px;
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@
 .tick-item.selected .tick-indicator {
   background: var(--primary);
   border-color: var(--primary);
-  color: #ffffff;
+  color: var(--text);
 }
 
 .searchable-select {
@@ -86,7 +86,7 @@
 .searchable-select-trigger:hover:not(:disabled),
 .searchable-select-trigger:focus-visible {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+  box-shadow: 0 0 0 3px rgba(194, 95, 76, 0.15);
 }
 
 .searchable-select.disabled .searchable-select-trigger {

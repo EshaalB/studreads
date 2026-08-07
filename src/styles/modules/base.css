@@ -1,33 +1,34 @@
 :root {
-  /* Soft Blue Student-Focused Corporate Palette */
-  --primary: #2563eb;            /* Soft Corporate Blue */
-  --primary-hover: #1d4ed8;      /* Hover State Blue */
-  --primary-light: #eff6ff;      /* Soft Light Blue Tint */
-  --primary-border: #bfdbfe;     /* Soft Blue Border */
-  --secondary: #475569;          /* Slate Neutral */
-  --secondary-hover: #334155;
+  /* Warm, student-friendly terracotta palette */
+  --primary: #c25f4c;
+  --primary-hover: #a94e3d;
+  --primary-light: #f8e6e2;
+  --primary-border: #e9b6ac;
+  --secondary: #e69180;
+  --secondary-hover: #d77b69;
+  --accent: #f16c52;
   --success: #059669;
   --success-light: #ecfdf5;
   --error: #dc2626;
   --error-light: #fef2f2;
   --warning: #d97706;
   
-  --bg: #f6f7fb;
-  --surface: #ffffff;
-  --surface-subtle: #f1f5f9;
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --border-focus: #60a5fa;
+  --bg: #f9f4f3;
+  --surface: #fffdfc;
+  --surface-subtle: #f3e8e5;
+  --text: #110e0d;
+  --text-muted: #74615d;
+  --border: #eadbd7;
+  --border-focus: #c25f4c;
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 18px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(96, 48, 39, 0.06);
+  --shadow-md: 0 6px 18px rgba(96, 48, 39, 0.08);
+  --shadow-lg: 0 18px 40px rgba(96, 48, 39, 0.12);
   --z-dropdown: 20;
   --z-modal: 40;
   --z-toast: 60;
@@ -51,7 +52,7 @@ html {
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg);
@@ -60,8 +61,8 @@ body {
   font-size: 15px;
   min-height: 100dvh;
   background-image:
-    radial-gradient(circle at 8% 0%, rgba(37, 99, 235, 0.08), transparent 30rem),
-    radial-gradient(circle at 94% 14%, rgba(14, 165, 233, 0.05), transparent 24rem);
+    radial-gradient(circle at 8% 0%, rgba(194, 95, 76, 0.11), transparent 30rem),
+    radial-gradient(circle at 94% 14%, rgba(230, 145, 128, 0.13), transparent 24rem);
 }
 
 #root {
@@ -72,7 +73,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--text);
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -86,7 +87,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.3);
+  outline: 3px solid rgba(194, 95, 76, 0.3);
   outline-offset: 2px;
 }
 

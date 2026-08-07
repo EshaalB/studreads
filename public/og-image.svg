@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#f8fafc"/>
-  <circle cx="1080" cy="-30" r="360" fill="#dbeafe"/>
-  <rect x="72" y="72" width="1056" height="486" rx="34" fill="#ffffff" stroke="#dbe5f0" stroke-width="2"/>
-  <rect x="118" y="120" width="66" height="66" rx="16" fill="#2563eb"/>
-  <path d="M137 144h28v24h-28zm0 7h28m-20-15v16m12-16v16" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-  <text x="210" y="165" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#0f172a">StudReads</text>
-  <text x="118" y="290" font-family="Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="-2" fill="#0f172a">Your spreadsheet,</text>
-  <text x="118" y="368" font-family="Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="-2" fill="#2563eb">made readable.</text>
-  <text x="118" y="430" font-family="Arial, sans-serif" font-size="25" fill="#64748b">Build a clear weekly university timetable in your browser.</text>
+  <rect width="1200" height="630" fill="#f9f4f3"/>
+  <circle cx="1080" cy="-30" r="360" fill="#f5d8d2"/>
+  <rect x="72" y="72" width="1056" height="486" rx="34" fill="#fffdfc" stroke="#eadbd7" stroke-width="2"/>
+  <rect x="118" y="120" width="66" height="66" rx="16" fill="#c25f4c"/>
+  <path d="M137 144h28v24h-28zm0 7h28m-20-15v16m12-16v16" fill="none" stroke="#110e0d" stroke-width="4" stroke-linecap="round"/>
+  <text x="210" y="165" font-family="Nunito, Arial, sans-serif" font-size="34" font-weight="700" fill="#110e0d">StudReads</text>
+  <text x="118" y="290" font-family="Nunito, Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="-2" fill="#110e0d">Your spreadsheet,</text>
+  <text x="118" y="368" font-family="Nunito, Arial, sans-serif" font-size="66" font-weight="700" letter-spacing="-2" fill="#c25f4c">made readable.</text>
+  <text x="118" y="430" font-family="Nunito, Arial, sans-serif" font-size="25" fill="#74615d">Build a clear weekly university timetable in your browser.</text>
   <g transform="translate(810 230)">
-    <rect width="240" height="220" rx="18" fill="#eff6ff" stroke="#bfdbfe"/>
-    <path d="M24 58h192M24 104h192M24 150h192M78 24v172M138 24v172" stroke="#bfdbfe" stroke-width="2"/>
-    <rect x="82" y="63" width="52" height="36" rx="6" fill="#93c5fd"/>
-    <rect x="142" y="109" width="70" height="36" rx="6" fill="#86efac"/>
-    <rect x="82" y="155" width="52" height="36" rx="6" fill="#fde68a"/>
+    <rect width="240" height="220" rx="18" fill="#f8e6e2" stroke="#e9b6ac"/>
+    <path d="M24 58h192M24 104h192M24 150h192M78 24v172M138 24v172" stroke="#e9b6ac" stroke-width="2"/>
+    <rect x="82" y="63" width="52" height="36" rx="6" fill="#e69180"/>
+    <rect x="142" y="109" width="70" height="36" rx="6" fill="#efb8ad"/>
+    <rect x="82" y="155" width="52" height="36" rx="6" fill="#f16c52"/>
   </g>
 </svg>

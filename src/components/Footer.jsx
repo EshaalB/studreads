@@ -45,8 +45,8 @@ const Footer = ({ onOpenPrivacy, onOpenContact, onOpenReviews }) => {
           <ul className="contact-list">
             <li>
               <Mail size={15} className="footer-icon" />
-              <a href="mailto:support@timetablegen.org" className="footer-contact-link">
-                support@timetablegen.org
+              <a href="mailto:eshaalrehamat@gmail.com" className="footer-contact-link">
+                eshaalrehamat@gmail.com
               </a>
             </li>
             <li>

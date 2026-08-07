@@ -42,7 +42,7 @@ const PrivacyModal = ({ isOpen, onClose }) => {
           <p>
             If you have questions regarding this Privacy Policy or your privacy rights, please contact us at:
             <br />
-            <strong>Email:</strong> <a href="mailto:support@timetablegen.org" className="link-text">support@timetablegen.org</a>
+            <strong>Email:</strong> <a href="mailto:eshaalrehamat@gmail.com" className="link-text">eshaalrehamat@gmail.com</a>
           </p>
         </div>
 

@@ -14,7 +14,7 @@
   padding: clamp(2rem, 5vw, 3rem) 1.5rem;
   text-align: center;
   cursor: pointer;
-  background: linear-gradient(145deg, #f8fbff, var(--primary-light));
+  background: linear-gradient(145deg, #fffaf8, var(--primary-light));
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -25,12 +25,12 @@
 .upload-dropzone:hover,
 .upload-dropzone:focus-visible {
   border-color: var(--primary);
-  background: #e0e7ff;
+  background: #f6ddd8;
 }
 
 .upload-dropzone.is-dragging {
   border-color: var(--primary);
-  background: #dbeafe;
+  background: #f3d3cd;
   transform: translateY(-2px);
 }
 
@@ -119,7 +119,7 @@
   flex-basis: 100%;
   padding-top: 0.75rem;
   border-top: 1px solid var(--primary-border);
-  color: var(--secondary);
+  color: var(--text-muted);
   font-size: 0.78rem;
 }
 

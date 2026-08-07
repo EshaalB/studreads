@@ -16,7 +16,7 @@
   background: var(--surface);
   border: 1px solid rgba(226, 232, 240, 0.8);
   border-radius: var(--radius-lg);
-  box-shadow: 0 0.5rem 2rem rgba(30, 64, 175, 0.05);
+  box-shadow: 0 0.5rem 2rem rgba(96, 48, 39, 0.06);
 }
 
 .nav-brand {
@@ -30,7 +30,7 @@
   height: 34px;
   border-radius: var(--radius-sm);
   background: var(--primary);
-  color: #ffffff;
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,7 +56,7 @@
   padding: 0.4rem 0.8rem;
   font-size: 0.825rem;
   font-weight: 600;
-  color: var(--secondary);
+  color: var(--text-muted);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -75,7 +75,7 @@
   border: 1px solid var(--border);
   border-top: none;
   border-radius: var(--radius-lg);
-  box-shadow: 0 1rem 3rem rgba(30, 64, 175, 0.07);
+  box-shadow: 0 1rem 3rem rgba(96, 48, 39, 0.08);
   padding: clamp(1.25rem, 3vw, 2.25rem);
   display: flex;
   flex-direction: column;
@@ -160,7 +160,7 @@
 .progress-steps strong { color: var(--text); font-size: 0.78rem; }
 .progress-steps small { font-size: 0.68rem; }
 .progress-steps .is-current { background: var(--primary-light); color: var(--primary); }
-.progress-steps .is-current > span { color: #fff; background: var(--primary); border-color: var(--primary); }
+.progress-steps .is-current > span { color: var(--text); background: var(--primary); border-color: var(--primary); }
 .progress-steps .is-complete > span { color: var(--success); border-color: #a7f3d0; background: var(--success-light); }
 
 .builder-content { display: flex; flex-direction: column; }
@@ -178,7 +178,7 @@
   margin-top: 0.75rem;
   padding: 1rem;
   border-radius: var(--radius-md);
-  background: #fbfcfe;
+  background: #fffaf8;
   border: 1px solid var(--border);
 }
 
@@ -191,7 +191,7 @@
   border: 1px dashed var(--primary-border);
   border-radius: var(--radius-md);
   background: var(--primary-light);
-  color: var(--secondary);
+  color: var(--text-muted);
   text-align: center;
   font-size: 0.82rem;
 }
@@ -269,7 +269,7 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.55);
+  background: rgba(17, 14, 13, 0.52);
   backdrop-filter: blur(2px);
   z-index: var(--z-modal);
   display: flex;

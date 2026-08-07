@@ -38,14 +38,14 @@
 
 .btn-primary {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--text);
   border-color: var(--primary);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.25);
+  box-shadow: 0 3px 10px rgba(194, 95, 76, 0.24);
 }
 
 .btn-secondary {
@@ -55,7 +55,7 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #e2e8f0;
+  background: #efd8d3;
   border-color: var(--secondary);
 }
 
