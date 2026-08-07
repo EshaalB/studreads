@@ -1,5 +1,5 @@
 import { ChevronDown, Search, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 const SearchableSelect = ({
   options = [],
@@ -14,6 +14,8 @@ const SearchableSelect = ({
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+  const optionRefs = useRef([]);
+  const listboxId = useId();
 
   const filteredOptions = useMemo(() => {
     if (!searchTerm) return options;
@@ -70,6 +72,10 @@ const SearchableSelect = ({
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       setIsOpen(!isOpen);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIsOpen(true);
+      requestAnimationFrame(() => optionRefs.current[0]?.focus());
     } else if (e.key === 'Escape' && isOpen) {
       setIsOpen(false);
       setSearchTerm('');
@@ -87,6 +93,7 @@ const SearchableSelect = ({
         aria-label={ariaLabel || placeholder}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-controls={isOpen ? listboxId : undefined}
       >
         <span className="searchable-select-value">
           {selectedLabel || <span className="placeholder">{placeholder}</span>}
@@ -126,13 +133,16 @@ const SearchableSelect = ({
                 if (e.key === 'Escape') {
                   setIsOpen(false);
                   setSearchTerm('');
+                } else if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  optionRefs.current[0]?.focus();
                 }
               }}
               placeholder={placeholder}
               className="searchable-select-input"
             />
           </div>
-          <div className="searchable-select-options" role="listbox">
+          <div className="searchable-select-options" role="listbox" id={listboxId}>
             {filteredOptions.length === 0 ? (
               <div className="searchable-select-empty" role="option">No options found</div>
             ) : (
@@ -149,6 +159,19 @@ const SearchableSelect = ({
                     aria-selected={isSelected}
                     className={`searchable-select-option ${isSelected ? 'selected' : ''}`}
                     onClick={() => handleSelect(optValue)}
+                    ref={(node) => { optionRefs.current[idx] = node; }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        optionRefs.current[(idx + 1) % filteredOptions.length]?.focus();
+                      } else if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        optionRefs.current[(idx - 1 + filteredOptions.length) % filteredOptions.length]?.focus();
+                      } else if (event.key === 'Escape') {
+                        setIsOpen(false);
+                        setSearchTerm('');
+                      }
+                    }}
                   >
                     {optLabel}
                   </button>

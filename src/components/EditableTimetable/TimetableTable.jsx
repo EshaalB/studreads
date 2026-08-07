@@ -1,4 +1,4 @@
-import { useTimetable } from '../../context/TimetableContext';
+import { useTimetable } from '../../context/useTimetable';
 import TimetableRow from './TimetableRow';
 
 const TimetableTable = ({

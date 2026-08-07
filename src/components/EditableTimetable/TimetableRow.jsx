@@ -8,10 +8,7 @@ const TimetableRow = ({
   const sanitizedName = sanitizeString(cls.name);
 
   return (
-    <tr
-      key={`${cls.day}-${cls.startTime}-${idx}`}
-      style={isConflicted ? { borderLeft: '4px solid var(--error)' } : {}}
-    >
+    <tr key={`${cls.day}-${cls.startTime}-${idx}`} className={isConflicted ? 'row-conflicted' : ''}>
       {isFirstOfDay && (
         <td rowSpan={dayCount} className="day-cell">
           {editingCell === `${classKey}-day` ? (
@@ -31,26 +28,11 @@ const TimetableRow = ({
       )}
       <td
         className={`course-cell ${isConflicted ? 'conflicted' : ''}`}
-        style={{
-          background: bgColor,
-          color: textColor,
-          position: 'relative'
-        }}
+        style={{ background: bgColor, color: textColor }}
       >
         {isConflicted && (
-          <div style={{
-            position: 'absolute',
-            top: '4px',
-            right: '4px',
-            background: 'var(--error)',
-            color: 'white',
-            fontSize: '10px',
-            padding: '2px 4px',
-            borderRadius: '4px',
-            fontWeight: 'bold',
-            zIndex: 1
-          }}>
-            CONFLICT
+          <div className="table-conflict-label">
+            Clash
           </div>
         )}
         {editingCell === `${classKey}-name` ? (

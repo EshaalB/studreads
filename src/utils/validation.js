@@ -1,4 +1,4 @@
-import { MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from './constants';
+import { MAX_FILE_SIZE, ACCEPTED_FILE_TYPES } from './constants.js';
 
 export const sanitizeString = (str) => {
   if (typeof str !== 'string') return '';

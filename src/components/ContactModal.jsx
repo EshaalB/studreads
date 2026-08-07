@@ -1,26 +1,31 @@
 import { Mail, Send, X } from 'lucide-react';
 import { useState } from 'react';
 import { showSuccess } from '../utils/errorHandler';
+import { useModalAccessibility } from '../utils/useModalAccessibility';
 
 const ContactModal = ({ isOpen, onClose }) => {
+  const dialogRef = useModalAccessibility(isOpen, onClose);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    showSuccess('Thank you! Your message has been sent.');
+    const subject = encodeURIComponent(`StudReads feedback from ${formData.name}`);
+    const body = encodeURIComponent(`${formData.message}\n\nReply to: ${formData.email}`);
+    window.location.href = `mailto:support@timetablegen.org?subject=${subject}&body=${body}`;
+    showSuccess('Your email app is opening.');
     setFormData({ name: '', email: '', message: '' });
     onClose();
   };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} className="modal-card" role="dialog" aria-modal="true" aria-labelledby="contact-title" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
             <Mail className="icon-primary" size={22} />
-            <h2>Contact & Support</h2>
+            <h2 id="contact-title">Contact and support</h2>
           </div>
           <button type="button" className="btn-icon" onClick={onClose} aria-label="Close Contact Modal">
             <X size={20} />
@@ -42,7 +47,7 @@ const ContactModal = ({ isOpen, onClose }) => {
                 id="contact-name"
                 type="text"
                 required
-                placeholder="Jane Doe"
+                placeholder="Amina Yusuf"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="input-field"
@@ -72,7 +77,7 @@ const ContactModal = ({ isOpen, onClose }) => {
                 className="input-field textarea-field"
               />
             </div>
-            <div className="modal-footer" style={{ padding: 0, marginTop: '1rem' }}>
+            <div className="modal-footer modal-footer-form">
               <button type="button" className="btn btn-secondary" onClick={onClose}>
                 Cancel
               </button>

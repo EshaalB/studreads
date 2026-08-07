@@ -5,6 +5,33 @@
   padding-top: var(--spacing-xl);
 }
 
+.mobile-agenda { display: none; }
+
+.agenda-day h3 {
+  margin-bottom: 0.55rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.agenda-day-list { display: grid; gap: 0.55rem; }
+
+.agenda-item {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.agenda-item.has-conflict { border-color: #fca5a5; }
+.agenda-colour { width: 0.35rem; flex: 0 0 0.35rem; }
+.agenda-copy { min-width: 0; padding: 0.8rem; flex: 1; }
+.agenda-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+.agenda-title-row h4 { font-size: 0.9rem; text-wrap: pretty; }
+.agenda-copy p { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.3rem; color: var(--text-muted); font-size: 0.75rem; }
+.conflict-label { display: inline-flex; align-items: center; gap: 0.2rem; color: var(--error); font-size: 0.68rem; font-weight: 700; }
+
 .preview-header {
   display: flex;
   justify-content: space-between;

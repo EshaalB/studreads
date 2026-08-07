@@ -1,10 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EXCLUDED_COURSES } from '../utils/constants';
 import { COLOR_THEMES, getThemeColors } from '../utils/themes';
 import { parseTime } from '../utils/timeUtils';
 import { sanitizeObject, sanitizeString, validateSection } from '../utils/validation';
-
-const TimetableContext = createContext();
+import { TimetableContext } from './useTimetable';
 
 const STORAGE_KEYS = {
   display: 'timetable_display_v6',
@@ -136,6 +135,39 @@ export const TimetableProvider = ({ children }) => {
     setExtraSelections([]);
   }, []);
 
+  const loadSharedTimetable = useCallback((classes = []) => {
+    const normalized = classes.map((item) => ({
+      courseName: sanitizeString(item.name || item.courseName || ''),
+      section: 'Shared timetable',
+      day: sanitizeString(item.day || ''),
+      startTime: sanitizeString(item.startTime || ''),
+      endTime: sanitizeString(item.endTime || ''),
+      instructor: sanitizeString(item.teacher || item.instructor || ''),
+      room: sanitizeString(item.room || ''),
+      credits: sanitizeString(item.credits || '')
+    })).filter((item) => item.courseName && item.day);
+
+    const mapping = {
+      courseName: 'courseName', section: 'section', day: 'day',
+      startTime: 'startTime', endTime: 'endTime', instructor: 'instructor',
+      room: 'room', credits: 'credits'
+    };
+
+    setRawData(normalized);
+    setColumnMapping(mapping);
+    setRootSections(['Shared timetable']);
+    setActiveSection('Shared timetable');
+
+    const firstIdByCourse = new Map();
+    normalized.forEach((item, index) => {
+      if (!firstIdByCourse.has(item.courseName)) {
+        firstIdByCourse.set(item.courseName, `${item.courseName}-${item.day}-${item.startTime}-${index}`);
+      }
+    });
+    setSelectedCourseIds([...firstIdByCourse.values()]);
+    setExtraSelections([]);
+  }, []);
+
   const currentThemeColors = useMemo(() => {
     return getThemeColors(selectedTheme);
   }, [selectedTheme]);
@@ -145,9 +177,8 @@ export const TimetableProvider = ({ children }) => {
     if (!sanitizedName) return currentThemeColors[0];
 
     if (colorMap[sanitizedName]) return colorMap[sanitizedName];
-    const nextColor = currentThemeColors[Object.keys(colorMap).length % currentThemeColors.length];
-    setColorMap(prev => ({ ...prev, [sanitizedName]: nextColor }));
-    return nextColor;
+    const hash = [...sanitizedName].reduce((total, character) => ((total * 31) + character.charCodeAt(0)) >>> 0, 0);
+    return currentThemeColors[hash % currentThemeColors.length];
   }, [colorMap, currentThemeColors]);
 
   const getCoursesForSection = useCallback((section) => {
@@ -162,7 +193,7 @@ export const TimetableProvider = ({ children }) => {
         // If no section column mapped, all items match (they were assigned 'All')
         if (!sectionCol) return true;
         const itemSection = sanitizeString(item[sectionCol]?.toString() || '').toUpperCase();
-        return itemSection && (itemSection.includes(sanitizedSection) || sanitizedSection.includes(itemSection) || itemSection === 'ALL');
+        return itemSection && (itemSection === sanitizedSection || itemSection === 'ALL');
       })
       .filter(item => {
         const name = sanitizeString(item[columnMapping.courseName]?.toString() || '').toUpperCase();
@@ -288,6 +319,7 @@ export const TimetableProvider = ({ children }) => {
     editedClasses,
     updateClassField,
     processData,
+    loadSharedTimetable,
     getCoursesForSection,
     getOrAssignColor,
     setDisplayOptions,
@@ -302,5 +334,3 @@ export const TimetableProvider = ({ children }) => {
     </TimetableContext.Provider>
   );
 };
-
-export const useTimetable = () => useContext(TimetableContext);

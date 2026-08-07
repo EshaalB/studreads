@@ -38,7 +38,7 @@
   border: 1px solid var(--border);
   border-top: 2px solid var(--primary);
   border-radius: var(--radius-sm);
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   max-height: 300px;
   display: flex;
   flex-direction: column;

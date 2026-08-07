@@ -1,15 +1,17 @@
 import { Shield, X } from 'lucide-react';
+import { useModalAccessibility } from '../utils/useModalAccessibility';
 
 const PrivacyModal = ({ isOpen, onClose }) => {
+  const dialogRef = useModalAccessibility(isOpen, onClose);
   if (!isOpen) return null;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} className="modal-card" role="dialog" aria-modal="true" aria-labelledby="privacy-title" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
             <Shield className="icon-primary" size={22} />
-            <h2>Privacy Policy</h2>
+            <h2 id="privacy-title">Privacy policy</h2>
           </div>
           <button type="button" className="btn-icon" onClick={onClose} aria-label="Close Privacy Policy">
             <X size={20} />

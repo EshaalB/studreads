@@ -1,6 +1,6 @@
-import { EXCLUDED_COURSES } from './constants';
-import { parseTime } from './timeUtils';
-import { sanitizeString } from './validation';
+import { EXCLUDED_COURSES } from './constants.js';
+import { parseTime } from './timeUtils.js';
+import { sanitizeString } from './validation.js';
 
 const DAY_VARIANTS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -229,13 +229,11 @@ export const parseHeuristicExcel = (jsonData) => {
           // Section codes typically have format: 2-4 letters + optional dash + numbers + optional letter
           const sectionPattern = /^[A-Z]{2,5}-?\d[A-Z]?\d?$/i;
           let sectionMatch = null;
-          let sectionIndex = -1;
 
           for (let i = allParens.length - 1; i >= 0; i--) {
             const content = allParens[i][1].trim();
             if (sectionPattern.test(content)) {
               sectionMatch = allParens[i];
-              sectionIndex = i;
               break;
             }
           }

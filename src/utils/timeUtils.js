@@ -11,7 +11,7 @@ export const parseTime = (timeStr) => {
 
   // Try to match HH:mm AM/PM or HH:mm A.M./P.M.
   const ampmMatch = normalized.match(/(\d{1,2}):(\d{2})\s*(AM|PM|A\.M\.?|P\.M\.?)/i);
-  const militaryMatch = normalized.match(/(\d{1,2}):(\d{2})/);
+  const militaryMatch = normalized.match(/^(\d{1,2}):(\d{2})$/);
 
   let hours, minutes;
 
@@ -20,19 +20,14 @@ export const parseTime = (timeStr) => {
     minutes = parseInt(ampmMatch[2], 10);
     const period = ampmMatch[3].replace(/\./g, '').toUpperCase();
 
-    if ((period === 'PM' || period === 'PM') && hours < 12) hours += 12;
-    if ((period === 'AM' || period === 'AM') && hours === 12) hours = 0;
+    if (hours < 1 || hours > 12 || minutes > 59) return null;
+    if (period === 'PM' && hours < 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
   } else if (militaryMatch) {
     hours = parseInt(militaryMatch[1], 10);
     minutes = parseInt(militaryMatch[2], 10);
 
-    // For times that are ambiguous (like "1:00"), assume PM for typical class hours
-    // Classes usually run from 8 AM to 9 PM, so:
-    // - 1-7 are usually PM (1 PM to 7 PM)
-    // - 8-12 are usually AM (8 AM to 12 PM)
-    if (hours >= 1 && hours <= 7) {
-      hours += 12; // Assume PM for 1:00-7:00
-    }
+    if (hours > 23 || minutes > 59) return null;
   } else {
     return null;
   }
@@ -56,9 +51,9 @@ export const checkOverlap = (slot1, slot2) => {
   const start2 = parseTime(slot2.startTime);
   const end2 = parseTime(slot2.endTime);
 
-  if (!start1 || !end1 || !start2 || !end2) return false;
+  if (start1 === null || end1 === null || start2 === null || end2 === null) return false;
 
   return (start1 < end2) && (end1 > start2);
 };
 
-export { DAYS } from './constants';
+export { DAYS } from './constants.js';

@@ -1,12 +1,9 @@
 import { Calendar, Mail, Share2, Shield, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import * as XLSX from 'xlsx';
-import { useTimetable } from '../../context/TimetableContext';
-import { TIME_REGEX } from '../../utils/constants';
+import { useTimetable } from '../../context/useTimetable';
 import { showError, showSuccess } from '../../utils/errorHandler';
-import { parseHeuristicExcel } from '../../utils/heuristicParser';
 import { decodeState, encodeState } from '../../utils/sharingUtils';
-import { autoDetectColumnMapping } from '../../utils/columnDetector';
+import { parseWorkbook } from '../../utils/spreadsheetParser';
 import { validateFile } from '../../utils/validation';
 import ContactModal from '../ContactModal';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
@@ -22,7 +19,8 @@ const MainLayout = () => {
   const {
     rawData, processData, rootSections, activeSection, setActiveSection,
     selectedCourseIds, setSelectedCourseIds, extraSelections, setExtraSelections,
-    displayOptions, setDisplayOptions, getCoursesForSection
+    displayOptions, setDisplayOptions, getCoursesForSection, finalActiveClasses,
+    loadSharedTimetable
   } = useTimetable();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +30,7 @@ const MainLayout = () => {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
+  const [fileSummary, setFileSummary] = useState(null);
   const fileInputRef = useRef();
 
   // URL state restoration
@@ -41,31 +40,36 @@ const MainLayout = () => {
     if (sharedState) {
       const decoded = decodeState(sharedState);
       if (decoded) {
-        if (decoded.activeSection) setActiveSection(decoded.activeSection);
-        if (decoded.selectedCourseIds) setSelectedCourseIds(decoded.selectedCourseIds);
-        if (decoded.extraSelections) setExtraSelections(decoded.extraSelections);
+        if (Array.isArray(decoded.classes) && decoded.classes.length > 0) {
+          loadSharedTimetable(decoded.classes);
+        } else {
+          if (decoded.activeSection) setActiveSection(decoded.activeSection);
+          if (decoded.selectedCourseIds) setSelectedCourseIds(decoded.selectedCourseIds);
+          if (decoded.extraSelections) setExtraSelections(decoded.extraSelections);
+        }
         window.history.replaceState({}, document.title, window.location.pathname);
-        showSuccess(`Restored ${decoded.userName ? decoded.userName + "'s" : "shared"} timetable!`);
+        showSuccess(`Restored ${decoded.userName ? `${decoded.userName}'s` : 'the shared'} timetable.`);
       }
     }
-  }, [setActiveSection, setSelectedCourseIds, setExtraSelections]);
+  }, [loadSharedTimetable, setActiveSection, setSelectedCourseIds, setExtraSelections]);
 
   const handleShare = useCallback(() => {
     const state = {
       activeSection,
       selectedCourseIds,
       extraSelections,
+      classes: finalActiveClasses,
       userName: userName.trim()
     };
     const encoded = encodeState(state);
     const url = `${window.location.origin}${window.location.pathname}?s=${encoded}`;
 
     navigator.clipboard.writeText(url).then(() => {
-      showSuccess('Share link copied to clipboard!');
+      showSuccess('Share link copied to clipboard.');
     }).catch(() => {
       showError('Failed to copy link.');
     });
-  }, [activeSection, selectedCourseIds, extraSelections, userName]);
+  }, [activeSection, selectedCourseIds, extraSelections, finalActiveClasses, userName]);
 
   const handleFileUpload = useCallback((e) => {
     const file = e.target.files?.[0];
@@ -74,63 +78,35 @@ const MainLayout = () => {
     if (!validation.valid) { setError(validation.error); showError(validation.error); return; }
     setIsLoading(true); setError('');
     const reader = new FileReader();
-    reader.onerror = () => { setIsLoading(false); showError('Failed to read file.'); };
-    reader.onload = (evt) => {
-      try {
-        const bstr = evt.target.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-
-        // Helper to expand merged cells
-        if (ws['!merges']) {
-          ws['!merges'].forEach(merge => {
-            const startStr = XLSX.utils.encode_cell(merge.s);
-            const startVal = ws[startStr];
-            if (!startVal) return;
-
-            for (let R = merge.s.r; R <= merge.e.r; ++R) {
-              for (let C = merge.s.c; C <= merge.e.c; ++C) {
-                const cellRef = XLSX.utils.encode_cell({ c: C, r: R });
-                if (!ws[cellRef]) {
-                  ws[cellRef] = { ...startVal };
-                }
-              }
-            }
-          });
-        }
-
-        const rawMatrix = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        const hasGrid = rawMatrix.slice(0, 30).some(row => Array.isArray(row) && row.some(c => TIME_REGEX.test(String(c || '').trim())));
-
-        if (hasGrid) {
-          const parsed = parseHeuristicExcel(rawMatrix);
-          if (parsed.length === 0) {
-            showError('Could not extract any courses from this spreadsheet layout. Check the file format.');
-            return;
-          }
-          processData(parsed, { courseName: 'courseName', section: 'section', day: 'day', startTime: 'startTime', endTime: 'endTime', instructor: 'instructor', room: 'room', credits: 'credits' });
-        } else {
-          // Flat table: auto-detect column mapping from header names
-          const data = XLSX.utils.sheet_to_json(ws);
-          if (data.length === 0) {
-            showError('No data rows found in spreadsheet.');
-            return;
-          }
-
-          const headers = Object.keys(data[0]);
-          const mapping = autoDetectColumnMapping(headers);
-
-          if (!mapping.courseName) {
-            showError('Could not detect a course name column. Expected headers like "Course", "Subject", "Course Name", etc.');
-            return;
-          }
-
-          processData(data, mapping);
-        }
-        showSuccess('Timetable parsed and loaded successfully!');
-      } catch (err) { showError(err.message); } finally { setIsLoading(false); }
+    reader.onerror = () => {
+      const message = 'The file could not be read. Try saving it as a new .xlsx file.';
+      setIsLoading(false);
+      setError(message);
+      showError(message);
     };
-    reader.readAsBinaryString(file);
+    reader.onload = async (evt) => {
+      try {
+        const XLSX = await import('xlsx');
+        const workbook = XLSX.read(evt.target.result, { type: 'array', cellDates: true });
+        const parsed = parseWorkbook(XLSX, workbook);
+        processData(parsed.rows, parsed.mapping);
+        setFileSummary({
+          name: file.name,
+          sheetName: parsed.sheetName,
+          rowCount: parsed.rows.length,
+          warnings: parsed.warnings
+        });
+        showSuccess(`Loaded ${parsed.rows.length} timetable entries from ${parsed.sheetName}.`);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'The spreadsheet could not be parsed.';
+        setError(message);
+        showError(message);
+      } finally {
+        setIsLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
   }, [processData]);
 
   const coursesInActiveSection = useMemo(() => {
@@ -147,7 +123,12 @@ const MainLayout = () => {
   const addExtra = useCallback(() => setExtraSelections(prev => [...prev, { id: Date.now() + Math.random(), courseName: '', section: '', courseId: '' }]), [setExtraSelections]);
   const removeExtra = useCallback((id) => setExtraSelections(prev => prev.filter(s => s.id !== id)), [setExtraSelections]);
   const updateExtra = useCallback((id, updates) => setExtraSelections(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s)), [setExtraSelections]);
-  const resetUpload = useCallback(() => { localStorage.clear(); window.location.reload(); }, []);
+  const resetUpload = useCallback(() => {
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith('timetable_'))
+      .forEach((key) => localStorage.removeItem(key));
+    window.location.reload();
+  }, []);
 
   const displayOptionsList = useMemo(() => [
     { key: 'showTeacher', label: 'Show Teachers' },
@@ -159,6 +140,7 @@ const MainLayout = () => {
 
   return (
     <div className="main-layout-container">
+      <a className="skip-link" href="#main-content">Skip to timetable builder</a>
       {/* Top Navbar */}
       <nav className="top-navbar">
         <div className="nav-brand">
@@ -167,13 +149,13 @@ const MainLayout = () => {
         </div>
         <div className="nav-actions">
           <button type="button" className="nav-btn" onClick={() => setIsReviewsOpen(true)}>
-            <Star size={16} /> Reviews
+            <Star size={16} /> <span>About</span>
           </button>
           <button type="button" className="nav-btn" onClick={() => setIsContactOpen(true)}>
-            <Mail size={16} /> Contact
+            <Mail size={16} /> <span>Contact</span>
           </button>
           <button type="button" className="nav-btn" onClick={() => setIsPrivacyOpen(true)}>
-            <Shield size={16} /> Privacy
+            <Shield size={16} /> <span>Privacy</span>
           </button>
         </div>
       </nav>
@@ -213,6 +195,8 @@ const MainLayout = () => {
           rawData={rawData}
           isLoading={isLoading}
           error={error}
+          fileSummary={fileSummary}
+          setFileSummary={setFileSummary}
           fileInputRef={fileInputRef}
           handleFileUpload={handleFileUpload}
           resetUpload={resetUpload}
@@ -220,7 +204,7 @@ const MainLayout = () => {
         />
 
         {rawData.length > 0 && (
-          <main className="builder-content">
+          <main className="builder-content" id="main-content">
             {/* Step 2: Select your section & courses */}
             <CourseSelection
               sectionOptions={sectionOptions}

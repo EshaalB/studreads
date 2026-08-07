@@ -72,3 +72,18 @@
   font-size: inherit;
   outline: none;
 }
+
+.course-cell { position: relative; }
+.row-conflicted { border-left: 0.25rem solid var(--error); }
+.table-conflict-label {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  z-index: 1;
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.2rem;
+  background: var(--error);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+}

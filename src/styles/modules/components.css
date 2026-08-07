@@ -176,6 +176,9 @@
   gap: 1rem;
 }
 
+.proof-metrics-spaced { margin-bottom: 1.5rem; }
+.project-about-copy { max-width: 62ch; color: var(--text-muted); }
+
 .metric-card {
   background: var(--surface-subtle);
   padding: 1.15rem;

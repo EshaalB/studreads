@@ -3,6 +3,13 @@
   margin-bottom: var(--spacing-lg);
 }
 
+.form-group-spaced { margin-top: 1.25rem; }
+.form-heading-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.form-heading-wrap { flex-wrap: wrap; gap: 0.5rem; }
+.label-reset { margin-bottom: 0; }
+.add-course-action { display: flex; justify-content: center; margin-top: 1rem; width: 100%; }
+.add-course-action .btn { width: 100%; max-width: 15.625rem; }
+
 .label-text {
   display: block;
   font-size: 0.85rem;
@@ -45,7 +52,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   box-shadow: var(--shadow-sm);
 }
 

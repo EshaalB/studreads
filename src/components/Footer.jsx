@@ -19,17 +19,17 @@ const Footer = ({ onOpenPrivacy, onOpenContact, onOpenReviews }) => {
           <ul>
             <li>
               <button type="button" className="footer-link-btn" onClick={onOpenReviews}>
-                <Star size={14} /> Reviews & Proof
+                <Star size={14} /> About the project
               </button>
             </li>
             <li>
               <button type="button" className="footer-link-btn" onClick={onOpenPrivacy}>
-                <Shield size={14} /> Privacy Policy
+                <Shield size={14} /> Privacy policy
               </button>
             </li>
             <li>
               <button type="button" className="footer-link-btn" onClick={onOpenContact}>
-                <Mail size={14} /> Contact & Support
+                <Mail size={14} /> Contact and support
               </button>
             </li>
             <li>

@@ -185,7 +185,7 @@
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(2px);
-  z-index: 999;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,6 +207,9 @@
   flex-direction: column;
   gap: 1rem;
 }
+
+.modal-card-wide { max-width: 680px; }
+.modal-footer-form { padding: 0; margin-top: 1rem; }
 
 .modal-header {
   display: flex;

@@ -1,23 +1,21 @@
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
-import { useTimetable } from '../../context/TimetableContext';
+import { useTimetable } from '../../context/useTimetable';
 import SearchableSelect from '../SearchableSelect';
 
 const AdditionalCourseRow = ({
-  sel, index, extraSelections, rawData, allUniqueCourses,
+  sel, index, extraSelections, rootSections, allUniqueCourses,
   primarySelectedNames, getCoursesForSection, updateExtra, removeExtra
 }) => {
   // Get available sections for the current chosen course
   const sectionsForCourse = useMemo(() => {
     if (!sel.courseName) return [];
     const sections = new Set();
-    rawData.forEach(item => {
-      if (item.courseName === sel.courseName || item.Course === sel.courseName) {
-        sections.add(item.section || item.Section || 'All');
-      }
+    rootSections.forEach(section => {
+      if (getCoursesForSection(section).some(item => item.name === sel.courseName)) sections.add(section);
     });
     return Array.from(sections).map(s => ({ value: s, label: s }));
-  }, [sel.courseName, rawData]);
+  }, [sel.courseName, rootSections, getCoursesForSection]);
 
   // Filter out already selected courses for the COURSE picker
   const filteredCourseOptions = useMemo(() => {
@@ -75,21 +73,22 @@ const AdditionalCourses = ({
   removeExtra,
   addExtra
 }) => {
-  const { rawData, selectedCourseIds, activeSection } = useTimetable();
+  const { rootSections, selectedCourseIds, activeSection } = useTimetable();
 
   // Get all unique courses available in the spreadsheet
   const allUniqueCourses = useMemo(() => {
     const courses = [];
     const seen = new Set();
-    rawData.forEach(item => {
-      const name = item.courseName || item.Course || '';
-      if (name && !seen.has(name)) {
-        courses.push({ value: name, label: name });
-        seen.add(name);
-      }
+    rootSections.forEach(section => {
+      getCoursesForSection(section).forEach(item => {
+        if (item.name && !seen.has(item.name)) {
+          courses.push({ value: item.name, label: item.name });
+          seen.add(item.name);
+        }
+      });
     });
     return courses.sort((a, b) => a.label.localeCompare(b.label));
-  }, [rawData]);
+  }, [rootSections, getCoursesForSection]);
 
   // Get already picked course names from primary section
   const primarySelectedNames = useMemo(() => {
@@ -108,20 +107,22 @@ const AdditionalCourses = ({
         type="button"
         className="section-divider accordion-trigger"
         onClick={() => setIsExtraOpen(!isExtraOpen)}
+        aria-expanded={isExtraOpen}
+        aria-controls="additional-courses-panel"
       >
         <span>Additional Courses</span>
         {isExtraOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 
       {isExtraOpen && (
-        <div className="extra-selections">
+        <div className="extra-selections" id="additional-courses-panel">
           {extraSelections.map((sel, index) => (
             <AdditionalCourseRow
               key={sel.id}
               sel={sel}
               index={index}
               extraSelections={extraSelections}
-              rawData={rawData}
+              rootSections={rootSections}
               allUniqueCourses={allUniqueCourses}
               primarySelectedNames={primarySelectedNames}
               getCoursesForSection={getCoursesForSection}
@@ -130,14 +131,13 @@ const AdditionalCourses = ({
             />
           ))}
 
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px', width: '100%' }}>
+          <div className="add-course-action">
             <button
               type="button"
               className="btn btn-secondary btn-add"
               onClick={addExtra}
-              style={{ width: '100%', maxWidth: '250px' }}
             >
-              <Plus size={14} /> Add Course
+              <Plus size={14} /> Add course
             </button>
           </div>
         </div>

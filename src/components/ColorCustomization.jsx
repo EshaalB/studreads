@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useTimetable } from '../context/TimetableContext';
+import { useTimetable } from '../context/useTimetable';
 import { getThemeColors } from '../utils/themes';
 import { sanitizeString } from '../utils/validation';
 

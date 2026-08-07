@@ -1,6 +1,6 @@
 import { Check, HelpCircle, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useTimetable } from '../../context/TimetableContext';
+import { useTimetable } from '../../context/useTimetable';
 import SearchableSelect from '../SearchableSelect';
 
 const CourseSelection = ({
@@ -23,9 +23,9 @@ const CourseSelection = ({
   return (
     <div className="section-container">
       <div className="form-group">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <label className="label-with-tooltip" style={{ marginBottom: 0 }}>
-            <span className="label-text">Primary Section</span>
+        <div className="form-heading-row">
+          <label className="label-with-tooltip label-reset">
+            <span className="label-text">Primary section</span>
             <div className="tooltip-wrapper">
               <HelpCircle size={14} />
               <span className="tooltip">Select your main section to automatically load courses</span>
@@ -37,7 +37,7 @@ const CourseSelection = ({
               className="btn btn-sm btn-danger-outline"
               onClick={clearAllSelections}
             >
-              <Trash2 size={13} /> Clear Selections
+              <Trash2 size={13} /> Clear selections
             </button>
           )}
         </div>
@@ -51,9 +51,9 @@ const CourseSelection = ({
       </div>
 
       {activeSection && (
-        <div className="form-group" style={{ marginTop: '1.25rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-            <label className="label-text" style={{ marginBottom: 0 }}>Available Section Courses</label>
+        <div className="form-group form-group-spaced">
+          <div className="form-heading-row form-heading-wrap">
+            <label className="label-text label-reset">Available courses</label>
             <div className="search-input-wrapper">
               <Search size={14} className="search-icon" />
               <input

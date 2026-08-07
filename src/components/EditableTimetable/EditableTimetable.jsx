@@ -1,13 +1,13 @@
-import html2canvas from 'html2canvas';
 import { ChevronDown, ChevronUp, Download, Grid3X3, List, Palette } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useTimetable } from '../../context/TimetableContext';
+import { useTimetable } from '../../context/useTimetable';
 import { DAY_ORDER } from '../../utils/constants';
 import { showError } from '../../utils/errorHandler';
 import { parseTime } from '../../utils/timeUtils';
 import ColorCustomization from '../ColorCustomization';
 import TimetableGrid from './TimetableGrid';
 import TimetableTable from './TimetableTable';
+import MobileAgenda from './MobileAgenda';
 
 const EditableTimetable = () => {
   const { finalActiveClasses, getOrAssignColor, displayOptions, updateClassField } = useTimetable();
@@ -56,6 +56,7 @@ const EditableTimetable = () => {
     if (!tableRef.current) return;
     setIsExporting(true);
     try {
+      const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(tableRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
@@ -76,7 +77,7 @@ const EditableTimetable = () => {
       link.download = `timetable-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
-    } catch (error) { showError('Failed to export timetable.'); } finally { setIsExporting(false); }
+    } catch { showError('Failed to export timetable.'); } finally { setIsExporting(false); }
   }, []);
 
   if (sortedClasses.length === 0) return null;
@@ -116,17 +117,22 @@ const EditableTimetable = () => {
         type="button"
         className="accordion-trigger"
         onClick={() => setIsColorPaletteOpen(!isColorPaletteOpen)}
+        aria-expanded={isColorPaletteOpen}
+        aria-controls="colour-palette-panel"
       >
         <div className="accordion-label"><Palette size={16} /><span>Colour Palette</span></div>
         {isColorPaletteOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
-      {isColorPaletteOpen && <div className="accordion-content"><ColorCustomization /></div>}
+      {isColorPaletteOpen && <div className="accordion-content" id="colour-palette-panel"><ColorCustomization /></div>}
 
       {viewMode === 'list' ? (
-        <TimetableTable
-          tableRef={tableRef} sortedClasses={sortedClasses} getOrAssignColor={getOrAssignColor} getContrastYIQ={getContrastYIQ}
-          displayOptions={displayOptions} editingCell={editingCell} editValue={editValue} setEditValue={setEditValue} startEdit={startEdit} saveEdit={saveEdit} cancelEdit={cancelEdit}
-        />
+        <>
+          <MobileAgenda classes={sortedClasses} getOrAssignColor={getOrAssignColor} />
+          <TimetableTable
+            tableRef={tableRef} sortedClasses={sortedClasses} getOrAssignColor={getOrAssignColor} getContrastYIQ={getContrastYIQ}
+            displayOptions={displayOptions} editingCell={editingCell} editValue={editValue} setEditValue={setEditValue} startEdit={startEdit} saveEdit={saveEdit} cancelEdit={cancelEdit}
+          />
+        </>
       ) : (
         <div ref={tableRef}>
           <TimetableGrid
