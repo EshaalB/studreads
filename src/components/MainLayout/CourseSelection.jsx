@@ -53,12 +53,15 @@ const CourseSelection = ({
       {activeSection && (
         <div className="form-group form-group-spaced">
           <div className="form-heading-row form-heading-wrap">
-            <label className="label-text label-reset">Available courses</label>
+            <label className="label-text label-reset">
+              Available courses
+              {selectedCourseIds.length > 0 && <span className="selection-count">{selectedCourseIds.length} selected</span>}
+            </label>
             <div className="search-input-wrapper">
               <Search size={14} className="search-icon" />
               <input
                 type="text"
-                placeholder="Filter courses..."
+                placeholder="Find a course…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="input-field search-input"
@@ -81,7 +84,7 @@ const CourseSelection = ({
               </button>
             ))}
             {filteredCourses.length === 0 && (
-              <p className="empty-state">No matching courses found</p>
+              <p className="empty-state">No courses match that search.</p>
             )}
           </div>
         </div>

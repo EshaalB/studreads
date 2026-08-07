@@ -7,6 +7,13 @@
 .form-heading-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .form-heading-wrap { flex-wrap: wrap; gap: 0.5rem; }
 .label-reset { margin-bottom: 0; }
+.selection-count {
+  display: inline-block;
+  margin-left: 0.5rem;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
 .add-course-action { display: flex; justify-content: center; margin-top: 1rem; width: 100%; }
 .add-course-action .btn { width: 100%; max-width: 15.625rem; }
 

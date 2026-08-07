@@ -59,17 +59,17 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
             {isLoading ? (
               <div className="upload-loading">
                 <div className="spinner"></div>
-                <h3>Processing Timetable File...</h3>
-                <p>Analyzing sheets, time headers, and course sections</p>
+                <h3>Reading your timetable…</h3>
+                <p>Finding the right sheet, sections, and class times</p>
               </div>
             ) : (
               <div className="upload-text">
-                <h3>Upload your university timetable</h3>
-                <p className="upload-subtitle">Drag & drop your Excel file here, or click to browse</p>
+                <h3>Drop your timetable here</h3>
+                <p className="upload-subtitle">or choose an Excel file from your device</p>
                 <div className="upload-meta-chips">
-                  <span className="meta-chip"><FileSpreadsheet size={14} /> .XLSX / .XLS</span>
-                  <span className="meta-chip">Max 10MB</span>
-                  <span className="meta-chip">Processed in your browser</span>
+                  <span className="meta-chip"><FileSpreadsheet size={14} /> XLSX or XLS</span>
+                  <span className="meta-chip">Up to 10 MB</span>
+                  <span className="meta-chip">Your file stays on this device</span>
                 </div>
               </div>
             )}
@@ -81,14 +81,14 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
               className="btn btn-primary btn-lg cta-btn"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload size={18} /> Upload Excel file
+              <Upload size={18} /> Choose Excel file
             </button>
             <button
               type="button"
               className="btn btn-secondary btn-lg cta-btn"
               onClick={handleLoadDemo}
             >
-              <Play size={18} /> Try sample timetable
+              <Play size={18} /> Show me an example
             </button>
           </div>
 
@@ -101,7 +101,7 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
             <div>
               <span className="file-status-title">{fileSummary?.name || 'Timetable data ready'}</span>
               <span className="file-status-sub">
-                {fileSummary ? `${fileSummary.sheetName} · ${fileSummary.rowCount} entries` : `${rawData.length} schedule entries`}
+                {fileSummary ? `${fileSummary.sheetName} · ${fileSummary.rowCount} entries found` : `${rawData.length} schedule entries`}
               </span>
             </div>
           </div>
@@ -112,21 +112,21 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
               className="btn btn-outline btn-sm"
               onClick={() => fileInputRef.current?.click()}
             >
-              <Upload size={14} /> Change File
+              <Upload size={14} /> Change file
             </button>
             <button
               type="button"
               className="btn btn-outline btn-sm"
               onClick={handleLoadDemo}
             >
-              <Play size={14} /> Reload Sample
+              <Play size={14} /> Use example
             </button>
             <button
               type="button"
               className="btn btn-danger-outline btn-sm"
               onClick={resetUpload}
             >
-              <RefreshCcw size={14} /> Reset
+              <RefreshCcw size={14} /> Start over
             </button>
           </div>
           {fileSummary?.warnings?.length > 0 && (

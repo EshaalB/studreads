@@ -85,7 +85,10 @@ const EditableTimetable = () => {
   return (
     <div className="timetable-preview-section">
       <div className="preview-header">
-        <h2>Your Timetable</h2>
+        <div>
+          <span className="step-kicker">Step 3</span>
+          <h2>Your week</h2>
+        </div>
         <div className="preview-actions">
           <div className="view-toggle">
             <button
@@ -108,7 +111,7 @@ const EditableTimetable = () => {
             </button>
           </div>
           <button type="button" className="btn btn-primary" onClick={exportAsPng} disabled={isExporting}>
-            <Download size={16} /> {isExporting ? 'Exporting...' : 'Export PNG'}
+            <Download size={16} /> {isExporting ? 'Saving…' : 'Save as image'}
           </button>
         </div>
       </div>
@@ -120,7 +123,7 @@ const EditableTimetable = () => {
         aria-expanded={isColorPaletteOpen}
         aria-controls="colour-palette-panel"
       >
-        <div className="accordion-label"><Palette size={16} /><span>Colour Palette</span></div>
+        <div className="accordion-label"><Palette size={16} /><span>Change course colours</span></div>
         {isColorPaletteOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
       {isColorPaletteOpen && <div className="accordion-content" id="colour-palette-panel"><ColorCustomization /></div>}

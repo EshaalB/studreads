@@ -131,9 +131,9 @@ const MainLayout = () => {
   }, []);
 
   const displayOptionsList = useMemo(() => [
-    { key: 'showTeacher', label: 'Show Teachers' },
-    { key: 'showCredits', label: 'Show Credits' },
-    { key: 'showSection', label: 'Section View' }
+    { key: 'showTeacher', label: 'Teacher names' },
+    { key: 'showCredits', label: 'Course credits' },
+    { key: 'showSection', label: 'Section labels' }
   ], []);
 
   const hasSelectedCourses = selectedCourseIds.length > 0 || extraSelections.filter(s => s.courseId).length > 0;
@@ -164,9 +164,10 @@ const MainLayout = () => {
         {/* Simplified hero — no bloat, straight to the point */}
         <header className="hero-header">
           <div className="hero-title-group">
-            <h1>Generate Your Timetable</h1>
+            <span className="hero-eyebrow">Your week, sorted</span>
+            <h1>Turn your timetable sheet into a week you can read</h1>
             <p className="hero-description">
-              Upload your university spreadsheet → pick your section → get your timetable. That's it.
+              Upload the spreadsheet from your university, choose your courses, and get a clean schedule in a few clicks.
             </p>
           </div>
 
@@ -174,7 +175,7 @@ const MainLayout = () => {
             <div className="share-actions-bar">
               <input
                 type="text"
-                placeholder="Your Name (Optional)"
+                placeholder="Name on shared schedule"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 className="input-field name-input"
@@ -184,11 +185,23 @@ const MainLayout = () => {
                 className="btn btn-secondary"
                 onClick={handleShare}
               >
-                <Share2 size={16} /> Share Link
+                <Share2 size={16} /> Copy share link
               </button>
             </div>
           )}
         </header>
+
+        <ol className="progress-steps" aria-label="Timetable setup progress">
+          <li className={rawData.length > 0 ? 'is-complete' : 'is-current'}>
+            <span>1</span><div><strong>Upload</strong><small>Your Excel file</small></div>
+          </li>
+          <li className={rawData.length > 0 ? (hasSelectedCourses ? 'is-complete' : 'is-current') : ''}>
+            <span>2</span><div><strong>Choose</strong><small>Section and courses</small></div>
+          </li>
+          <li className={hasSelectedCourses ? 'is-current' : ''}>
+            <span>3</span><div><strong>Save</strong><small>Export or share</small></div>
+          </li>
+        </ol>
 
         {/* Step 1: Upload */}
         <FileUpload
@@ -205,6 +218,13 @@ const MainLayout = () => {
 
         {rawData.length > 0 && (
           <main className="builder-content" id="main-content">
+            <div className="builder-heading">
+              <span className="step-kicker">Step 2</span>
+              <div>
+                <h2>Pick what belongs in your week</h2>
+                <p>Start with your main section, then tick the courses you actually take.</p>
+              </div>
+            </div>
             {/* Step 2: Select your section & courses */}
             <CourseSelection
               sectionOptions={sectionOptions}
@@ -227,14 +247,25 @@ const MainLayout = () => {
             />
 
             {/* Display toggles */}
-            <DisplayOptions
-              displayOptions={displayOptions}
-              setDisplayOptions={setDisplayOptions}
-              displayOptionsList={displayOptionsList}
-            />
+            <section className="display-preferences" aria-labelledby="display-title">
+              <div>
+                <h3 id="display-title">What should each class show?</h3>
+                <p>Keep it simple or add the details you need.</p>
+              </div>
+              <DisplayOptions
+                displayOptions={displayOptions}
+                setDisplayOptions={setDisplayOptions}
+                displayOptionsList={displayOptionsList}
+              />
+            </section>
 
             {/* Step 3: View & export timetable */}
             {hasSelectedCourses && <EditableTimetable />}
+            {!hasSelectedCourses && activeSection && (
+              <div className="selection-nudge" role="status">
+                Choose at least one course above and your timetable will appear here.
+              </div>
+            )}
           </main>
         )}
       </div>
