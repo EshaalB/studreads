@@ -1,6 +1,6 @@
 # StudReads
 
-StudReads is a browser-based timetable builder for university students. It reads common Excel timetable layouts, detects sections and courses, highlights schedule clashes, and exports a clean weekly schedule.
+StudReads is a browser-based timetable and exam planner for university students. It turns large university files into a personal weekly schedule or a searchable list of exam dates, without sending those files to a server.
 
 ## Features
 
@@ -12,6 +12,9 @@ StudReads is a browser-based timetable builder for university students. It reads
 - Detects overlapping classes
 - Supports inline edits, colour themes, PNG export, and self-contained share links
 - Saves display preferences locally
+- Reads text-based PDF, `.xlsx`, and `.xls` exam date sheets
+- Searches exams by subject, course code, programme, or room
+- Builds a personal exam list and exports it as an `.ics` calendar file
 
 ## Run locally
 
@@ -29,7 +32,7 @@ npm run lint
 npm run build
 ```
 
-## Supported spreadsheet shapes
+## Supported file shapes
 
 The importer handles two broad structures:
 
@@ -37,6 +40,8 @@ The importer handles two broad structures:
 2. A weekly grid with day labels and time ranges across the columns.
 
 University spreadsheets vary widely. If a workbook contains several plausible timetable sheets, StudReads evaluates them and reports which sheet it selected. Unsupported or incomplete files receive an actionable error instead of being silently accepted.
+
+For exam date sheets, StudReads recognizes common columns such as subject, course code, date, day, time, and venue. It can also infer these fields from simple text rows in a PDF. Image-only scanned PDFs are intentionally rejected with guidance to run OCR first.
 
 ## Privacy
 
@@ -46,9 +51,16 @@ Uploaded spreadsheet contents are parsed locally in the browser. The application
 
 - React 19
 - Vite 7
-- SheetJS (`xlsx`), loaded only during import
+- SheetJS (`xlsx`) and PDF.js, loaded only during import
 - html2canvas, loaded only during PNG export
 - Vanilla modular CSS
+
+## Engineering highlights
+
+- Normalizes inconsistent dates, times, headers, and worksheet layouts into stable data models
+- Keeps large parsing libraries out of the initial application bundle through dynamic imports
+- Provides responsive desktop and mobile views from the same selected-course data
+- Covers both real university workbook fixtures and focused parser cases with automated tests
 
 ## Author
 

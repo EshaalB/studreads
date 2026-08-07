@@ -7,6 +7,7 @@ import { parseWorkbook } from '../../utils/spreadsheetParser';
 import { validateFile } from '../../utils/validation';
 import AboutModal from '../AboutModal';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
+import ExamFinder from '../ExamFinder';
 import Footer from '../Footer';
 import PrivacyModal from '../PrivacyModal';
 import AdditionalCourses from './AdditionalCourses';
@@ -29,6 +30,7 @@ const MainLayout = () => {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [fileSummary, setFileSummary] = useState(null);
+  const [activeTool, setActiveTool] = useState('timetable');
   const fileInputRef = useRef();
 
   // URL state restoration
@@ -148,6 +150,10 @@ const MainLayout = () => {
             <small>timetable maker</small>
           </div>
         </div>
+        <div className="tool-switch" role="tablist" aria-label="Choose planner tool">
+          <button type="button" role="tab" aria-selected={activeTool === 'timetable'} className={activeTool === 'timetable' ? 'active' : ''} onClick={() => setActiveTool('timetable')}>Weekly timetable</button>
+          <button type="button" role="tab" aria-selected={activeTool === 'exams'} className={activeTool === 'exams' ? 'active' : ''} onClick={() => setActiveTool('exams')}>Exam finder</button>
+        </div>
         <div className="nav-actions">
           <button type="button" className="nav-btn" onClick={() => setIsAboutOpen(true)}>
             <span>Project notes</span>
@@ -158,7 +164,7 @@ const MainLayout = () => {
         </div>
       </nav>
 
-      <div className="app-card" id="main-content">
+      {activeTool === 'timetable' ? <div className="app-card" id="main-content">
         <header className="workspace-header">
           <div>
             <h1>Build your week</h1>
@@ -248,7 +254,7 @@ const MainLayout = () => {
             </section>
           </main>
         )}
-      </div>
+      </div> : <ExamFinder />}
 
       <Footer
         onOpenPrivacy={() => setIsPrivacyOpen(true)}

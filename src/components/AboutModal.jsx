@@ -24,17 +24,21 @@ const AboutModal = ({ isOpen, onClose }) => {
           <p>
             StudReads checks the worksheets in an Excel file, finds the most likely timetable, and turns its rows or grid cells into course entries. You can then choose your own classes and see the week update beside them.
           </p>
+          <p>
+            I later added the exam finder for the same reason: date sheets are often long files that students repeatedly search by hand. It reads Excel files and text-based PDFs, then lets you search, save only your exams, and add them to a calendar.
+          </p>
 
           <h3>What I worked on</h3>
           <ul className="about-list">
             <li>Handling both column-based and grid-style timetable sheets</li>
             <li>Finding course, section, day, room and time information</li>
             <li>Detecting clashes and joining multi-period classes</li>
+            <li>Extracting searchable exam records from spreadsheets and PDFs</li>
             <li>Making the result useful on a phone as well as a laptop</li>
           </ul>
 
           <p className="about-limit">
-            University files vary a lot, so the importer supports common timetable structures rather than every possible Excel layout.
+            University files vary a lot, so the importers support common layouts rather than every possible file. Scanned PDFs need OCR before the exam finder can read them.
           </p>
 
           <div className="about-links">
