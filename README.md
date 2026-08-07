@@ -6,6 +6,7 @@ StudReads is a privacy-first timetable and exam planner for university students.
 
 - Parses grid-style and column-based `.xlsx` and `.xls` timetables
 - Builds a timetable manually when no spreadsheet is available
+- Lets students review detected columns and sample rows before importing
 - Checks every worksheet and chooses the strongest timetable candidate
 - Keeps spreadsheet processing in the browser
 - Supports primary sections and courses from other sections
@@ -13,6 +14,7 @@ StudReads is a privacy-first timetable and exam planner for university students.
 - Detects overlapping classes
 - Supports inline edits, colour themes, PNG export, and self-contained share links
 - Saves display preferences locally
+- Restores manually created timetables after a refresh
 - Reads text-based PDF, `.xlsx`, and `.xls` exam date sheets
 - Searches exams by subject, course code, programme, or room
 - Builds a personal exam list and exports it as an `.ics` calendar file

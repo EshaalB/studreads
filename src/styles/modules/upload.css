@@ -117,6 +117,54 @@
   text-align: center;
 }
 
+.import-review {
+  padding: 1rem;
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  background: var(--primary-light);
+}
+.import-review-heading,
+.import-review-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.import-review-heading h2 { font-size: 1.05rem; }
+.import-review-heading p,
+.import-review-actions span { color: var(--text-muted); font-size: 0.75rem; }
+.mapping-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.9rem;
+}
+.mapping-fields label { display: grid; gap: 0.25rem; }
+.mapping-fields label > span { font-size: 0.68rem; font-weight: 700; }
+.mapping-fields select {
+  min-width: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.75rem;
+}
+.import-preview-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem; margin-top: 0.9rem; }
+.import-preview-row { min-width: 0; padding: 0.55rem 0.65rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.import-preview-row strong,
+.import-preview-row span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.import-preview-row strong { font-size: 0.76rem; }
+.import-preview-row span { margin-top: 0.1rem; color: var(--text-muted); font-size: 0.68rem; }
+.import-note { margin-top: 0.6rem; color: var(--text-muted); font-size: 0.72rem; }
+.import-review-actions { margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px solid var(--primary-border); }
+
+@media (max-width: 700px) {
+  .mapping-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .import-preview-list { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .import-review-heading,
+  .import-review-actions { align-items: flex-start; flex-direction: column; }
+}
+
 .active-file-bar {
   display: flex;
   align-items: center;

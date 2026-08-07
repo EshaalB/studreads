@@ -38,7 +38,10 @@ export const normalizeExamDate = (value) => {
   const numeric = text.match(DATE_PATTERNS[0]);
   if (numeric) {
     const year = Number(numeric[3].length === 2 ? `20${numeric[3]}` : numeric[3]);
-    return toIsoDate(year, Number(numeric[2]), Number(numeric[1]));
+    const first = Number(numeric[1]);
+    const second = Number(numeric[2]);
+    if (second > 12 && first <= 12) return toIsoDate(year, first, second);
+    return toIsoDate(year, second, first);
   }
 
   if (DATE_PATTERNS.slice(1).some((pattern) => pattern.test(text))) {
@@ -47,6 +50,13 @@ export const normalizeExamDate = (value) => {
   }
   return '';
 };
+
+export const hasAmbiguousNumericDates = (matrix) => Array.isArray(matrix) && matrix.some((row) =>
+  Array.isArray(row) && row.some((cell) => {
+    const match = clean(cell).match(DATE_PATTERNS[0]);
+    return Boolean(match && Number(match[1]) <= 12 && Number(match[2]) <= 12);
+  })
+);
 
 const getDay = (value, isoDate) => {
   const explicit = clean(value).match(DAY_PATTERN)?.[1];
@@ -134,13 +144,14 @@ export const parseExamMatrix = (matrix, source = 'Uploaded file') => {
 export const parseExamWorkbook = (XLSX, workbook) => {
   const candidates = workbook.SheetNames.map((sheetName) => {
     const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '', raw: false });
-    return { sheetName, records: parseExamMatrix(matrix, sheetName) };
+    return { sheetName, records: parseExamMatrix(matrix, sheetName), hasAmbiguousDates: hasAmbiguousNumericDates(matrix) };
   }).filter((candidate) => candidate.records.length > 0)
     .sort((a, b) => b.records.length - a.records.length);
 
   if (candidates.length === 0) throw new Error('No dated exam rows were found in this workbook.');
   return {
     records: candidates[0].records,
+    hasAmbiguousDates: candidates[0].hasAmbiguousDates,
     source: candidates[0].sheetName,
     warnings: candidates.length > 1 ? [`Found exam data on ${candidates.length} sheets and selected “${candidates[0].sheetName}”.`] : []
   };

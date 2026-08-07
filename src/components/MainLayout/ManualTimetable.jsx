@@ -1,7 +1,7 @@
-import { Plus, Trash2, X } from 'lucide-react';
+import { Check, Edit2, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { DAYS } from '../../utils/constants';
-import { parseTime } from '../../utils/timeUtils';
+import { isDuplicateManualEntry, validateManualEntry } from '../../utils/manualTimetable';
 
 const EMPTY_CLASS = {
   courseName: '', day: 'Monday', startTime: '09:00', endTime: '10:00',
@@ -11,23 +11,39 @@ const EMPTY_CLASS = {
 const ManualTimetable = ({ entries, onChange, onCancel }) => {
   const [draft, setDraft] = useState(EMPTY_CLASS);
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState('');
 
   const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
 
-  const addClass = (event) => {
+  const saveClass = (event) => {
     event.preventDefault();
-    const name = draft.courseName.trim();
-    const start = parseTime(draft.startTime);
-    const end = parseTime(draft.endTime);
-    if (!name) return setError('Add a course name.');
-    if (start === null || end === null || end <= start) return setError('Choose an end time after the start time.');
+    const validation = validateManualEntry(draft);
+    if (!validation.valid) return setError(validation.error);
+    if (isDuplicateManualEntry(validation.entry, entries, editingId)) return setError('That class is already in your timetable.');
 
-    onChange([...entries, { ...draft, courseName: name, id: crypto.randomUUID() }]);
+    if (editingId) {
+      onChange(entries.map((entry) => entry.id === editingId ? { ...validation.entry, id: editingId } : entry));
+    } else {
+      const id = globalThis.crypto?.randomUUID?.() || `manual-${Date.now()}-${Math.random()}`;
+      onChange([...entries, { ...validation.entry, id }]);
+    }
     setDraft((current) => ({ ...EMPTY_CLASS, day: current.day, startTime: current.startTime, endTime: current.endTime }));
+    setEditingId('');
     setError('');
   };
 
-  const removeClass = (id) => onChange(entries.filter((entry) => entry.id !== id));
+  const removeClass = (id) => {
+    onChange(entries.filter((entry) => entry.id !== id));
+    if (editingId === id) { setEditingId(''); setDraft(EMPTY_CLASS); setError(''); }
+  };
+
+  const editClass = (entry) => {
+    setDraft(entry);
+    setEditingId(entry.id);
+    setError('');
+  };
+
+  const cancelEdit = () => { setDraft(EMPTY_CLASS); setEditingId(''); setError(''); };
 
   return (
     <section className="manual-builder" aria-labelledby="manual-builder-title">
@@ -42,7 +58,7 @@ const ManualTimetable = ({ entries, onChange, onCancel }) => {
         </button>
       </div>
 
-      <form className="manual-class-form" onSubmit={addClass}>
+      <form className="manual-class-form" onSubmit={saveClass}>
         <label className="manual-field manual-field-name">
           <span>Course name</span>
           <input value={draft.courseName} onChange={(event) => updateDraft('courseName', event.target.value)} placeholder="e.g. Data Structures" maxLength={80} autoFocus />
@@ -69,7 +85,8 @@ const ManualTimetable = ({ entries, onChange, onCancel }) => {
           <span>Teacher <small>optional</small></span>
           <input value={draft.instructor} onChange={(event) => updateDraft('instructor', event.target.value)} placeholder="Teacher name" maxLength={80} />
         </label>
-        <button type="submit" className="btn btn-primary manual-add-button"><Plus size={16} /> Add class</button>
+        <button type="submit" className="btn btn-primary manual-add-button">{editingId ? <Check size={16} /> : <Plus size={16} />} {editingId ? 'Save class' : 'Add class'}</button>
+        {editingId && <button type="button" className="btn btn-outline manual-cancel-edit" onClick={cancelEdit}>Cancel</button>}
       </form>
       {error && <p className="manual-error" role="alert">{error}</p>}
 
@@ -78,7 +95,10 @@ const ManualTimetable = ({ entries, onChange, onCancel }) => {
           {entries.map((entry) => (
             <div className="manual-entry" key={entry.id}>
               <div><strong>{entry.courseName}</strong><span>{entry.day} · {entry.startTime}–{entry.endTime}{entry.room ? ` · ${entry.room}` : ''}</span></div>
-              <button type="button" className="btn-icon" onClick={() => removeClass(entry.id)} aria-label={`Remove ${entry.courseName}`}><Trash2 size={16} /></button>
+              <div className="manual-entry-actions">
+                <button type="button" className="btn-icon" onClick={() => editClass(entry)} aria-label={`Edit ${entry.courseName}`}><Edit2 size={15} /></button>
+                <button type="button" className="btn-icon" onClick={() => removeClass(entry.id)} aria-label={`Remove ${entry.courseName}`}><Trash2 size={16} /></button>
+              </div>
             </div>
           ))}
         </div>

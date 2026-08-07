@@ -1,7 +1,7 @@
 import { CalendarPlus, Check, FileSearch, Search, Upload, X } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { parseExamMatrix, parseExamWorkbook } from '../utils/examParser';
+import { hasAmbiguousNumericDates, parseExamMatrix, parseExamWorkbook } from '../utils/examParser';
 import { parseTime } from '../utils/timeUtils';
 
 const MAX_EXAM_FILE_SIZE = 15 * 1024 * 1024;
@@ -59,17 +59,20 @@ const ExamFinder = () => {
     const document = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
     const parsed = [];
     let textItems = 0;
+    let hasAmbiguousDates = false;
 
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
       const page = await document.getPage(pageNumber);
       const content = await page.getTextContent();
       textItems += content.items.length;
-      parsed.push(...parseExamMatrix(groupPdfItemsIntoRows(content.items), `${fileName}, page ${pageNumber}`));
+      const rows = groupPdfItemsIntoRows(content.items);
+      hasAmbiguousDates ||= hasAmbiguousNumericDates(rows);
+      parsed.push(...parseExamMatrix(rows, `${fileName}, page ${pageNumber}`));
     }
 
     if (textItems === 0) throw new Error('This PDF appears to be scanned. Export a text-based PDF or upload the Excel date sheet instead.');
     if (parsed.length === 0) throw new Error('The PDF contains text, but no dated exam rows could be identified.');
-    return { records: parsed, source: `${document.numPages} PDF page${document.numPages === 1 ? '' : 's'}`, warnings: [] };
+    return { records: parsed, source: `${document.numPages} PDF page${document.numPages === 1 ? '' : 's'}`, warnings: [], hasAmbiguousDates };
   };
 
   const handleFile = async (event) => {
@@ -100,7 +103,14 @@ const ExamFinder = () => {
       setRecords(result.records);
       setSelectedIds([]);
       setQuery('');
-      setFileInfo({ name: file.name, source: result.source, warnings: result.warnings });
+      setFileInfo({
+        name: file.name,
+        source: result.source,
+        warnings: [
+          ...result.warnings,
+          ...(result.hasAmbiguousDates ? ['Numeric dates are read as day/month/year. Check dates such as 03/04/2026 before adding them to your calendar.'] : [])
+        ]
+      });
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'The exam date sheet could not be read.');
     } finally {
@@ -134,10 +144,13 @@ const ExamFinder = () => {
     }).join('\r\n');
     const blob = new Blob([`BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//StudReads//Exam Finder//EN\r\n${events}\r\nEND:VCALENDAR\r\n`], { type: 'text/calendar' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    const downloadUrl = URL.createObjectURL(blob);
+    link.href = downloadUrl;
     link.download = 'my-exams.ics';
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(link.href);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 0);
   };
 
   const reset = () => {

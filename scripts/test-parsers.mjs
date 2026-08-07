@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 import { parseWorkbook } from '../src/utils/spreadsheetParser.js';
-import { normalizeExamDate, parseExamMatrix, parseExamWorkbook } from '../src/utils/examParser.js';
+import { hasAmbiguousNumericDates, normalizeExamDate, parseExamMatrix, parseExamWorkbook } from '../src/utils/examParser.js';
+import { isDuplicateManualEntry, normalizeManualEntry, validateManualEntry } from '../src/utils/manualTimetable.js';
 import { checkOverlap, parseTime } from '../src/utils/timeUtils.js';
 
 const fixtures = [
@@ -40,6 +41,9 @@ assert.equal(parsedExams[0].subject, 'Data Structures');
 assert.equal(parsedExams[0].date, '2026-05-18');
 assert.equal(parsedExams[1].room, 'Lab 4');
 assert.equal(normalizeExamDate('7 June 2026'), '2026-06-07');
+assert.equal(normalizeExamDate('05/18/2026'), '2026-05-18');
+assert.equal(hasAmbiguousNumericDates([['03/04/2026']]), true);
+assert.equal(hasAmbiguousNumericDates([['18/05/2026']]), false);
 
 const loosePdfRows = parseExamMatrix([
   ['18/05/2026', 'Monday', 'CS-204', 'Data Structures', '9:00 AM - 12:00 PM', 'Hall B']
@@ -53,4 +57,14 @@ XLSX.utils.book_append_sheet(examWorkbook, XLSX.utils.aoa_to_sheet(examMatrix), 
 const workbookExams = parseExamWorkbook(XLSX, examWorkbook);
 assert.equal(workbookExams.records.length, 2);
 assert.equal(workbookExams.source, 'Final exams');
+
+const manualClass = normalizeManualEntry({
+  id: 'one', courseName: '  Data Structures  ', day: 'Monday',
+  startTime: '09:00', endTime: '10:00', room: '<Lab 4>'
+});
+assert.equal(manualClass.courseName, 'Data Structures');
+assert.equal(validateManualEntry(manualClass).valid, true);
+assert.equal(validateManualEntry({ ...manualClass, endTime: '08:00' }).valid, false);
+assert.equal(isDuplicateManualEntry(manualClass, [{ ...manualClass }]), true);
+assert.equal(isDuplicateManualEntry(manualClass, [{ ...manualClass }], 'one'), false);
 console.log('✓ Excel exam date-sheet parsing');

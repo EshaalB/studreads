@@ -2,7 +2,12 @@ import { FileSpreadsheet, PencilLine, Play, RefreshCcw, Upload } from 'lucide-re
 import { useState } from 'react';
 import { DEMO_TIMETABLE_DATA } from '../../utils/demoData';
 
-const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fileInputRef, handleFileUpload, resetUpload, processData, onStartManual }) => {
+const REVIEW_FIELDS = [
+  ['courseName', 'Course'], ['section', 'Section'], ['day', 'Day'], ['startTime', 'Starts'],
+  ['endTime', 'Ends'], ['instructor', 'Teacher'], ['room', 'Room']
+];
+
+const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fileInputRef, handleFileUpload, resetUpload, processData, onStartManual, pendingImport, onConfirmImport, onCancelImport, onUpdateMapping }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = (event) => {
@@ -37,7 +42,52 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
         aria-label="Upload timetable file"
       />
       
-      {rawData.length === 0 ? (
+      {pendingImport ? (
+        <div className="import-review" aria-labelledby="import-review-title">
+          <div className="import-review-heading">
+            <div>
+              <span className="manual-eyebrow">Check before importing</span>
+              <h2 id="import-review-title">Does this look like your timetable?</h2>
+              <p>{pendingImport.rowCount} entries found on “{pendingImport.sheetName}”.</p>
+            </div>
+            <button type="button" className="btn btn-outline btn-sm" onClick={onCancelImport}>Choose another file</button>
+          </div>
+
+          {pendingImport.kind === 'table' && (
+            <div className="mapping-fields">
+              {REVIEW_FIELDS.map(([field, label]) => (
+                <label key={field}>
+                  <span>{label}{['courseName', 'day', 'startTime'].includes(field) ? ' *' : ''}</span>
+                  <select value={pendingImport.mapping[field] || ''} onChange={(event) => onUpdateMapping(field, event.target.value)}>
+                    <option value="">Not included</option>
+                    {Object.keys(pendingImport.rows[0] || {}).map((column) => <option key={column} value={column}>{column}</option>)}
+                  </select>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <div className="import-preview-list">
+            {pendingImport.rows.slice(0, 4).map((row, index) => (
+              <div className="import-preview-row" key={`${pendingImport.sheetName}-${index}`}>
+                <strong>{row[pendingImport.mapping.courseName] || 'Course not detected'}</strong>
+                <span>{[
+                  row[pendingImport.mapping.day],
+                  row[pendingImport.mapping.startTime],
+                  row[pendingImport.mapping.endTime],
+                  row[pendingImport.mapping.room]
+                ].filter(Boolean).join(' · ') || 'Schedule details not detected'}</span>
+              </div>
+            ))}
+          </div>
+          {pendingImport.warnings.map((warning) => <p className="import-note" key={warning}>{warning}</p>)}
+          {error && <div className="error-banner" role="alert">{error}</div>}
+          <div className="import-review-actions">
+            <button type="button" className="btn btn-primary" onClick={onConfirmImport}>Use this timetable</button>
+            <span>You can edit individual details afterwards.</span>
+          </div>
+        </div>
+      ) : rawData.length === 0 ? (
         <div className="upload-container">
           <div
             className={`upload-dropzone ${isDragging ? 'is-dragging' : ''}`}

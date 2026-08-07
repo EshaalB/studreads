@@ -5,6 +5,7 @@ import { showError, showSuccess } from '../../utils/errorHandler';
 import { decodeState, encodeState } from '../../utils/sharingUtils';
 import { parseWorkbook } from '../../utils/spreadsheetParser';
 import { validateFile } from '../../utils/validation';
+import { normalizeManualEntry } from '../../utils/manualTimetable';
 import AboutModal from '../AboutModal';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
 import ExamFinder from '../ExamFinder';
@@ -17,6 +18,12 @@ import FileUpload from './FileUpload';
 import ManualTimetable from './ManualTimetable';
 
 const MainLayout = () => {
+  const savedManualEntries = useMemo(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('timetable_manual_v1') || '[]');
+      return Array.isArray(saved) ? saved.map(normalizeManualEntry).filter((entry) => entry.id && entry.courseName) : [];
+    } catch { return []; }
+  }, []);
   const {
     rawData, processData, rootSections, activeSection, setActiveSection,
     selectedCourseIds, setSelectedCourseIds, extraSelections, setExtraSelections,
@@ -31,10 +38,17 @@ const MainLayout = () => {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [fileSummary, setFileSummary] = useState(null);
+  const [pendingImport, setPendingImport] = useState(null);
   const [activeTool, setActiveTool] = useState('timetable');
-  const [isManualMode, setIsManualMode] = useState(false);
-  const [manualEntries, setManualEntries] = useState([]);
+  const [isManualMode, setIsManualMode] = useState(savedManualEntries.length > 0);
+  const [manualEntries, setManualEntries] = useState(savedManualEntries);
   const fileInputRef = useRef();
+
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has('s') && savedManualEntries.length > 0) {
+      loadManualTimetable(savedManualEntries);
+    }
+  }, [loadManualTimetable, savedManualEntries]);
 
   // URL state restoration
   useEffect(() => {
@@ -92,14 +106,16 @@ const MainLayout = () => {
         const XLSX = await import('xlsx');
         const workbook = XLSX.read(evt.target.result, { type: 'array', cellDates: true });
         const parsed = parseWorkbook(XLSX, workbook);
-        processData(parsed.rows, parsed.mapping);
-        setFileSummary({
+        setPendingImport({
+          rows: parsed.rows,
+          mapping: parsed.mapping,
+          kind: parsed.kind,
           name: file.name,
           sheetName: parsed.sheetName,
           rowCount: parsed.rows.length,
           warnings: parsed.warnings
         });
-        showSuccess(`Loaded ${parsed.rows.length} timetable entries from ${parsed.sheetName}.`);
+        showSuccess(`Found ${parsed.rows.length} entries. Review them before building your timetable.`);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'The spreadsheet could not be parsed.';
         setError(message);
@@ -110,7 +126,32 @@ const MainLayout = () => {
       }
     };
     reader.readAsArrayBuffer(file);
-  }, [processData]);
+  }, []);
+
+  const confirmImport = useCallback(() => {
+    if (!pendingImport) return;
+    if (!pendingImport.mapping.courseName || !pendingImport.mapping.day || !pendingImport.mapping.startTime) {
+      setError('Choose the course, day and start-time columns before continuing.');
+      return;
+    }
+    processData(pendingImport.rows, pendingImport.mapping);
+    setFileSummary({
+      name: pendingImport.name,
+      sheetName: pendingImport.sheetName,
+      rowCount: pendingImport.rowCount,
+      warnings: pendingImport.warnings
+    });
+    setPendingImport(null);
+    setError('');
+    showSuccess(`Loaded ${pendingImport.rowCount} timetable entries from ${pendingImport.sheetName}.`);
+  }, [pendingImport, processData]);
+
+  const updatePendingMapping = useCallback((field, column) => {
+    setPendingImport((current) => current ? {
+      ...current,
+      mapping: { ...current.mapping, [field]: column }
+    } : current);
+  }, []);
 
   const coursesInActiveSection = useMemo(() => {
     if (!activeSection) return [];
@@ -136,11 +177,17 @@ const MainLayout = () => {
   const updateManualEntries = useCallback((entries) => {
     setManualEntries(entries);
     loadManualTimetable(entries);
+    try {
+      if (entries.length) localStorage.setItem('timetable_manual_v1', JSON.stringify(entries));
+      else localStorage.removeItem('timetable_manual_v1');
+    } catch {
+      showError('The timetable was updated, but this browser could not save it for your next visit.');
+    }
   }, [loadManualTimetable]);
 
   const leaveManualMode = useCallback(() => {
     if (manualEntries.length > 0) {
-      resetUpload();
+      if (window.confirm('Clear all manually added classes and start over?')) resetUpload();
       return;
     }
     setIsManualMode(false);
@@ -222,6 +269,10 @@ const MainLayout = () => {
             resetUpload={resetUpload}
             processData={processData}
             onStartManual={() => setIsManualMode(true)}
+            pendingImport={pendingImport}
+            onConfirmImport={confirmImport}
+            onCancelImport={() => { setPendingImport(null); setError(''); }}
+            onUpdateMapping={updatePendingMapping}
           />
         )}
 
