@@ -5,32 +5,58 @@
 .upload-container {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.1rem;
 }
 
 .upload-dropzone {
-  border: 2px dashed var(--primary-border);
-  border-radius: var(--radius-lg);
-  padding: clamp(2rem, 5vw, 3rem) 1.5rem;
-  text-align: center;
+  position: relative;
+  min-height: 25rem;
+  border: 1px solid rgba(17, 14, 13, 0.16);
+  border-radius: 1.5rem 1.5rem 4rem 1.5rem;
+  padding: clamp(3rem, 7vw, 5rem) 2rem 3rem;
+  text-align: left;
   cursor: pointer;
-  background: linear-gradient(145deg, #fffaf8, var(--primary-light));
+  background: var(--secondary);
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.85rem;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 1rem;
+  box-shadow: 1rem 1rem 0 rgba(194, 95, 76, 0.14);
+}
+
+.upload-dropzone::after {
+  content: '';
+  position: absolute;
+  inset: 1rem;
+  border: 1px dashed rgba(17, 14, 13, 0.28);
+  border-radius: 1rem 1rem 3.25rem 1rem;
+  pointer-events: none;
+}
+
+.upload-corner-note {
+  position: absolute;
+  top: 1.75rem;
+  right: 1.75rem;
+  color: rgba(17, 14, 13, 0.62);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  transform: rotate(5deg);
 }
 
 .upload-dropzone:hover,
 .upload-dropzone:focus-visible {
-  border-color: var(--primary);
-  background: #f6ddd8;
+  border-color: var(--text);
+  background: #eb9c8c;
+  transform: translate(-0.2rem, -0.2rem);
+  box-shadow: 1.2rem 1.2rem 0 rgba(194, 95, 76, 0.18);
 }
 
 .upload-dropzone.is-dragging {
   border-color: var(--primary);
-  background: #f3d3cd;
+  background: var(--accent);
   transform: translateY(-2px);
 }
 
@@ -38,32 +64,35 @@
   width: 60px;
   height: 60px;
   border-radius: 16px;
-  background: var(--surface);
-  color: var(--primary);
+  background: var(--text);
+  color: var(--background);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--primary-border);
+  border: none;
 }
 
 .upload-text h3 {
-  font-size: 1.25rem;
+  max-width: 13ch;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
   font-weight: 700;
   margin-bottom: 0.25rem;
   color: var(--text);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
 }
 
 .upload-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  font-size: 0.9rem;
+  color: rgba(17, 14, 13, 0.7);
   margin-bottom: 0.65rem;
 }
 
 .upload-meta-chips {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
@@ -74,11 +103,11 @@
   gap: 0.35rem;
   font-size: 0.775rem;
   font-weight: 600;
-  color: var(--primary);
-  background: var(--surface);
+  color: var(--text);
+  background: rgba(255, 253, 252, 0.48);
   padding: 0.2rem 0.6rem;
   border-radius: var(--radius-full);
-  border: 1px solid var(--primary-border);
+  border: 1px solid rgba(17, 14, 13, 0.14);
 }
 
 .cta-action-bar {

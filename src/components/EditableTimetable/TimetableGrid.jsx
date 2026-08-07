@@ -87,7 +87,7 @@ const TimetableGrid = ({
           // Empty cell
           info[day][slot] = null;
         }
-        // If classes.length > 0 but all are already rendered, this is a continuation cell — skip
+        // If classes.length > 0 but all are already rendered, this is a continuation cell; skip.
       });
     });
     return info;
@@ -113,7 +113,7 @@ const TimetableGrid = ({
               {activeDays.map(day => {
                 const cellInfo = renderInfo[day]?.[slot];
 
-                // If cellInfo is undefined, this slot is a continuation — skip rendering
+                // If cellInfo is undefined, this slot is a continuation; skip rendering.
                 if (cellInfo === undefined) return null;
 
                 // If null, empty cell
@@ -136,7 +136,7 @@ const TimetableGrid = ({
                     >
                       <div className="grid-class-name">{sanitizedName}</div>
                       <div className="grid-class-time">
-                        {sanitizeString(cls.startTime)} – {sanitizeString(cls.endTime)}
+                        {sanitizeString(cls.startTime)} to {sanitizeString(cls.endTime)}
                       </div>
                       {displayOptions.showTeacher && cls.teacher && (
                         <div className="grid-class-teacher">{sanitizeString(cls.teacher)}</div>

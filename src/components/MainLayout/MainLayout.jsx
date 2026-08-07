@@ -144,8 +144,11 @@ const MainLayout = () => {
       {/* Top Navbar */}
       <nav className="top-navbar">
         <div className="nav-brand">
-          <div className="brand-icon"><Calendar size={20} /></div>
-          <span className="brand-title">StudReads</span>
+          <div className="brand-icon"><Calendar size={19} /></div>
+          <div className="brand-lockup">
+            <span className="brand-title">StudReads</span>
+            <small>timetable maker</small>
+          </div>
         </div>
         <div className="nav-actions">
           <button type="button" className="nav-btn" onClick={() => setIsReviewsOpen(true)}>
@@ -161,13 +164,12 @@ const MainLayout = () => {
       </nav>
 
       <div className="app-card">
-        {/* Simplified hero — no bloat, straight to the point */}
         <header className="hero-header">
           <div className="hero-title-group">
-            <span className="hero-eyebrow">Your week, sorted</span>
-            <h1>Turn your timetable sheet into a week you can read</h1>
+            <span className="hero-eyebrow">Made for busy uni weeks</span>
+            <h1>Messy sheet.<em>Clear week.</em></h1>
             <p className="hero-description">
-              Upload the spreadsheet from your university, choose your courses, and get a clean schedule in a few clicks.
+              Bring the spreadsheet. Pick your classes. Leave with a week that actually makes sense.
             </p>
           </div>
 

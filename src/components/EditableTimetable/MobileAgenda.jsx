@@ -21,7 +21,7 @@ const MobileAgenda = ({ classes, getOrAssignColor }) => {
                     <h4>{item.name}</h4>
                     {conflicts.has(item.id) && <span className="conflict-label"><AlertTriangle size={12} /> Clash</span>}
                   </div>
-                  <p><Clock3 size={14} /> {item.startTime}–{item.endTime}</p>
+                  <p><Clock3 size={14} /> {item.startTime} to {item.endTime}</p>
                   {item.room && <p><MapPin size={14} /> {item.room}</p>}
                   {displayOptions.showTeacher && item.teacher && <p><UserRound size={14} /> {item.teacher}</p>}
                 </div>

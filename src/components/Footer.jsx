@@ -60,7 +60,7 @@ const Footer = ({ onOpenPrivacy, onOpenContact, onOpenReviews }) => {
       </div>
 
       <div className="footer-bottom">
-        <p>&copy; {new Date().getFullYear()} Eshaal B — StudReads. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} Eshaal B, StudReads.</p>
       </div>
     </footer>
   );

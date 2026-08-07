@@ -257,14 +257,15 @@
 
 /* Footer Styling */
 .app-footer {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
   padding: 1.75rem 2rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
 }
 
 .footer-content {

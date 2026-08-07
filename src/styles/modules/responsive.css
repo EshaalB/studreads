@@ -52,8 +52,24 @@
   .display-preferences .display-options-bar { justify-content: flex-start; }
 
   .app-card {
-    padding: 1.25rem;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1.25rem;
+    padding: 0.5rem 0;
   }
+
+  .hero-header,
+  .progress-steps,
+  .file-upload-section,
+  .builder-content {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .hero-header { padding-top: 1.5rem; }
+  .hero-title-group h1 { max-width: 14ch; }
+  .file-upload-section { margin-top: 0.75rem; }
+  .upload-dropzone { min-height: 21rem; box-shadow: 0.65rem 0.65rem 0 rgba(194, 95, 76, 0.14); }
 
   .cta-action-bar {
     flex-direction: column;
@@ -112,7 +128,7 @@
 
 @media (max-width: 480px) {
   .app-card {
-    padding: 1rem;
+    padding: 0;
   }
 
   .hero-header h1 {
@@ -120,6 +136,10 @@
   }
 
   .upload-dropzone {
-    padding: 1.5rem 1rem;
+    min-height: 19rem;
+    padding: 4rem 1.4rem 2.25rem;
+    border-radius: 1.25rem 1.25rem 3rem 1.25rem;
   }
+
+  .upload-meta-chips .meta-chip:nth-child(2) { display: none; }
 }
