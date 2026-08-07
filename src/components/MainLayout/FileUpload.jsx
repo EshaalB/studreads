@@ -1,8 +1,8 @@
-import { FileSpreadsheet, Play, RefreshCcw, Upload } from 'lucide-react';
+import { FileSpreadsheet, PencilLine, Play, RefreshCcw, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { DEMO_TIMETABLE_DATA } from '../../utils/demoData';
 
-const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fileInputRef, handleFileUpload, resetUpload, processData }) => {
+const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fileInputRef, handleFileUpload, resetUpload, processData, onStartManual }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = (event) => {
@@ -89,6 +89,13 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
               onClick={handleLoadDemo}
             >
               <Play size={18} /> Show me an example
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-lg cta-btn"
+              onClick={onStartManual}
+            >
+              <PencilLine size={18} /> Build it manually
             </button>
           </div>
 

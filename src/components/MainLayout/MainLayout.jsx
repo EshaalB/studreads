@@ -14,13 +14,14 @@ import AdditionalCourses from './AdditionalCourses';
 import CourseSelection from './CourseSelection';
 import DisplayOptions from './DisplayOptions';
 import FileUpload from './FileUpload';
+import ManualTimetable from './ManualTimetable';
 
 const MainLayout = () => {
   const {
     rawData, processData, rootSections, activeSection, setActiveSection,
     selectedCourseIds, setSelectedCourseIds, extraSelections, setExtraSelections,
     displayOptions, setDisplayOptions, getCoursesForSection, finalActiveClasses,
-    loadSharedTimetable
+    loadSharedTimetable, loadManualTimetable
   } = useTimetable();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +32,8 @@ const MainLayout = () => {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [fileSummary, setFileSummary] = useState(null);
   const [activeTool, setActiveTool] = useState('timetable');
+  const [isManualMode, setIsManualMode] = useState(false);
+  const [manualEntries, setManualEntries] = useState([]);
   const fileInputRef = useRef();
 
   // URL state restoration
@@ -130,6 +133,19 @@ const MainLayout = () => {
     window.location.reload();
   }, []);
 
+  const updateManualEntries = useCallback((entries) => {
+    setManualEntries(entries);
+    loadManualTimetable(entries);
+  }, [loadManualTimetable]);
+
+  const leaveManualMode = useCallback(() => {
+    if (manualEntries.length > 0) {
+      resetUpload();
+      return;
+    }
+    setIsManualMode(false);
+  }, [manualEntries.length, resetUpload]);
+
   const displayOptionsList = useMemo(() => [
     { key: 'showTeacher', label: 'Teacher names' },
     { key: 'showCredits', label: 'Course credits' },
@@ -168,7 +184,7 @@ const MainLayout = () => {
         <header className="workspace-header">
           <div>
             <h1>Build your week</h1>
-            <p>Upload a timetable and start choosing courses straight away.</p>
+            <p>Upload a timetable or build your own, then see your week immediately.</p>
           </div>
 
           {hasSelectedCourses && (
@@ -192,17 +208,22 @@ const MainLayout = () => {
         </header>
 
         {/* Step 1: Upload */}
-        <FileUpload
-          rawData={rawData}
-          isLoading={isLoading}
-          error={error}
-          fileSummary={fileSummary}
-          setFileSummary={setFileSummary}
-          fileInputRef={fileInputRef}
-          handleFileUpload={handleFileUpload}
-          resetUpload={resetUpload}
-          processData={processData}
-        />
+        {isManualMode ? (
+          <ManualTimetable entries={manualEntries} onChange={updateManualEntries} onCancel={leaveManualMode} />
+        ) : (
+          <FileUpload
+            rawData={rawData}
+            isLoading={isLoading}
+            error={error}
+            fileSummary={fileSummary}
+            setFileSummary={setFileSummary}
+            fileInputRef={fileInputRef}
+            handleFileUpload={handleFileUpload}
+            resetUpload={resetUpload}
+            processData={processData}
+            onStartManual={() => setIsManualMode(true)}
+          />
+        )}
 
         {rawData.length > 0 && (
           <main className="builder-content">

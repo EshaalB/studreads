@@ -5,6 +5,7 @@ StudReads is a privacy-first timetable and exam planner for university students.
 ## Features
 
 - Parses grid-style and column-based `.xlsx` and `.xls` timetables
+- Builds a timetable manually when no spreadsheet is available
 - Checks every worksheet and chooses the strongest timetable candidate
 - Keeps spreadsheet processing in the browser
 - Supports primary sections and courses from other sections

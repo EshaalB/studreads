@@ -34,6 +34,7 @@ const AboutModal = ({ isOpen, onClose }) => {
             <li>Finding course, section, day, room and time information</li>
             <li>Detecting clashes and joining multi-period classes</li>
             <li>Extracting searchable exam records from spreadsheets and PDFs</li>
+            <li>Providing a manual builder when a timetable file is unavailable</li>
             <li>Making the result useful on a phone as well as a laptop</li>
           </ul>
 

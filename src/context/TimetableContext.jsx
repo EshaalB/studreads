@@ -168,6 +168,39 @@ export const TimetableProvider = ({ children }) => {
     setExtraSelections([]);
   }, []);
 
+  const loadManualTimetable = useCallback((entries = []) => {
+    const normalized = entries.map((item) => ({
+      courseName: sanitizeString(item.courseName || ''),
+      section: 'My timetable',
+      day: sanitizeString(item.day || ''),
+      startTime: sanitizeString(item.startTime || ''),
+      endTime: sanitizeString(item.endTime || ''),
+      instructor: sanitizeString(item.instructor || ''),
+      room: sanitizeString(item.room || ''),
+      credits: sanitizeString(item.credits || '')
+    })).filter((item) => item.courseName && item.day && item.startTime && item.endTime);
+
+    const mapping = {
+      courseName: 'courseName', section: 'section', day: 'day',
+      startTime: 'startTime', endTime: 'endTime', instructor: 'instructor',
+      room: 'room', credits: 'credits'
+    };
+
+    setRawData(normalized);
+    setColumnMapping(mapping);
+    setRootSections(normalized.length ? ['My timetable'] : []);
+    setActiveSection(normalized.length ? 'My timetable' : '');
+
+    const firstIdByCourse = new Map();
+    normalized.forEach((item, index) => {
+      if (!firstIdByCourse.has(item.courseName)) {
+        firstIdByCourse.set(item.courseName, `${item.courseName}-${item.day}-${item.startTime}-${index}`);
+      }
+    });
+    setSelectedCourseIds([...firstIdByCourse.values()]);
+    setExtraSelections([]);
+  }, []);
+
   const currentThemeColors = useMemo(() => {
     return getThemeColors(selectedTheme);
   }, [selectedTheme]);
@@ -320,6 +353,7 @@ export const TimetableProvider = ({ children }) => {
     updateClassField,
     processData,
     loadSharedTimetable,
+    loadManualTimetable,
     getCoursesForSection,
     getOrAssignColor,
     setDisplayOptions,
