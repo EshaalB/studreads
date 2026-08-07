@@ -163,14 +163,11 @@ const MainLayout = () => {
         </div>
       </nav>
 
-      <div className="app-card">
-        <header className="hero-header">
-          <div className="hero-title-group">
-            <span className="hero-eyebrow">Made for busy uni weeks</span>
-            <h1>Messy sheet.<em>Clear week.</em></h1>
-            <p className="hero-description">
-              Bring the spreadsheet. Pick your classes. Leave with a week that actually makes sense.
-            </p>
+      <div className="app-card" id="main-content">
+        <header className="workspace-header">
+          <div>
+            <h1>Build your week</h1>
+            <p>Upload a timetable and start choosing courses straight away.</p>
           </div>
 
           {hasSelectedCourses && (
@@ -193,18 +190,6 @@ const MainLayout = () => {
           )}
         </header>
 
-        <ol className="progress-steps" aria-label="Timetable setup progress">
-          <li className={rawData.length > 0 ? 'is-complete' : 'is-current'}>
-            <span>1</span><div><strong>Upload</strong><small>Your Excel file</small></div>
-          </li>
-          <li className={rawData.length > 0 ? (hasSelectedCourses ? 'is-complete' : 'is-current') : ''}>
-            <span>2</span><div><strong>Choose</strong><small>Section and courses</small></div>
-          </li>
-          <li className={hasSelectedCourses ? 'is-current' : ''}>
-            <span>3</span><div><strong>Save</strong><small>Export or share</small></div>
-          </li>
-        </ol>
-
         {/* Step 1: Upload */}
         <FileUpload
           rawData={rawData}
@@ -219,55 +204,53 @@ const MainLayout = () => {
         />
 
         {rawData.length > 0 && (
-          <main className="builder-content" id="main-content">
-            <div className="builder-heading">
-              <span className="step-kicker">Step 2</span>
-              <div>
-                <h2>Pick what belongs in your week</h2>
-                <p>Start with your main section, then tick the courses you actually take.</p>
+          <main className="builder-content">
+            <aside className="builder-controls" aria-label="Timetable options">
+              <div className="builder-heading">
+                <h2>Your courses</h2>
+                <p>Choose a section, then tick your classes.</p>
               </div>
-            </div>
-            {/* Step 2: Select your section & courses */}
-            <CourseSelection
-              sectionOptions={sectionOptions}
-              activeSection={activeSection}
-              handleSectionChange={handleSectionChange}
-              coursesInActiveSection={coursesInActiveSection}
-              selectedCourseIds={selectedCourseIds}
-              toggleCourse={toggleCourse}
-            />
-
-            {/* Optional: Additional courses from other sections */}
-            <AdditionalCourses
-              isExtraOpen={isExtraOpen}
-              setIsExtraOpen={setIsExtraOpen}
-              extraSelections={extraSelections}
-              getCoursesForSection={getCoursesForSection}
-              updateExtra={updateExtra}
-              removeExtra={removeExtra}
-              addExtra={addExtra}
-            />
-
-            {/* Display toggles */}
-            <section className="display-preferences" aria-labelledby="display-title">
-              <div>
-                <h3 id="display-title">What should each class show?</h3>
-                <p>Keep it simple or add the details you need.</p>
-              </div>
-              <DisplayOptions
-                displayOptions={displayOptions}
-                setDisplayOptions={setDisplayOptions}
-                displayOptionsList={displayOptionsList}
+              <CourseSelection
+                sectionOptions={sectionOptions}
+                activeSection={activeSection}
+                handleSectionChange={handleSectionChange}
+                coursesInActiveSection={coursesInActiveSection}
+                selectedCourseIds={selectedCourseIds}
+                toggleCourse={toggleCourse}
               />
-            </section>
 
-            {/* Step 3: View & export timetable */}
-            {hasSelectedCourses && <EditableTimetable />}
-            {!hasSelectedCourses && activeSection && (
-              <div className="selection-nudge" role="status">
-                Choose at least one course above and your timetable will appear here.
-              </div>
-            )}
+              <AdditionalCourses
+                isExtraOpen={isExtraOpen}
+                setIsExtraOpen={setIsExtraOpen}
+                extraSelections={extraSelections}
+                getCoursesForSection={getCoursesForSection}
+                updateExtra={updateExtra}
+                removeExtra={removeExtra}
+                addExtra={addExtra}
+              />
+
+              <section className="display-preferences" aria-labelledby="display-title">
+                <div>
+                  <h3 id="display-title">Class details</h3>
+                  <p>Choose what appears on the timetable.</p>
+                </div>
+                <DisplayOptions
+                  displayOptions={displayOptions}
+                  setDisplayOptions={setDisplayOptions}
+                  displayOptionsList={displayOptionsList}
+                />
+              </section>
+            </aside>
+
+            <section className="builder-preview" aria-label="Timetable preview">
+              {hasSelectedCourses ? <EditableTimetable /> : (
+                <div className="selection-nudge" role="status">
+                  <Calendar size={28} />
+                  <strong>Your timetable will build here</strong>
+                  <span>{activeSection ? 'Tick a course to add it instantly.' : 'Choose your main section to get started.'}</span>
+                </div>
+              )}
+            </section>
           </main>
         )}
       </div>

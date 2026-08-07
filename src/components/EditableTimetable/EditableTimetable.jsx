@@ -86,7 +86,6 @@ const EditableTimetable = () => {
     <div className="timetable-preview-section">
       <div className="preview-header">
         <div>
-          <span className="step-kicker">Step 3</span>
           <h2>Your week</h2>
         </div>
         <div className="preview-actions">

@@ -52,7 +52,6 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
             tabIndex={0}
             onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
           >
-            <span className="upload-corner-note" aria-hidden="true">your file</span>
             <div className="upload-icon-wrapper">
               <Upload size={36} className="upload-icon" />
             </div>
@@ -65,8 +64,8 @@ const FileUpload = ({ rawData, isLoading, error, fileSummary, setFileSummary, fi
               </div>
             ) : (
               <div className="upload-text">
-                <h3>Drop your timetable here</h3>
-                <p className="upload-subtitle">or choose an Excel file from your device</p>
+                <h3>Drop your Excel timetable here</h3>
+                <p className="upload-subtitle">or click to choose a file</p>
                 <div className="upload-meta-chips">
                   <span className="meta-chip"><FileSpreadsheet size={14} /> XLSX or XLS</span>
                   <span className="meta-chip">Up to 10 MB</span>
