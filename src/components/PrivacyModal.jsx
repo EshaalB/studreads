@@ -19,7 +19,7 @@ const PrivacyModal = ({ isOpen, onClose }) => {
 
         <div className="modal-body">
           <p>
-            Your spreadsheet is read inside your browser. StudReads does not upload the file or its timetable data to a server.
+            Your timetable or exam file is read inside your browser. StudReads does not upload the file or its schedule data to a server.
           </p>
           <p>
             Your selected courses, display settings and colours are saved in this browser using local storage so they can still be here when you return.

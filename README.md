@@ -1,6 +1,6 @@
 # StudReads
 
-StudReads is a browser-based timetable and exam planner for university students. It turns large university files into a personal weekly schedule or a searchable list of exam dates, without sending those files to a server.
+StudReads is a privacy-first timetable and exam planner for university students. It supports common university Excel layouts and text-based PDF date sheets, turning them into personal weekly schedules and searchable exam plans directly in the browser.
 
 ## Features
 
