@@ -25,7 +25,7 @@ const CourseSelection = ({
       <div className="form-group">
         <div className="form-heading-row">
           <label className="label-with-tooltip label-reset">
-            <span className="label-text">Primary section</span>
+            <span className="label-text">Your section</span>
             <div className="tooltip-wrapper">
               <HelpCircle size={14} />
               <span className="tooltip">Select your main section to automatically load courses</span>
@@ -46,7 +46,7 @@ const CourseSelection = ({
           value={activeSection}
           onChange={handleSectionChange}
           placeholder="Select your main section (e.g. BSCS-3A)"
-          ariaLabel="Select primary section"
+          ariaLabel="Select your section"
         />
       </div>
 

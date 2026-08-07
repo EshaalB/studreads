@@ -249,9 +249,6 @@
   gap: 1rem;
 }
 
-.modal-card-wide { max-width: 680px; }
-.modal-footer-form { padding: 0; margin-top: 1rem; }
-
 .modal-header {
   display: flex;
   justify-content: space-between;

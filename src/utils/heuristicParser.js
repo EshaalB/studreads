@@ -156,7 +156,7 @@ export const parseHeuristicExcel = (jsonData) => {
     const row = jsonData[i];
     if (!row || row.length === 0) continue;
 
-    // Check if this row starts a new day — check columns 0-2
+    // Check if this row starts a new day in columns 0-2.
     for (let col = 0; col < Math.min(row.length, 3); col++) {
       const cellText = sanitizeString(row[col]?.toString() || '').toUpperCase().replace(/[^A-Z]/g, '');
       if (cellText && DAY_VARIANTS.includes(cellText)) {

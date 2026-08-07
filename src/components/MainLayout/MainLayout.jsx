@@ -1,15 +1,14 @@
-import { Calendar, Mail, Share2, Shield, Star } from 'lucide-react';
+import { Calendar, Github, Share2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { decodeState, encodeState } from '../../utils/sharingUtils';
 import { parseWorkbook } from '../../utils/spreadsheetParser';
 import { validateFile } from '../../utils/validation';
-import ContactModal from '../ContactModal';
+import AboutModal from '../AboutModal';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
 import Footer from '../Footer';
 import PrivacyModal from '../PrivacyModal';
-import ReviewsModal from '../ReviewsModal';
 import AdditionalCourses from './AdditionalCourses';
 import CourseSelection from './CourseSelection';
 import DisplayOptions from './DisplayOptions';
@@ -28,8 +27,7 @@ const MainLayout = () => {
   const [isExtraOpen, setIsExtraOpen] = useState(false);
   const [userName, setUserName] = useState('');
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
-  const [isContactOpen, setIsContactOpen] = useState(false);
-  const [isReviewsOpen, setIsReviewsOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [fileSummary, setFileSummary] = useState(null);
   const fileInputRef = useRef();
 
@@ -151,15 +149,12 @@ const MainLayout = () => {
           </div>
         </div>
         <div className="nav-actions">
-          <button type="button" className="nav-btn" onClick={() => setIsReviewsOpen(true)}>
-            <Star size={16} /> <span>About</span>
+          <button type="button" className="nav-btn" onClick={() => setIsAboutOpen(true)}>
+            <span>Project notes</span>
           </button>
-          <button type="button" className="nav-btn" onClick={() => setIsContactOpen(true)}>
-            <Mail size={16} /> <span>Contact</span>
-          </button>
-          <button type="button" className="nav-btn" onClick={() => setIsPrivacyOpen(true)}>
-            <Shield size={16} /> <span>Privacy</span>
-          </button>
+          <a className="nav-btn" href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer">
+            <Github size={16} /> <span>Source</span>
+          </a>
         </div>
       </nav>
 
@@ -257,13 +252,10 @@ const MainLayout = () => {
 
       <Footer
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
-        onOpenContact={() => setIsContactOpen(true)}
-        onOpenReviews={() => setIsReviewsOpen(true)}
       />
 
       <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
-      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
-      <ReviewsModal isOpen={isReviewsOpen} onClose={() => setIsReviewsOpen(false)} />
+      <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </div>
   );
 };

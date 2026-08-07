@@ -1,4 +1,4 @@
-import { Shield, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useModalAccessibility } from '../utils/useModalAccessibility';
 
 const PrivacyModal = ({ isOpen, onClose }) => {
@@ -10,8 +10,7 @@ const PrivacyModal = ({ isOpen, onClose }) => {
       <div ref={dialogRef} className="modal-card" role="dialog" aria-modal="true" aria-labelledby="privacy-title" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">
-            <Shield className="icon-primary" size={22} />
-            <h2 id="privacy-title">Privacy policy</h2>
+            <h2 id="privacy-title">What happens to your file?</h2>
           </div>
           <button type="button" className="btn-icon" onClick={onClose} aria-label="Close Privacy Policy">
             <X size={20} />
@@ -19,36 +18,23 @@ const PrivacyModal = ({ isOpen, onClose }) => {
         </div>
 
         <div className="modal-body">
-          <p className="badge-pill">Compliance Notice: Global Data Privacy Standards</p>
-          
-          <h3>1. What Personal Information We Collect</h3>
           <p>
-            The <strong>StudReads</strong> app operates strictly with a <strong>privacy-first, client-side model</strong>. 
-            Optional input fields (such as your name for custom timetable exports or email provided in feedback forms) remain local in your browser memory.
+            Your spreadsheet is read inside your browser. StudReads does not upload the file or its timetable data to a server.
           </p>
-
-          <h3>2. How Your Spreadsheets & Timetables Are Processed</h3>
           <p>
-            When you upload an Excel spreadsheet (<code>.xlsx</code> or <code>.xls</code>), your files are parsed directly inside your web browser. 
-            <strong>No timetable data, file contents, or course selections are ever uploaded to an external server or database.</strong>
+            Your selected courses, display settings and colours are saved in this browser using local storage so they can still be here when you return.
           </p>
-
-          <h3>3. Local Storage Usage</h3>
           <p>
-            We use your browser's local storage (<code>localStorage</code>) strictly to save your active section selections, display preferences, and custom theme colors so your timetable remains saved when you return.
+            Choosing <strong>Start over</strong> clears the timetable information saved by this app. Shared links contain the classes needed to show that shared timetable.
           </p>
-
-          <h3>4. How to Contact Us</h3>
           <p>
-            If you have questions regarding this Privacy Policy or your privacy rights, please contact us at:
-            <br />
-            <strong>Email:</strong> <a href="mailto:eshaalrehamat@gmail.com" className="link-text">eshaalrehamat@gmail.com</a>
+            Questions? Email <a href="mailto:eshaalrehamat@gmail.com" className="link-text">eshaalrehamat@gmail.com</a>.
           </p>
         </div>
 
         <div className="modal-footer">
           <button type="button" className="btn btn-primary" onClick={onClose}>
-            Got it, Close
+            Close
           </button>
         </div>
       </div>

@@ -110,7 +110,7 @@ const AdditionalCourses = ({
         aria-expanded={isExtraOpen}
         aria-controls="additional-courses-panel"
       >
-        <span>Taking a course from another section?</span>
+        <span>Course from another section</span>
         {isExtraOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </button>
 
