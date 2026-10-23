@@ -1,158 +1,796 @@
-const FIELD_ALIASES = {
-  subject: ['subject', 'subject name', 'course', 'course name', 'paper', 'paper title', 'module', 'module name'],
-  code: ['code', 'course code', 'subject code', 'paper code', 'module code'],
-  date: ['date', 'exam date', 'examination date'],
-  day: ['day', 'exam day'],
-  time: ['time', 'exam time', 'timing', 'slot', 'session'],
-  startTime: ['start time', 'from', 'starts'],
-  endTime: ['end time', 'to', 'ends'],
-  room: ['room', 'venue', 'location', 'hall', 'exam hall'],
-  program: ['program', 'programme', 'degree', 'semester', 'class']
-};
+// Exam date-sheet extraction.
+//
+// Every source (spreadsheet, CSV, Word table, PDF text layer, OCR, pasted text) is
+// reduced to rows of cells. A cell is either a primitive or { text, x, x2 } where x is
+// a horizontal position (column index for spreadsheets, points/pixels for PDF and OCR).
+// Three strategies then run over the same rows and the most productive one wins:
+//   table - a header row names the columns (Subject, Date, Time, Venue...)
+//   grid  - dates or time slots run across a row and course names fill the cells
+//   loose - free text where each line mentions a course and a date nearby
 
-const DATE_PATTERNS = [
-  /\b(\d{1,2})[-./](\d{1,2})[-./](\d{2,4})\b/,
-  /\b(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{4})\b/i,
-  /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2}),?\s+(\d{4})\b/i
+const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+const MONTH = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?';
+const ORDINAL = '(?:st|nd|rd|th)?';
+const YEAR = '(?:(\\d{4})|\'?(\\d{2})(?![:.]\\d))';
+
+const ISO_DATE = /\b(20\d{2})[-./](\d{1,2})[-./](\d{1,2})\b/;
+const NUMERIC_DATE = /\b(\d{1,2})[-./](\d{1,2})[-./](\d{4}|\d{2})\b/;
+const DAY_MONTH = new RegExp(`\\b(\\d{1,2})${ORDINAL}[\\s\\-./,]*(?:of\\s+)?${MONTH}(?:[\\s\\-./,]+${YEAR})?\\b`, 'i');
+const MONTH_DAY = new RegExp(`\\b${MONTH}[\\s\\-./]+(\\d{1,2})${ORDINAL}(?![:\\d])(?:,?\\s+(\\d{4}))?\\b`, 'i');
+
+const WEEKDAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const DAY_PATTERN = /\b(mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:r(?:s(?:day)?)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b\.?/i;
+
+const CLOCK = '(\\d{1,2})(?:[:.](\\d{2}))?\\s*([ap]\\.?\\s?m\\.?)?';
+const TIME_RANGE = new RegExp(`\\b${CLOCK}\\s*(?:-|–|—|to|till|until)\\s*${CLOCK}(?![\\d])`, 'i');
+const SINGLE_TIME = /\b(\d{1,2})(?:[:.](\d{2}))\s*([ap]\.?\s?m\.?)?|\b(\d{1,2})\s*([ap]\.?\s?m\.?)(?=\W|$)/i;
+
+const CODE_PATTERN = /\b(?!(?:HALL|ROOM|LAB|BLOCK|AUDI|PAGE|SEM|SR|NO)\b)([A-Z]{2,5})[\s-]?(\d{3,4}[A-Z]?)\b/;
+const ROOM_HINT = /\b(room|hall|lab|labs|block|auditorium|audi|venue|building|floor|campus)\b|^[A-Z]{1,2}-?\d{1,3}[A-Z]?$/i;
+const PROGRAM_HINT = /\b(bs|ms|ba|ma|bba|mba|bsc|msc|phd|be|semester|sem|batch|section|programme|program|class|year|level|department|dept)\b/i;
+const NOISE_LINE = /^(note|notes|nb|page|signature|signed|controller|registrar|instructions?|important|remarks?|prepared by|approved by|copy to|cc)\b|^(-|_|=|\*|\.){3,}$/i;
+
+const HEADER_RULES = [
+  ['code', /\b(course|subject|paper|module|class|crs)\s*(code|no|number|id|#)\b|^(code|codes|c code|course #)$/],
+  ['date', /\bdated?\b/],
+  ['day', /^(day|days|week ?day|exam day)$/],
+  ['startTime', /^(start|starts|starting|start time|from|time from|begins?|starting time)$/],
+  ['endTime', /^(end|ends|ending|end time|to|time to|finish|finishes|ending time)$/],
+  ['time', /\b(time|times|timing|timings|slot|slots|session|shift|duration)\b/],
+  ['room', /\b(room|rooms|venue|venues|location|hall|halls|centre|center|building|block|place)\b/],
+  ['teacher', /\b(teacher|instructor|faculty|invigilators?|examiner|lecturer|professor|supervisor)\b/],
+  ['program', /\b(program|programme|programs|degree|semester|sem|class|batch|section|sections|discipline|department|dept|group|year|level)\b/],
+  ['subject', /\b(subject|subjects|course|courses|paper|papers|module|modules|title|description|exam|examination|unit)\b/]
 ];
 
-const TIME_PATTERN = /\b\d{1,2}(?::\d{2})?\s*(?:AM|PM|A\.M\.?|P\.M\.?)?(?:\s*(?:-|to|–)\s*\d{1,2}(?::\d{2})?\s*(?:AM|PM|A\.M\.?|P\.M\.?)?)?\b/i;
-const DAY_PATTERN = /\b(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/i;
-
-const clean = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
-const key = (value) => clean(value).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const clean = (value) => String(value ?? '').replace(/[\u00a0\u2007\u202f]/g, ' ').replace(/[ \t]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
+const flat = (value) => clean(value).replace(/\n/g, ' ');
+const headerKey = (value) => flat(value).toLowerCase().replace(/[^a-z0-9#]+/g, ' ').trim();
+const pad = (value) => String(value).padStart(2, '0');
 
 const toIsoDate = (year, month, day) => {
   const date = new Date(Date.UTC(year, month - 1, day));
   if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return '';
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  return `${year}-${pad(month)}-${pad(day)}`;
 };
 
-export const normalizeExamDate = (value) => {
+const expandYear = (full, short, fallback) => {
+  if (full) return Number(full);
+  if (short) return 2000 + Number(short);
+  return fallback;
+};
+
+// Finds the first date in a piece of text. Returns { iso, index, length } or null.
+const findDate = (text, options = {}) => {
+  const value = flat(text);
+  if (!value) return null;
+  const fallbackYear = options.year || new Date().getFullYear();
+  const candidates = [];
+
+  const iso = value.match(ISO_DATE);
+  if (iso) candidates.push({ match: iso, iso: toIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3])) });
+
+  const numeric = value.match(NUMERIC_DATE);
+  if (numeric && !iso) {
+    const first = Number(numeric[1]);
+    const second = Number(numeric[2]);
+    const year = expandYear(numeric[3].length === 4 ? numeric[3] : '', numeric[3].length === 2 ? numeric[3] : '', fallbackYear);
+    let dayFirst = options.dayFirst ?? true;
+    if (first > 12) dayFirst = true;
+    else if (second > 12) dayFirst = false;
+    candidates.push({ match: numeric, iso: dayFirst ? toIsoDate(year, second, first) : toIsoDate(year, first, second) });
+  }
+
+  const dayMonth = value.match(DAY_MONTH);
+  if (dayMonth) {
+    const month = MONTHS[dayMonth[2].slice(0, 3).toLowerCase()];
+    candidates.push({ match: dayMonth, iso: toIsoDate(expandYear(dayMonth[3], dayMonth[4], fallbackYear), month, Number(dayMonth[1])) });
+  }
+
+  const monthDay = value.match(MONTH_DAY);
+  if (monthDay) {
+    const month = MONTHS[monthDay[1].slice(0, 3).toLowerCase()];
+    candidates.push({ match: monthDay, iso: toIsoDate(monthDay[3] ? Number(monthDay[3]) : fallbackYear, month, Number(monthDay[2])) });
+  }
+
+  const best = candidates.filter((candidate) => candidate.iso).sort((a, b) => a.match.index - b.match.index)[0];
+  return best ? { iso: best.iso, index: best.match.index, length: best.match[0].length } : null;
+};
+
+export const normalizeExamDate = (value, options = {}) => {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return toIsoDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
   }
-
-  const text = clean(value);
-  if (!text) return '';
-  const numeric = text.match(DATE_PATTERNS[0]);
-  if (numeric) {
-    const year = Number(numeric[3].length === 2 ? `20${numeric[3]}` : numeric[3]);
-    const first = Number(numeric[1]);
-    const second = Number(numeric[2]);
-    if (second > 12 && first <= 12) return toIsoDate(year, first, second);
-    return toIsoDate(year, second, first);
-  }
-
-  if (DATE_PATTERNS.slice(1).some((pattern) => pattern.test(text))) {
-    const parsed = new Date(text);
-    if (!Number.isNaN(parsed.getTime())) return toIsoDate(parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate());
-  }
-  return '';
+  return findDate(value, options)?.iso || '';
 };
 
 export const hasAmbiguousNumericDates = (matrix) => Array.isArray(matrix) && matrix.some((row) =>
   Array.isArray(row) && row.some((cell) => {
-    const match = clean(cell).match(DATE_PATTERNS[0]);
-    return Boolean(match && Number(match[1]) <= 12 && Number(match[2]) <= 12);
+    const match = flat(cellText(cell)).match(NUMERIC_DATE);
+    return Boolean(match && !flat(cellText(cell)).match(ISO_DATE) && Number(match[1]) <= 12 && Number(match[2]) <= 12 && match[1] !== match[2]);
   })
 );
 
-const getDay = (value, isoDate) => {
-  const explicit = clean(value).match(DAY_PATTERN)?.[1];
-  if (explicit) return explicit.slice(0, 3).toLowerCase().replace(/^./, (letter) => letter.toUpperCase());
-  if (!isoDate) return '';
-  return new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
+// ---------------------------------------------------------------------------
+// Times
+
+const toMinutes = (hours, minutes, meridiem) => {
+  let h = Number(hours);
+  const m = Number(minutes || 0);
+  if (Number.isNaN(h) || m > 59) return null;
+  const period = meridiem ? meridiem.replace(/[\s.]/g, '').toLowerCase() : '';
+  if (period) {
+    if (h < 1 || h > 12) return null;
+    if (period === 'pm' && h < 12) h += 12;
+    if (period === 'am' && h === 12) h = 0;
+  } else if (h > 23) {
+    return null;
+  }
+  return h * 60 + m;
 };
 
-const detectHeader = (matrix) => {
-  let best = null;
-  matrix.slice(0, 30).forEach((row, rowIndex) => {
-    const mapping = {};
-    row.forEach((cell, columnIndex) => {
-      const normalized = key(cell);
-      Object.entries(FIELD_ALIASES).forEach(([field, aliases]) => {
-        if (mapping[field] === undefined && aliases.includes(normalized)) mapping[field] = columnIndex;
-      });
-    });
-    const score = Object.keys(mapping).length + (mapping.subject !== undefined ? 2 : 0) + (mapping.date !== undefined ? 2 : 0);
-    if (!best || score > best.score) best = { rowIndex, mapping, score };
-  });
-  return best?.score >= 4 ? best : null;
+export const formatClock = (minutes, format = '12h') => {
+  if (minutes === null || minutes === undefined) return '';
+  const h = Math.floor(minutes / 60) % 24;
+  const m = minutes % 60;
+  if (format === '24h') return `${pad(h)}:${pad(m)}`;
+  return `${h % 12 || 12}:${pad(m)} ${h >= 12 ? 'PM' : 'AM'}`;
 };
+
+// Exams are not held overnight, so "2:00 - 5:00" means the afternoon.
+const assumeDaytime = (minutes, hadMeridiem) => (minutes !== null && !hadMeridiem && minutes < 7 * 60 ? minutes + 12 * 60 : minutes);
+
+const findTime = (text, { strict = true } = {}) => {
+  const value = flat(text);
+  if (!value) return null;
+  const range = value.match(TIME_RANGE);
+  if (range) {
+    const [, h1, m1, p1, h2, m2, p2] = range;
+    const explicit = m1 || m2 || p1 || p2;
+    if (explicit || !strict) {
+      // "2:00 - 5:00 PM" shares the PM; "9:00 - 12:00 PM" does not.
+      const inherit = !p1 && p2 && Number(h1) <= Number(h2) && Number(h2) !== 12;
+      let start = toMinutes(h1, m1, p1 || (inherit ? p2 : ''));
+      let end = toMinutes(h2, m2, p2);
+      start = assumeDaytime(start, p1 || p2);
+      end = assumeDaytime(end, p2);
+      if (start !== null && end !== null && end <= start && !p2) end += 12 * 60;
+      if (start !== null && end !== null && end > start && end - start <= 8 * 60) {
+        return { start, end, index: range.index, length: range[0].length };
+      }
+    }
+  }
+  const single = value.match(SINGLE_TIME);
+  if (single) {
+    const hadMeridiem = single[3] || single[5];
+    const start = assumeDaytime(single[1] ? toMinutes(single[1], single[2], single[3]) : toMinutes(single[4], 0, single[5]), hadMeridiem);
+    if (start !== null) return { start, end: null, index: single.index, length: single[0].length };
+  }
+  return null;
+};
+
+const timeLabel = (time) => {
+  if (!time) return '';
+  return time.end !== null ? `${formatClock(time.start)} – ${formatClock(time.end)}` : formatClock(time.start);
+};
+
+// ---------------------------------------------------------------------------
+// Cells and rows
+
+function cellText(cell) {
+  if (cell && typeof cell === 'object' && !(cell instanceof Date)) return cell.text ?? '';
+  if (cell instanceof Date) {
+    if (Number.isNaN(cell.getTime())) return '';
+    if (cell.getFullYear() < 1902) return formatClock(cell.getHours() * 60 + cell.getMinutes());
+    const date = toIsoDate(cell.getFullYear(), cell.getMonth() + 1, cell.getDate());
+    const minutes = cell.getHours() * 60 + cell.getMinutes();
+    return minutes ? `${date} ${formatClock(minutes)}` : date;
+  }
+  return cell ?? '';
+}
+
+const normalizeRows = (rows) => (Array.isArray(rows) ? rows : [])
+  .filter(Array.isArray)
+  .map((row) => row.map((cell, index) => {
+    const positioned = cell && typeof cell === 'object' && !(cell instanceof Date);
+    const text = clean(cellText(cell));
+    return {
+      text,
+      x: positioned ? cell.x : index,
+      x2: positioned ? (cell.x2 ?? cell.x) : index + 1
+    };
+  }).filter((cell) => cell.text && !/^[-–—_.]+$/.test(cell.text)));
+
+const center = (cell) => (cell.x + cell.x2) / 2;
+
+const matchHeader = (text) => {
+  const key = headerKey(text);
+  if (!key || key.length > 32 || key.split(' ').length > 4) return null;
+  const rule = HEADER_RULES.find(([, pattern]) => pattern.test(key));
+  return rule ? rule[0] : null;
+};
+
+const scoreHeader = (row) => {
+  const mapping = {};
+  row.forEach((cell) => {
+    const field = matchHeader(cell.text);
+    if (field && !mapping[field]) mapping[field] = cell;
+  });
+  const fields = Object.keys(mapping);
+  const hasCourse = mapping.subject || mapping.code;
+  const hasWhen = mapping.date || mapping.day || mapping.time || mapping.startTime;
+  const looksLikeData = row.some((cell) => findDate(cell.text));
+  if (!hasCourse || !hasWhen || fields.length < 2 || looksLikeData) return null;
+  return { mapping, score: fields.length };
+};
+
+const splitCode = (text) => {
+  const value = flat(text);
+  const match = value.match(CODE_PATTERN);
+  if (!match) return { code: '', subject: value };
+  const rest = (value.slice(0, match.index) + value.slice(match.index + match[0].length))
+    .replace(/\(\s*\)/g, '')
+    .replace(/^[\s:–—\-|,/()]+|[\s:–—\-|,/(]+$/g, '')
+    .trim();
+  return { code: match[0].trim(), subject: rest };
+};
+
+const splitRoom = (text) => {
+  const bracketed = text.match(/\(([^)]*)\)\s*$/);
+  if (bracketed && ROOM_HINT.test(bracketed[1])) return { subject: text.slice(0, bracketed.index).trim(), room: bracketed[1].trim() };
+  const trailing = text.match(/[\s,–-]+((?:room|hall|lab|block|auditorium|venue)\s*[:#]?\s*[\w-]{1,8})$/i);
+  if (trailing) return { subject: text.slice(0, trailing.index).trim(), room: trailing[1].replace(/^venue\s*[:#]?\s*/i, '').trim() };
+  return { subject: text, room: '' };
+};
+
+const tidySubject = (text) => flat(text)
+  .replace(/^\d{1,3}[.)]\s+/, '')
+  .replace(/^[\s:–—\-|,•*]+|[\s:–—\-|,•*]+$/g, '')
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+const isUsefulSubject = (text) => {
+  if (!text || text.length < 2 || text.length > 140) return false;
+  if (!/[a-z]/i.test(text)) return false;
+  if (NOISE_LINE.test(text)) return false;
+  const stripped = text.replace(DAY_PATTERN, '').replace(/\b(exam|exams|paper|morning|evening|afternoon|session|break|holiday|off|no exam|reserved)\b/gi, '').replace(/[^a-z]/gi, '');
+  return stripped.length >= 2;
+};
+
+const weekdayOf = (isoDate) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
 
 const makeRecord = (values, source, index) => {
-  const subject = clean(values.subject);
-  const code = clean(values.code);
-  const date = normalizeExamDate(values.date);
-  const start = clean(values.startTime);
-  const end = clean(values.endTime);
-  const time = clean(values.time) || [start, end].filter(Boolean).join(' to ');
-  if ((!subject && !code) || !date) return null;
+  let subject = tidySubject(values.subject);
+  let code = flat(values.code);
+  let room = flat(values.room);
+  if (!code) {
+    const split = splitCode(subject);
+    code = split.code;
+    subject = tidySubject(split.subject);
+  }
+  if (!room) {
+    const split = splitRoom(subject);
+    subject = split.subject;
+    room = split.room;
+  }
+  if (!subject && code) subject = code;
+  if (!values.date || !isUsefulSubject(subject)) return null;
 
   return {
-    id: `${source}-${date}-${code || subject}-${index}`,
-    subject: subject || code,
+    id: `${source}-${values.date}-${code || subject}-${index}`.replace(/\s+/g, '_'),
+    subject,
     code,
-    date,
-    day: getDay(values.day, date),
-    time,
-    room: clean(values.room),
-    program: clean(values.program),
+    date: values.date,
+    day: weekdayOf(values.date),
+    time: timeLabel(values.time),
+    start: values.time?.start ?? null,
+    end: values.time?.end ?? null,
+    room,
+    program: flat(values.program),
+    teacher: flat(values.teacher),
     source
   };
 };
 
-const parseMappedRows = (matrix, header, source) => matrix
-  .slice(header.rowIndex + 1)
-  .map((row, index) => {
-    const values = {};
-    Object.entries(header.mapping).forEach(([field, columnIndex]) => { values[field] = row[columnIndex]; });
-    return makeRecord(values, source, index);
-  })
-  .filter(Boolean);
+// A cell can hold several courses ("CS-101 Programming\nMA-102 Calculus") or one course
+// with extra lines ("Data Structures\nBSCS-3A\nHall 2").
+const parseCellCourses = (text) => {
+  const lines = clean(text).split(/\n|;/).map((part) => part.trim()).filter(Boolean);
+  if (lines.length > 1 && lines.every((line) => CODE_PATTERN.test(line))) {
+    return lines.map((line) => ({ subject: line, room: '', program: '' }));
+  }
+  const course = { subject: '', room: '', program: '' };
+  lines.forEach((line, index) => {
+    if (index > 0 && !course.room && ROOM_HINT.test(line) && line.length < 30) course.room = line;
+    else if (index > 0 && !course.program && PROGRAM_HINT.test(line) && line.length < 50) course.program = line;
+    else course.subject = course.subject ? `${course.subject} ${line}` : line;
+  });
+  return course.subject ? [course] : [];
+};
 
-const parseLooseRows = (matrix, source) => matrix.map((row, index) => {
-  const cells = row.map(clean).filter(Boolean);
-  const dateCell = cells.find((cell) => normalizeExamDate(cell));
-  if (!dateCell) return null;
-  const timeCell = cells.find((cell) => cell !== dateCell && TIME_PATTERN.test(cell));
-  const dayCell = cells.find((cell) => DAY_PATTERN.test(cell));
-  const codeCell = cells.find((cell) => /^(?=.*[A-Z])(?=.*\d)[A-Z0-9][A-Z0-9 ./-]{2,14}$/i.test(cell));
-  const ignored = new Set([dateCell, timeCell, dayCell, codeCell].filter(Boolean));
-  const subject = cells.filter((cell) => !ignored.has(cell)).sort((a, b) => b.length - a.length)[0] || '';
-  return makeRecord({ subject, code: codeCell, date: dateCell, day: dayCell, time: timeCell }, source, index);
-}).filter(Boolean);
+const splitCodes = (text) => clean(text).split(/\n|;|,|\s\/\s/).map((part) => part.trim()).filter(Boolean);
+const TITLE_LINE = /\b(exam(ination)?s?|schedule|date ?sheet|time ?table|university|notification|notice|term|spring|fall|autumn|summer|winter)\b/i;
+
+// ---------------------------------------------------------------------------
+// Date interpretation shared by the whole document
+
+const analyseDates = (rows) => {
+  const years = new Map();
+  let dayFirstVotes = 0;
+  let monthFirstVotes = 0;
+  let ambiguous = false;
+
+  rows.forEach((row) => row.forEach((cell) => {
+    const text = flat(cell.text);
+    const year = text.match(/\b(20\d{2})\b/);
+    if (year && findDate(text)) years.set(year[1], (years.get(year[1]) || 0) + 1);
+
+    const numeric = !text.match(ISO_DATE) && text.match(NUMERIC_DATE);
+    if (!numeric) return;
+    const first = Number(numeric[1]);
+    const second = Number(numeric[2]);
+    if (first > 12) dayFirstVotes += 5;
+    else if (second > 12) monthFirstVotes += 5;
+    else if (first !== second) {
+      ambiguous = true;
+      // A weekday printed next to the date settles the order.
+      const weekday = text.match(DAY_PATTERN)?.[1]?.slice(0, 3).toLowerCase();
+      if (weekday) {
+        const yearValue = numeric[3].length === 2 ? 2000 + Number(numeric[3]) : Number(numeric[3]);
+        const asDayFirst = toIsoDate(yearValue, second, first);
+        const asMonthFirst = toIsoDate(yearValue, first, second);
+        if (asDayFirst && weekdayOf(asDayFirst).toLowerCase() === weekday) dayFirstVotes += 1;
+        if (asMonthFirst && weekdayOf(asMonthFirst).toLowerCase() === weekday) monthFirstVotes += 1;
+      }
+    }
+  }));
+
+  const year = [...years.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  return {
+    dayFirst: monthFirstVotes <= dayFirstVotes,
+    year: year ? Number(year) : new Date().getFullYear(),
+    ambiguous: ambiguous && dayFirstVotes === monthFirstVotes
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Strategy 1: header-driven tables
+
+// Every header cell becomes an anchor, including unrecognised ones such as "Sr. No",
+// so their values are not pulled into a neighbouring column.
+const headerAnchors = (row) => row.map((cell) => ({ field: matchHeader(cell.text), x: cell.x, x2: cell.x2 }));
+
+const assignToColumns = (row, anchors) => {
+  const values = {};
+  row.forEach((cell) => {
+    let best = null;
+    anchors.forEach((anchor) => {
+      const overlap = Math.min(cell.x2, anchor.x2) - Math.max(cell.x, anchor.x);
+      const score = overlap > 0 ? -overlap : Math.abs(center(cell) - center(anchor));
+      if (!best || score < best.score) best = { anchor, score };
+    });
+    const field = best?.anchor.field;
+    if (!field) return;
+    values[field] = values[field] ? `${values[field]}\n${cell.text}` : cell.text;
+  });
+  return values;
+};
+
+const isLabelRow = (text) => PROGRAM_HINT.test(text) && text.length < 60 && !CODE_PATTERN.test(text) && !TITLE_LINE.test(text);
+
+const parseTable = (rows, source, dateOptions) => {
+  const records = [];
+  let anchors = null;
+  let pendingLabel = '';
+  const context = { date: '', time: null, program: '' };
+
+  rows.forEach((row, rowIndex) => {
+    if (scoreHeader(row)) {
+      anchors = headerAnchors(row);
+      // Two-row headers such as "Time" above "From | To".
+      rows[rowIndex + 1]?.forEach((cell) => {
+        const field = matchHeader(cell.text);
+        if (field && !anchors.some((anchor) => anchor.field === field) && !findDate(cell.text)) {
+          const overlaps = (anchor) => Math.min(cell.x2, anchor.x2) - Math.max(cell.x, anchor.x) > 0;
+          anchors = anchors.filter((anchor) => !(overlaps(anchor) && (!anchor.field || anchor.field === 'time')));
+          anchors.push({ field, x: cell.x, x2: cell.x2 });
+        }
+      });
+      anchors.sort((a, b) => a.x - b.x);
+      context.date = '';
+      context.time = null;
+      context.program = pendingLabel;
+      pendingLabel = '';
+      return;
+    }
+
+    if (row.length === 1) {
+      const only = row[0].text;
+      const date = findDate(only, dateOptions);
+      if (date && flat(only).length < 48) {
+        context.date = date.iso;
+        const time = findTime(flat(only).slice(0, date.index) + ' ' + flat(only).slice(date.index + date.length));
+        if (time) context.time = time;
+        return;
+      }
+      if (isLabelRow(only)) {
+        if (anchors) context.program = only; else pendingLabel = only;
+        return;
+      }
+    }
+    if (!anchors) return;
+    if (row.every((cell) => matchHeader(cell.text))) return;
+
+    // A table continued on another PDF page can have different column widths. When a
+    // complete row no longer lines up with the header, re-anchor the columns on it.
+    if (row.length === anchors.length) {
+      const used = new Set(row.map((cell) => anchors.reduce((best, anchor, index) => {
+        const distance = Math.abs(center(cell) - center(anchor));
+        return distance < best.distance ? { index, distance } : best;
+      }, { index: -1, distance: Infinity }).index));
+      if (used.size < row.length) anchors = anchors.map((anchor, index) => ({ ...anchor, x: row[index].x, x2: row[index].x2 }));
+    }
+
+    const values = assignToColumns(row, anchors);
+    const dateText = flat([values.date, values.day].filter(Boolean).join(' '));
+    const date = findDate(dateText, dateOptions);
+    if (date) context.date = date.iso;
+
+    let time = null;
+    const startText = values.startTime || (values.endTime ? values.time : '');
+    if (startText) {
+      const start = findTime(startText, { strict: false });
+      const end = findTime(values.endTime || '', { strict: false });
+      if (start) time = { start: start.start, end: end?.start ?? start.end ?? null };
+    }
+    if (!time && values.time) time = findTime(values.time, { strict: false });
+    if (!time && date) time = findTime(dateText.slice(0, date.index) + ' ' + dateText.slice(date.index + date.length));
+    if (time) context.time = time;
+    if (values.program) context.program = flat(values.program);
+
+    const subjectText = values.subject || '';
+    const codeText = values.code || '';
+    if (!subjectText && !codeText) return;
+
+    // A wrapped title arrives as a row with nothing but more title text.
+    const previous = records[records.length - 1];
+    const onlySubject = subjectText && !codeText && !values.date && !values.day && !values.time && !values.startTime && !values.room;
+    if (onlySubject && previous?.rowIndex === rowIndex - 1 && previous.code && anchors.some((anchor) => anchor.field === 'code')) {
+      previous.subject = tidySubject(`${previous.subject} ${flat(subjectText)}`);
+      previous.rowIndex = rowIndex;
+      return;
+    }
+
+    const codes = codeText ? splitCodes(codeText) : [];
+    const courses = codes.length > 1
+      ? codes.map((code) => ({ code, subject: '', room: '', program: '' }))
+      : (subjectText ? parseCellCourses(subjectText) : [{ subject: '', room: '', program: '' }]).map((course) => ({ ...course, code: codes[0] || '' }));
+    courses.forEach((course) => {
+      const record = makeRecord({
+        subject: course.subject,
+        code: course.code,
+        date: context.date,
+        time: time || context.time,
+        room: values.room || course.room,
+        program: values.program || course.program || context.program,
+        teacher: values.teacher
+      }, source, records.length);
+      if (record) records.push({ ...record, rowIndex });
+    });
+  });
+
+  return records;
+};
+
+// ---------------------------------------------------------------------------
+// Strategy 2: grids with dates or time slots across the top
+
+const classify = (text, dateOptions) => {
+  const value = flat(text);
+  const date = findDate(value, dateOptions);
+  const withoutDate = date ? value.slice(0, date.index) + ' ' + value.slice(date.index + date.length) : value;
+  const time = findTime(withoutDate, { strict: true });
+  const leftover = (time ? withoutDate.slice(0, time.index) + withoutDate.slice(time.index + time.length) : withoutDate)
+    .replace(DAY_PATTERN, '')
+    .replace(/\b(morning|evening|afternoon|session|slot|shift|time|date|day|paper|exam|i|ii|iii|1st|2nd|3rd)\b/gi, '')
+    .replace(/[^a-z]/gi, '');
+  return { date, time, isAxis: Boolean(date || time) && leftover.length <= 2 };
+};
+
+const axisBoundary = (axis) => {
+  const sorted = [...axis].sort((a, b) => a.x - b.x);
+  const gap = sorted.length > 1 ? Math.max(0, sorted[1].x - sorted[0].x2) : 0;
+  return sorted[0].x - gap / 2;
+};
+
+const findAxis = (row, dateOptions) => {
+  const classified = row.map((cell) => ({ ...cell, ...classify(cell.text, dateOptions) }));
+  const axis = classified.filter((cell) => cell.isAxis);
+  if (axis.length < 2 || axis.length < classified.length - 2) return null;
+  const allDates = axis.every((cell) => cell.date);
+  const allTimes = axis.every((cell) => cell.time && !cell.date);
+  return allDates || allTimes ? axis : null;
+};
+
+const parseGrid = (rows, source, dateOptions) => {
+  let axis = null;
+  let start = -1;
+  for (let index = 0; index < Math.min(rows.length, 60) && !axis; index += 1) {
+    axis = findAxis(rows[index], dateOptions);
+    if (axis) start = index;
+  }
+  if (!axis) return [];
+
+  const records = [];
+  const context = { date: '', time: null };
+  let boundary = axisBoundary(axis);
+
+  rows.slice(start + 1).forEach((row, offset) => {
+    const rowIndex = start + 1 + offset;
+    // A later axis row (next week, next block) replaces the current one.
+    const right = row.filter((cell) => center(cell) >= boundary);
+    const nextAxis = findAxis(right, dateOptions);
+    if (nextAxis && nextAxis.length >= right.length - 1) {
+      axis = nextAxis;
+      boundary = axisBoundary(axis);
+      return;
+    }
+
+    let rowProgram = '';
+    const body = [];
+    row.forEach((cell) => {
+      const info = { ...cell, ...classify(cell.text, dateOptions) };
+      if (center(cell) >= boundary) { body.push(info); return; }
+      if (info.date) context.date = info.date.iso;
+      if (info.time) context.time = info.time;
+      if (!info.isAxis && !/^\d+$/.test(info.text) && info.text.replace(DAY_PATTERN, '').trim()) rowProgram = rowProgram ? `${rowProgram} ${flat(info.text)}` : flat(info.text);
+    });
+
+    body.filter((cell) => !cell.isAxis).forEach((cell) => {
+      let column = null;
+      axis.forEach((candidate) => {
+        const distance = Math.abs(center(candidate) - center(cell));
+        if (!column || distance < column.distance) column = { cell: candidate, distance };
+      });
+      const date = column.cell.date?.iso || context.date;
+      const time = column.cell.time || context.time;
+      parseCellCourses(cell.text).forEach((course) => {
+        const record = makeRecord({ subject: course.subject, room: course.room, date, time, program: course.program || rowProgram }, source, records.length);
+        if (record) records.push({ ...record, rowIndex });
+      });
+    });
+  });
+
+  return records;
+};
+
+// ---------------------------------------------------------------------------
+// Strategy 3: free text, one exam per line, dates may sit on their own line
+
+const parseLoose = (rows, source, dateOptions) => {
+  const records = [];
+  const context = { date: '', time: null };
+
+  rows.forEach((row, rowIndex) => {
+    const cells = row.map((cell) => flat(cell.text));
+    const line = cells.join('  ');
+    if (!line || NOISE_LINE.test(line) || line.length > 220) return;
+
+    const date = findDate(line, dateOptions);
+    if (date) context.date = date.iso;
+    const remaining = cells.map((text) => {
+      let value = text;
+      const cellDate = findDate(value, dateOptions);
+      if (cellDate) value = value.slice(0, cellDate.index) + ' ' + value.slice(cellDate.index + cellDate.length);
+      return flat(value.replace(DAY_PATTERN, ' '));
+    });
+
+    const time = findTime(remaining.join('  '));
+    if (time) context.time = time;
+    const withoutTime = remaining.map((text) => {
+      const cellTime = findTime(text);
+      return cellTime ? text.slice(0, cellTime.index) + ' ' + text.slice(cellTime.index + cellTime.length) : text;
+    }).map((text) => text.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
+    if (!context.date || withoutTime.length === 0) return;
+
+    const room = withoutTime.find((text) => ROOM_HINT.test(text) && !CODE_PATTERN.test(text) && text.length < 40) || '';
+    const program = withoutTime.find((text) => text !== room && PROGRAM_HINT.test(text) && !CODE_PATTERN.test(text) && text.length < 60) || '';
+    const rest = withoutTime.filter((text) => text !== room && text !== program);
+    const codeCell = rest.find((text) => CODE_PATTERN.test(text) && text.replace(CODE_PATTERN, '').trim().length < 3);
+    const subjectCell = rest.filter((text) => text !== codeCell).sort((a, b) => b.length - a.length)[0] || codeCell || '';
+    if (!subjectCell) return;
+
+    const record = makeRecord({
+      subject: subjectCell,
+      code: codeCell ? codeCell.match(CODE_PATTERN)[0] : '',
+      date: context.date,
+      time: time || context.time,
+      room,
+      program
+    }, source, records.length);
+    if (record) records.push({ ...record, rowIndex });
+  });
+
+  return records;
+};
+
+// ---------------------------------------------------------------------------
+
+const quality = (records) => records.reduce((total, record) => total + 1 + (record.start !== null ? 0.3 : 0) + (record.code ? 0.2 : 0) + (record.room ? 0.1 : 0), 0);
 
 const dedupeAndSort = (records) => {
   const seen = new Set();
-  return records.filter((record) => {
-    const identity = `${record.date}|${record.time}|${record.code}|${record.subject}`.toLowerCase();
-    if (seen.has(identity)) return false;
-    seen.add(identity);
-    return true;
-  }).sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time) || a.subject.localeCompare(b.subject));
+  return records
+    .map((record) => {
+      const copy = { ...record };
+      delete copy.rowIndex;
+      return copy;
+    })
+    .filter((record) => {
+      const identity = `${record.date}|${record.start}|${record.code}|${record.subject}|${record.program}`.toLowerCase();
+      if (seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    })
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.start ?? 0) - (b.start ?? 0) || a.subject.localeCompare(b.subject));
 };
 
-export const parseExamMatrix = (matrix, source = 'Uploaded file') => {
-  if (!Array.isArray(matrix)) return [];
-  const normalized = matrix.filter(Array.isArray);
-  const header = detectHeader(normalized);
-  return dedupeAndSort(header ? parseMappedRows(normalized, header, source) : parseLooseRows(normalized, source));
+export const extractExams = (matrix, source = 'Uploaded file') => {
+  const rows = normalizeRows(matrix).filter((row) => row.length > 0);
+  const dateOptions = analyseDates(rows);
+  const attempts = [
+    { mode: 'table', records: parseTable(rows, source, dateOptions) },
+    { mode: 'grid', records: parseGrid(rows, source, dateOptions) },
+    { mode: 'text', records: parseLoose(rows, source, dateOptions) }
+  ].map((attempt) => ({ ...attempt, score: quality(attempt.records) }));
+
+  // A table with a recognised header is the most reliable reading; another strategy only
+  // wins when it finds clearly more exams (for example a grid below a small header table).
+  const [table, ...others] = attempts;
+  const bestOther = others.sort((a, b) => b.score - a.score)[0];
+  const best = table.records.length > 0 && table.records.length >= bestOther.records.length * 0.6 ? table : [table, bestOther].sort((a, b) => b.score - a.score)[0];
+  return { records: dedupeAndSort(best.records), mode: best.mode, ambiguousDates: dateOptions.ambiguous };
+};
+
+export const parseExamMatrix = (matrix, source = 'Uploaded file') => extractExams(matrix, source).records;
+
+// ---------------------------------------------------------------------------
+// Source adapters
+
+// Spreadsheet cells are read directly so date serials are decoded without timezone drift
+// and merged cells (a date spanning several rows) are copied down.
+export const sheetToMatrix = (XLSX, sheet) => {
+  if (!sheet?.['!ref']) return [];
+  const range = XLSX.utils.decode_range(sheet['!ref']);
+  const matrix = [];
+  for (let r = range.s.r; r <= range.e.r; r += 1) {
+    const row = [];
+    for (let c = range.s.c; c <= range.e.c; c += 1) {
+      const cell = sheet[XLSX.utils.encode_cell({ r, c })];
+      row.push(cell ? readCell(XLSX, cell) : '');
+    }
+    matrix.push(row);
+  }
+  (sheet['!merges'] || []).forEach((merge) => {
+    const value = matrix[merge.s.r - range.s.r]?.[merge.s.c - range.s.c];
+    for (let r = merge.s.r + 1; r <= merge.e.r; r += 1) {
+      const row = matrix[r - range.s.r];
+      if (row && !row[merge.s.c - range.s.c]) row[merge.s.c - range.s.c] = value;
+    }
+  });
+  return matrix;
+};
+
+const readCell = (XLSX, cell) => {
+  if (cell.t === 'n' && cell.z && XLSX.SSF.is_date(cell.z)) {
+    const parts = XLSX.SSF.parse_date_code(cell.v);
+    if (parts) {
+      const minutes = parts.H * 60 + parts.M;
+      if (cell.v < 1) return formatClock(minutes);
+      const date = toIsoDate(parts.y, parts.m, parts.d);
+      return minutes ? `${date} ${formatClock(minutes)}` : date;
+    }
+  }
+  if (cell.t === 'd' && cell.v instanceof Date) return cellText(cell.v);
+  return cell.w ?? String(cell.v ?? '');
 };
 
 export const parseExamWorkbook = (XLSX, workbook) => {
   const candidates = workbook.SheetNames.map((sheetName) => {
-    const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '', raw: false });
-    return { sheetName, records: parseExamMatrix(matrix, sheetName), hasAmbiguousDates: hasAmbiguousNumericDates(matrix) };
+    const matrix = sheetToMatrix(XLSX, workbook.Sheets[sheetName]);
+    const result = extractExams(matrix, sheetName);
+    return { sheetName, ...result };
   }).filter((candidate) => candidate.records.length > 0)
     .sort((a, b) => b.records.length - a.records.length);
 
-  if (candidates.length === 0) throw new Error('No dated exam rows were found in this workbook.');
+  if (candidates.length === 0) throw new Error('No exams with a recognisable date were found in this file.');
+
+  // Date sheets are often split into one tab per programme or week; keep them all.
+  const combined = candidates.length > 1 && candidates[1].records.length >= Math.max(3, candidates[0].records.length * 0.2);
+  const chosen = combined ? candidates : [candidates[0]];
   return {
-    records: candidates[0].records,
-    hasAmbiguousDates: candidates[0].hasAmbiguousDates,
-    source: candidates[0].sheetName,
-    warnings: candidates.length > 1 ? [`Found exam data on ${candidates.length} sheets and selected “${candidates[0].sheetName}”.`] : []
+    records: dedupeAndSort(chosen.flatMap((candidate) => candidate.records)),
+    hasAmbiguousDates: chosen.some((candidate) => candidate.ambiguousDates),
+    source: combined ? `${chosen.length} sheets` : candidates[0].sheetName,
+    warnings: []
   };
+};
+
+// Pasted text or .txt files: columns separated by tabs, pipes or runs of spaces.
+export const textToRows = (text) => String(text || '')
+  .split(/\r?\n/)
+  .map((line) => line.split(/\t|\s\|\s|\|(?=\S)|\s{2,}/).map((cell) => cell.trim()).filter(Boolean));
+
+// Positioned words (PDF text layer or OCR) grouped into lines and cells.
+// items: [{ text, x, y, width, height }] with y growing downwards.
+export const positionedItemsToRows = (items) => {
+  const words = items
+    .map((item) => ({ ...item, text: String(item.text ?? '').replace(/\s+/g, ' ') }))
+    .filter((item) => item.text.trim())
+    .sort((a, b) => a.y - b.y || a.x - b.x);
+
+  const lines = [];
+  words.forEach((word) => {
+    const height = word.height || 10;
+    const middle = word.y + height / 2;
+    const line = lines.slice(-4).find((candidate) => Math.abs(candidate.middle - middle) < Math.max(2, Math.min(candidate.height, height) * 0.5));
+    if (line) {
+      line.words.push(word);
+      line.middle = (line.middle * (line.words.length - 1) + middle) / line.words.length;
+    } else {
+      lines.push({ middle, height, words: [word] });
+    }
+  });
+
+  return lines
+    .sort((a, b) => a.middle - b.middle)
+    .map((line) => {
+      const sorted = line.words.sort((a, b) => a.x - b.x);
+      const cells = [];
+      sorted.forEach((word) => {
+        const previous = cells[cells.length - 1];
+        const gap = previous ? word.x - previous.x2 : Infinity;
+        const threshold = Math.max(3, (word.height || line.height || 10) * 0.55);
+        if (previous && gap < threshold) {
+          previous.text = `${previous.text}${gap > 0.5 && !previous.text.endsWith(' ') && !word.text.startsWith(' ') ? ' ' : ''}${word.text}`;
+          previous.x2 = Math.max(previous.x2, word.x + (word.width || 0));
+        } else {
+          cells.push({ text: word.text, x: word.x, x2: word.x + (word.width || 0) });
+        }
+      });
+      return cells.map((cell) => ({ ...cell, text: cell.text.trim() })).filter((cell) => cell.text);
+    })
+    .filter((row) => row.length > 0);
+};
+
+// Word documents: tables become rows, other paragraphs become single-cell rows.
+export const docxXmlToRows = (xml) => {
+  const rows = [];
+  let row = null;
+  let cell = null;
+  let paragraph = '';
+  let depth = 0;
+  const decode = (value) => value
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+
+  const tokens = String(xml).match(/<w:tbl\b[^>]*>|<\/w:tbl>|<w:tr\b[^>]*>|<\/w:tr>|<w:tc\b[^>]*>|<\/w:tc>|<w:p\b[^>]*\/>|<w:p\b[^>]*>|<\/w:p>|<w:t\b[^>]*\/>|<w:t\b[^>]*>[^<]*<\/w:t>|<w:tab\/>|<w:br\/>/g) || [];
+  tokens.forEach((token) => {
+    if (token.startsWith('<w:tbl')) depth += 1;
+    else if (token === '</w:tbl>') depth -= 1;
+    else if (token.startsWith('<w:tr')) row = [];
+    else if (token === '</w:tr>') { if (row) rows.push(row); row = null; }
+    else if (token.startsWith('<w:tc')) cell = [];
+    else if (token === '</w:tc>') { if (row && cell) row.push(cell.join('\n')); cell = null; }
+    else if (token.startsWith('<w:p') && token.endsWith('/>')) { /* empty paragraph */ }
+    else if (token.startsWith('<w:p')) paragraph = '';
+    else if (token === '</w:p>') {
+      if (depth > 0 && cell) cell.push(paragraph);
+      else if (paragraph.trim()) rows.push(paragraph.split('\t').map((part) => part.trim()).filter(Boolean));
+      paragraph = '';
+    } else if (token === '<w:tab/>') paragraph += '\t';
+    else if (token === '<w:br/>') paragraph += '\n';
+    else if (token.startsWith('<w:t')) paragraph += decode(token.replace(/<[^>]+>/g, ''));
+  });
+  return rows;
 };

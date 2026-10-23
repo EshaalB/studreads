@@ -50,7 +50,7 @@ const parseWorksheet = (XLSX, worksheet, sheetName) => {
     }
   }
 
-  const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+  const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
   if (rows.length === 0) return null;
 
   const mapping = autoDetectColumnMapping(Object.keys(rows[0]));

@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, Plus, X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import SearchableSelect from '../SearchableSelect';
@@ -7,58 +7,45 @@ const AdditionalCourseRow = ({
   sel, index, extraSelections, rootSections, allUniqueCourses,
   primarySelectedNames, getCoursesForSection, updateExtra, removeExtra
 }) => {
-  // Get available sections for the current chosen course
+  // Sections that teach the chosen course
   const sectionsForCourse = useMemo(() => {
     if (!sel.courseName) return [];
-    const sections = new Set();
-    rootSections.forEach(section => {
-      if (getCoursesForSection(section).some(item => item.name === sel.courseName)) sections.add(section);
-    });
-    return Array.from(sections).map(s => ({ value: s, label: s }));
+    return rootSections
+      .filter(section => getCoursesForSection(section).some(item => item.name === sel.courseName))
+      .map(section => ({ value: section, label: section }));
   }, [sel.courseName, rootSections, getCoursesForSection]);
 
-  // Filter out already selected courses for the COURSE picker
-  const filteredCourseOptions = useMemo(() => {
-    return allUniqueCourses.filter(opt => {
-      // Allow current selected course to show up
-      if (opt.value === sel.courseName) return true;
-      // Hide if in primary section
-      if (primarySelectedNames.has(opt.value)) return false;
-      // Hide if in other extra selections
-      return !extraSelections.some((s, idx) => idx !== index && s.courseName === opt.value);
-    });
-  }, [allUniqueCourses, sel.courseName, primarySelectedNames, extraSelections, index]);
+  // Hide courses already picked in the main section or in another row
+  const filteredCourseOptions = useMemo(() => allUniqueCourses.filter(opt => {
+    if (opt.value === sel.courseName) return true;
+    if (primarySelectedNames.has(opt.value)) return false;
+    return !extraSelections.some((s, idx) => idx !== index && s.courseName === opt.value);
+  }), [allUniqueCourses, sel.courseName, primarySelectedNames, extraSelections, index]);
 
   return (
-    <div className="mixed-row">
-      <SearchableSelect
-        options={filteredCourseOptions}
-        value={sel.courseName}
-        onChange={(value) => {
-          updateExtra(sel.id, { courseName: value, section: '', courseId: '' });
-        }}
-        placeholder="Choose course name"
-        ariaLabel="Select course name"
-      />
-      <SearchableSelect
-        options={sectionsForCourse}
-        value={sel.section}
-        onChange={(value) => {
-          const courses = getCoursesForSection(value);
-          const match = courses.find(c => c.name === sel.courseName);
-          updateExtra(sel.id, { section: value, courseId: match ? match.id : '' });
-        }}
-        placeholder="Select Section"
-        disabled={!sel.courseName}
-        ariaLabel="Select section"
-      />
-      <button
-        type="button"
-        className="btn btn-icon btn-danger"
-        onClick={() => removeExtra(sel.id)}
-        aria-label="Remove course selection"
-      >
-        <Trash2 size={16} />
+    <div className="extra-row">
+      <div className="extra-fields">
+        <SearchableSelect
+          options={filteredCourseOptions}
+          value={sel.courseName}
+          onChange={(value) => updateExtra(sel.id, { courseName: value, section: '', courseId: '' })}
+          placeholder="Course"
+          ariaLabel="Course from another section"
+        />
+        <SearchableSelect
+          options={sectionsForCourse}
+          value={sel.section}
+          onChange={(value) => {
+            const match = getCoursesForSection(value).find(c => c.name === sel.courseName);
+            updateExtra(sel.id, { section: value, courseId: match ? match.id : '' });
+          }}
+          placeholder={sel.courseName ? 'Section' : 'Choose a course first'}
+          disabled={!sel.courseName}
+          ariaLabel="Section for this course"
+        />
+      </div>
+      <button type="button" className="icon-btn icon-btn-sm" onClick={() => removeExtra(sel.id)} aria-label="Remove this course">
+        <X size={15} />
       </button>
     </div>
   );
@@ -75,7 +62,6 @@ const AdditionalCourses = ({
 }) => {
   const { rootSections, selectedCourseIds, activeSection } = useTimetable();
 
-  // Get all unique courses available in the spreadsheet
   const allUniqueCourses = useMemo(() => {
     const courses = [];
     const seen = new Set();
@@ -90,32 +76,28 @@ const AdditionalCourses = ({
     return courses.sort((a, b) => a.label.localeCompare(b.label));
   }, [rootSections, getCoursesForSection]);
 
-  // Get already picked course names from primary section
   const primarySelectedNames = useMemo(() => {
     if (!activeSection) return new Set();
-    const activeCourses = getCoursesForSection(activeSection);
-    return new Set(
-      activeCourses
-        .filter(c => selectedCourseIds.includes(c.id))
-        .map(c => c.name)
-    );
+    return new Set(getCoursesForSection(activeSection).filter(c => selectedCourseIds.includes(c.id)).map(c => c.name));
   }, [activeSection, selectedCourseIds, getCoursesForSection]);
 
+  const count = extraSelections.filter((sel) => sel.courseId).length;
+
   return (
-    <>
+    <section className="side-section">
       <button
         type="button"
-        className="section-divider accordion-trigger"
+        className="disclosure"
         onClick={() => setIsExtraOpen(!isExtraOpen)}
         aria-expanded={isExtraOpen}
         aria-controls="additional-courses-panel"
       >
-        <span>Course from another section</span>
-        {isExtraOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <span className="side-title">Courses from other sections{count > 0 && <span className="count">{count}</span>}</span>
+        <ChevronDown size={16} className="disclosure-icon" aria-hidden="true" />
       </button>
 
       {isExtraOpen && (
-        <div className="extra-selections" id="additional-courses-panel">
+        <div className="extra-list" id="additional-courses-panel">
           {extraSelections.map((sel, index) => (
             <AdditionalCourseRow
               key={sel.id}
@@ -130,19 +112,12 @@ const AdditionalCourses = ({
               removeExtra={removeExtra}
             />
           ))}
-
-          <div className="add-course-action">
-            <button
-              type="button"
-              className="btn btn-secondary btn-add"
-              onClick={addExtra}
-            >
-              <Plus size={14} /> Add course
-            </button>
-          </div>
+          <button type="button" className="btn btn-sm" onClick={addExtra}>
+            <Plus size={14} /> Add a course
+          </button>
         </div>
       )}
-    </>
+    </section>
   );
 };
 

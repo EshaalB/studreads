@@ -11,97 +11,99 @@ const STORAGE_KEYS = {
   theme: 'timetable_theme_v6',
   editedClasses: 'timetable_edited_classes_v6',
   selectedCourses: 'timetable_selected_v6',
-  extraSelections: 'timetable_extra_v6'
+  extraSelections: 'timetable_extra_v6',
+  activeSection: 'timetable_section_v6',
+  source: 'timetable_source_v6'
 };
 
-const safeParseJSON = (str, defaultValue) => {
+const DEFAULT_DISPLAY = {
+  title: '',
+  showTeacher: true,
+  showRoom: true,
+  showCredits: false,
+  showSection: false,
+  timeFormat: '12h',
+  view: 'list'
+};
+
+const MANUAL_MAPPING = {
+  courseName: 'courseName', section: 'section', day: 'day',
+  startTime: 'startTime', endTime: 'endTime', instructor: 'instructor',
+  room: 'room', credits: 'credits'
+};
+
+const readStored = (key, fallback) => {
   try {
-    const parsed = JSON.parse(str);
-    return typeof parsed === 'object' && parsed !== null ? parsed : defaultValue;
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const parsed = JSON.parse(raw);
+    return parsed !== null && typeof parsed === typeof fallback ? parsed : fallback;
   } catch {
-    return defaultValue;
+    return fallback;
   }
 };
 
+const writeStored = (key, value) => {
+  try {
+    if (value === undefined) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Storage can be full or disabled; the app keeps working for this visit.
+  }
+};
+
+const findSections = (data, mapping) => {
+  const sectionCol = mapping.section;
+  const roots = new Set();
+  if (sectionCol) {
+    data.forEach(item => {
+      const value = item[sectionCol]?.toString().trim();
+      if (value && validateSection(value)) roots.add(sanitizeString(value));
+    });
+  } else {
+    roots.add('All');
+  }
+  return [...roots].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+};
+
 export const TimetableProvider = ({ children }) => {
-  const [rawData, setRawData] = useState([]);
-  const [columnMapping, setColumnMapping] = useState({});
-  const [rootSections, setRootSections] = useState([]);
-  const [activeSection, setActiveSection] = useState('');
+  // An uploaded timetable is kept so a refresh does not lose the student's work.
+  const [savedSource] = useState(() => readStored(STORAGE_KEYS.source, null));
+  const [rawData, setRawData] = useState(() => (Array.isArray(savedSource?.data) ? savedSource.data : []));
+  const [columnMapping, setColumnMapping] = useState(() => savedSource?.mapping || {});
+  const [sourceMeta, setSourceMeta] = useState(() => savedSource?.meta || null);
+  const [isManual, setIsManual] = useState(false);
+  const [rootSections, setRootSections] = useState(() => (savedSource ? findSections(savedSource.data || [], savedSource.mapping || {}) : []));
+  const [activeSection, setActiveSection] = useState(() => (savedSource ? readStored(STORAGE_KEYS.activeSection, '') : ''));
 
-  const [selectedCourseIds, setSelectedCourseIds] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.selectedCourses);
-    return saved ? safeParseJSON(saved, []) : [];
-  });
-  const [extraSelections, setExtraSelections] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.extraSelections);
-    return saved ? safeParseJSON(saved, []) : [];
-  });
-  const [editedClasses, setEditedClasses] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.editedClasses);
-    return saved ? safeParseJSON(saved, {}) : {};
-  });
+  const [selectedCourseIds, setSelectedCourseIds] = useState(() => readStored(STORAGE_KEYS.selectedCourses, []));
+  const [extraSelections, setExtraSelections] = useState(() => readStored(STORAGE_KEYS.extraSelections, []));
+  const [editedClasses, setEditedClasses] = useState(() => readStored(STORAGE_KEYS.editedClasses, {}));
   const [selectedTheme, setSelectedTheme] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.theme);
-    return saved || COLOR_THEMES[0].id;
+    try {
+      return localStorage.getItem(STORAGE_KEYS.theme) || COLOR_THEMES[0].id;
+    } catch {
+      return COLOR_THEMES[0].id;
+    }
   });
+  const [displayOptions, setDisplayOptions] = useState(() => ({ ...DEFAULT_DISPLAY, ...readStored(STORAGE_KEYS.display, {}) }));
+  const [colorMap, setColorMap] = useState(() => readStored(STORAGE_KEYS.colors, {}));
 
-  const [displayOptions, setDisplayOptions] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.display);
-    const defaultOptions = {
-      showTeacher: true,
-      showCredits: false,
-      showSection: false
-    };
-    return saved ? safeParseJSON(saved, defaultOptions) : defaultOptions;
-  });
-
-  const [colorMap, setColorMap] = useState(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.colors);
-    return saved ? safeParseJSON(saved, {}) : {};
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.selectedCourses, JSON.stringify(selectedCourseIds));
-  }, [selectedCourseIds]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.extraSelections, JSON.stringify(extraSelections));
-  }, [extraSelections]);
-
+  useEffect(() => writeStored(STORAGE_KEYS.selectedCourses, selectedCourseIds), [selectedCourseIds]);
+  useEffect(() => writeStored(STORAGE_KEYS.extraSelections, extraSelections), [extraSelections]);
+  useEffect(() => writeStored(STORAGE_KEYS.editedClasses, editedClasses), [editedClasses]);
+  useEffect(() => writeStored(STORAGE_KEYS.display, displayOptions), [displayOptions]);
+  useEffect(() => writeStored(STORAGE_KEYS.colors, colorMap), [colorMap]);
+  useEffect(() => writeStored(STORAGE_KEYS.activeSection, activeSection), [activeSection]);
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEYS.theme, selectedTheme);
-    } catch (error) {
-      console.warn('Failed to save theme:', error);
+    } catch {
+      // Not critical.
     }
   }, [selectedTheme]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.editedClasses, JSON.stringify(editedClasses));
-    } catch (error) {
-      console.warn('Failed to save edited classes:', error);
-    }
-  }, [editedClasses]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.display, JSON.stringify(displayOptions));
-    } catch (error) {
-      console.warn('Failed to save display options:', error);
-    }
-  }, [displayOptions]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.colors, JSON.stringify(colorMap));
-    } catch (error) {
-      console.warn('Failed to save color map:', error);
-    }
-  }, [colorMap]);
-
-  const processData = useCallback((data, mapping) => {
+  const processData = useCallback((data, mapping, meta = null) => {
     const sanitizedData = Array.isArray(data) ? data.map(item => sanitizeObject(item)) : [];
     // Keep internal keys like _combinedTime in the mapping (sanitizeObject would strip them)
     const sanitizedMapping = { ...sanitizeObject(mapping) };
@@ -109,63 +111,13 @@ export const TimetableProvider = ({ children }) => {
 
     setRawData(sanitizedData);
     setColumnMapping(sanitizedMapping);
-
-    const sectionCol = sanitizedMapping.section;
-    const rootsSet = new Set();
-
-    if (sectionCol) {
-      // Section column exists: discover unique section values
-      sanitizedData.forEach(item => {
-        const val = item[sectionCol]?.toString().trim();
-        if (val && validateSection(val)) {
-          rootsSet.add(sanitizeString(val));
-        }
-      });
-    } else {
-      // No section column: use a default "All Courses" section
-      rootsSet.add('All');
-    }
-
-    const sortedRoots = Array.from(rootsSet).sort((a, b) =>
-      a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
-    );
-    setRootSections(sortedRoots);
+    setSourceMeta(meta);
+    setIsManual(false);
+    setRootSections(findSections(sanitizedData, sanitizedMapping));
     setActiveSection('');
     setSelectedCourseIds([]);
     setExtraSelections([]);
-  }, []);
-
-  const loadSharedTimetable = useCallback((classes = []) => {
-    const normalized = classes.map((item) => ({
-      courseName: sanitizeString(item.name || item.courseName || ''),
-      section: 'Shared timetable',
-      day: sanitizeString(item.day || ''),
-      startTime: sanitizeString(item.startTime || ''),
-      endTime: sanitizeString(item.endTime || ''),
-      instructor: sanitizeString(item.teacher || item.instructor || ''),
-      room: sanitizeString(item.room || ''),
-      credits: sanitizeString(item.credits || '')
-    })).filter((item) => item.courseName && item.day);
-
-    const mapping = {
-      courseName: 'courseName', section: 'section', day: 'day',
-      startTime: 'startTime', endTime: 'endTime', instructor: 'instructor',
-      room: 'room', credits: 'credits'
-    };
-
-    setRawData(normalized);
-    setColumnMapping(mapping);
-    setRootSections(['Shared timetable']);
-    setActiveSection('Shared timetable');
-
-    const firstIdByCourse = new Map();
-    normalized.forEach((item, index) => {
-      if (!firstIdByCourse.has(item.courseName)) {
-        firstIdByCourse.set(item.courseName, `${item.courseName}-${item.day}-${item.startTime}-${index}`);
-      }
-    });
-    setSelectedCourseIds([...firstIdByCourse.values()]);
-    setExtraSelections([]);
+    writeStored(STORAGE_KEYS.source, { data: sanitizedData, mapping: sanitizedMapping, meta });
   }, []);
 
   const loadManualTimetable = useCallback((entries = []) => {
@@ -180,16 +132,13 @@ export const TimetableProvider = ({ children }) => {
       credits: sanitizeString(item.credits || '')
     })).filter((item) => item.courseName && item.day && item.startTime && item.endTime);
 
-    const mapping = {
-      courseName: 'courseName', section: 'section', day: 'day',
-      startTime: 'startTime', endTime: 'endTime', instructor: 'instructor',
-      room: 'room', credits: 'credits'
-    };
-
     setRawData(normalized);
-    setColumnMapping(mapping);
+    setColumnMapping(MANUAL_MAPPING);
+    setSourceMeta(null);
+    setIsManual(true);
     setRootSections(normalized.length ? ['My timetable'] : []);
     setActiveSection(normalized.length ? 'My timetable' : '');
+    writeStored(STORAGE_KEYS.source, undefined);
 
     const firstIdByCourse = new Map();
     normalized.forEach((item, index) => {
@@ -201,9 +150,7 @@ export const TimetableProvider = ({ children }) => {
     setExtraSelections([]);
   }, []);
 
-  const currentThemeColors = useMemo(() => {
-    return getThemeColors(selectedTheme);
-  }, [selectedTheme]);
+  const currentThemeColors = useMemo(() => getThemeColors(selectedTheme), [selectedTheme]);
 
   const getOrAssignColor = useCallback((name) => {
     const sanitizedName = sanitizeString(name);
@@ -290,7 +237,7 @@ export const TimetableProvider = ({ children }) => {
     return list.map(cls => {
       const editKey = `${cls.day}-${cls.startTime}-${cls.name}`;
       const edits = editedClasses[editKey];
-      return edits ? { ...cls, ...edits } : cls;
+      return edits ? { ...cls, ...edits, editKey } : { ...cls, editKey };
     });
   }, [activeSection, selectedCourseIds, extraSelections, getCoursesForSection, editedClasses]);
 
@@ -336,6 +283,8 @@ export const TimetableProvider = ({ children }) => {
 
   const value = {
     rawData,
+    sourceMeta,
+    isManual,
     rootSections,
     activeSection,
     setActiveSection,
@@ -346,18 +295,18 @@ export const TimetableProvider = ({ children }) => {
     finalActiveClasses,
     conflicts,
     displayOptions,
+    setDisplayOptions,
     colorMap,
+    setColorMap,
     selectedTheme,
     setSelectedTheme,
     editedClasses,
+    setEditedClasses,
     updateClassField,
     processData,
-    loadSharedTimetable,
     loadManualTimetable,
     getCoursesForSection,
     getOrAssignColor,
-    setDisplayOptions,
-    setColorMap,
     clearAllSelections,
     COLOR_THEMES
   };

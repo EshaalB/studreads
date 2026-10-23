@@ -9,27 +9,35 @@
   <!-- Primary Meta Tags -->
   <title>StudReads | Timetable & Exam Planner</title>
   <meta name="title" content="StudReads | Timetable & Exam Planner" />
-  <meta name="description" content="A privacy-first planner that turns common university Excel timetables and text-based PDF date sheets into personal schedules." />
+  <meta name="description" content="A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules." />
   <link rel="canonical" href="https://university-timetable-gen.vercel.app/" />
 
   <!-- Open Graph / Facebook / WhatsApp -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://university-timetable-gen.vercel.app/" />
   <meta property="og:title" content="StudReads | Timetable & Exam Planner" />
-  <meta property="og:description" content="A privacy-first planner that turns common university Excel timetables and text-based PDF date sheets into personal schedules." />
+  <meta property="og:description" content="A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules." />
   <meta property="og:image" content="https://university-timetable-gen.vercel.app/og-image.svg" />
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image" />
   <meta property="twitter:url" content="https://university-timetable-gen.vercel.app/" />
   <meta property="twitter:title" content="StudReads | Timetable & Exam Planner" />
-  <meta property="twitter:description" content="A privacy-first planner that turns common university Excel timetables and text-based PDF date sheets into personal schedules." />
+  <meta property="twitter:description" content="A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules." />
   <meta property="twitter:image" content="https://university-timetable-gen.vercel.app/og-image.svg" />
 
-  <!-- Google Fonts -->
+  <meta name="theme-color" content="#f6f6f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)" />
+  <script>
+    try {
+      var appearance = localStorage.getItem('studreads_appearance');
+      if (appearance === 'light' || appearance === 'dark') document.documentElement.dataset.theme = appearance;
+    } catch (error) {}
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -38,7 +46,7 @@
     "@type": "WebApplication",
     "name": "StudReads",
     "url": "https://university-timetable-gen.vercel.app/",
-    "description": "A privacy-first planner that turns common university Excel timetables and text-based PDF date sheets into personal schedules.",
+    "description": "A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules.",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "All",
     "offers": {

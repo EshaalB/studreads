@@ -1,39 +1,94 @@
-import { useTimetable } from '../../context/useTimetable';
-import TimetableRow from './TimetableRow';
+import { useRef } from 'react';
+import { displayTimeRange } from '../../utils/timeUtils';
 
-const TimetableTable = ({
-  tableRef, sortedClasses, getOrAssignColor, getContrastYIQ,
-  displayOptions, editingCell, editValue, setEditValue, startEdit, saveEdit, cancelEdit
-}) => {
-  const { conflicts } = useTimetable();
+// A value that turns into a text field when clicked.
+const EditableText = ({ value, display, label, isEditing, editable, onStart, onSave, onCancel, placeholder = '—' }) => {
+  const cancelled = useRef(false);
+  if (!editable) return <span>{display ?? value ?? placeholder}</span>;
+  if (isEditing) {
+    return (
+      <input
+        className="cell-input"
+        defaultValue={value}
+        autoFocus
+        aria-label={label}
+        onFocus={(event) => { cancelled.current = false; event.target.select(); }}
+        onBlur={(event) => { if (!cancelled.current) onSave(event.target.value); }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') event.currentTarget.blur();
+          if (event.key === 'Escape') { cancelled.current = true; onCancel(); }
+        }}
+      />
+    );
+  }
+  return (
+    <button type="button" className="cell-edit" onClick={onStart} aria-label={`${label}: ${value || 'empty'}. Edit`}>
+      {display || value || <span className="muted">{placeholder}</span>}
+    </button>
+  );
+};
+
+const TimetableTable = ({ classes, getOrAssignColor, displayOptions, conflicts, editingCell, setEditingCell, onSave, editable }) => {
+  const field = (cls, name) => ({
+    editable,
+    isEditing: editingCell === `${cls.editKey}:${name}`,
+    onStart: () => setEditingCell(`${cls.editKey}:${name}`),
+    onCancel: () => setEditingCell(null),
+    onSave: (value) => { onSave(cls.editKey, name, value); setEditingCell(null); }
+  });
 
   return (
-    <div className="timetable-wrapper" ref={tableRef}>
-      <table className="timetable-table">
+    <div className="list-wrap">
+      <table className="list-table">
         <thead>
           <tr>
-            <th className="col-day">Day</th>
-            <th className="col-course">Course</th>
-            <th className="col-time">Time</th>
-            <th className="col-venue">Venue</th>
+            <th scope="col" className="col-day">Day</th>
+            <th scope="col" className="col-time">Time</th>
+            <th scope="col">Course</th>
+            {displayOptions.showRoom && <th scope="col" className="col-room">Room</th>}
           </tr>
         </thead>
         <tbody>
-          {sortedClasses.map((cls, idx) => {
-            const isFirstOfDay = idx === 0 || sortedClasses[idx - 1].day !== cls.day;
-            const dayCount = sortedClasses.filter(c => c.day === cls.day).length;
-            const classKey = `${cls.day}-${cls.startTime}-${cls.name}`;
-            const bgColor = getOrAssignColor(cls.name);
-            const textColor = getContrastYIQ(bgColor);
-            const isConflicted = conflicts.has(cls.id);
-
+          {classes.map((cls, index) => {
+            const isFirstOfDay = index === 0 || classes[index - 1].day !== cls.day;
+            const dayCount = isFirstOfDay ? classes.filter((item) => item.day === cls.day).length : 0;
+            const meta = [
+              displayOptions.showTeacher && cls.teacher,
+              displayOptions.showCredits && cls.credits && `${cls.credits} credit${cls.credits === '1' ? '' : 's'}`,
+              displayOptions.showSection && cls.section
+            ].filter(Boolean);
             return (
-              <TimetableRow
-                key={`${cls.day}-${cls.startTime}-${idx}`}
-                cls={cls} idx={idx} isFirstOfDay={isFirstOfDay} dayCount={dayCount} classKey={classKey} bgColor={bgColor} textColor={textColor}
-                isConflicted={isConflicted}
-                displayOptions={displayOptions} editingCell={editingCell} editValue={editValue} setEditValue={setEditValue} startEdit={startEdit} saveEdit={saveEdit} cancelEdit={cancelEdit}
-              />
+              <tr key={`${cls.id}-${index}`} className={isFirstOfDay ? 'is-day-start' : ''}>
+                {isFirstOfDay && <th scope="rowgroup" rowSpan={dayCount} className="col-day">{cls.day}</th>}
+                <td className="col-time">
+                  <EditableText
+                    {...field(cls, 'time')}
+                    label={`Time for ${cls.name}`}
+                    value={`${cls.startTime} - ${cls.endTime}`}
+                    display={displayTimeRange(cls.startTime, cls.endTime, displayOptions.timeFormat)}
+                  />
+                </td>
+                <td>
+                  <div className="course-cell">
+                    <span className="swatch" style={{ background: getOrAssignColor(cls.name) }} aria-hidden="true" />
+                    <div className="course-text">
+                      <EditableText {...field(cls, 'name')} label="Course name" value={cls.name} />
+                      {(meta.length > 0 || (editable && displayOptions.showTeacher)) && (
+                        <span className="course-meta">
+                          {displayOptions.showTeacher
+                            ? <EditableText {...field(cls, 'teacher')} label={`Teacher for ${cls.name}`} value={cls.teacher} placeholder="Add teacher" />
+                            : null}
+                          {meta.slice(displayOptions.showTeacher && cls.teacher ? 1 : 0).map((item) => <span key={item}>{item}</span>)}
+                        </span>
+                      )}
+                    </div>
+                    {conflicts.has(cls.id) && <span className="badge badge-warn">Clash</span>}
+                  </div>
+                </td>
+                {displayOptions.showRoom && (
+                  <td className="col-room"><EditableText {...field(cls, 'room')} label={`Room for ${cls.name}`} value={cls.room} placeholder={editable ? 'Add room' : '—'} /></td>
+                )}
+              </tr>
             );
           })}
         </tbody>

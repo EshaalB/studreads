@@ -1,13 +1,6 @@
 @import './modules/base.css';
+@import './modules/controls.css';
 @import './modules/layout.css';
-@import './modules/forms.css';
-@import './modules/buttons.css';
-@import './modules/upload.css';
-@import './modules/selectors.css';
-@import './modules/searchable-select.css';
-@import './modules/timetable-table.css';
-@import './modules/timetable-cells.css';
-@import './modules/components.css';
-@import './modules/responsive.css';
+@import './modules/timetable.css';
 @import './modules/exams.css';
-@import './modules/manual.css';
+@import './modules/responsive.css';

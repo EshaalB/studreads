@@ -30,3 +30,31 @@ export const isDuplicateManualEntry = (candidate, entries, ignoredId = '') => en
   && entry.startTime === candidate.startTime
   && entry.endTime === candidate.endTime
 );
+
+const toClock = (value) => {
+  const minutes = parseTime(String(value || ''));
+  return minutes === null ? '' : `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+};
+
+const toDay = (value) => {
+  const text = String(value || '').trim().toLowerCase();
+  return DAYS.find((day) => text && day.toLowerCase().startsWith(text.slice(0, 3))) || '';
+};
+
+let counter = 0;
+const newId = () => globalThis.crypto?.randomUUID?.() || `manual-${Date.now()}-${counter++}`;
+
+// Turns classes from a share link, backup file or uploaded timetable into editable entries.
+export const classesToManualEntries = (classes = []) => classes
+  .filter((item) => toDay(item.day))
+  .map((item) => normalizeManualEntry({
+    id: newId(),
+    courseName: item.name ?? item.courseName,
+    day: toDay(item.day),
+    startTime: toClock(item.startTime),
+    endTime: toClock(item.endTime),
+    room: item.room,
+    instructor: item.teacher ?? item.instructor,
+    credits: item.credits
+  }))
+  .filter((entry) => validateManualEntry(entry).valid);

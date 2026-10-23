@@ -1,118 +1,201 @@
-@media print {
-  .no-print,
-  .top-navbar,
-  .app-footer,
-  .file-upload-section,
-  .social-proof-section {
-    display: none !important;
+/* Tablets --------------------------------------------------------------- */
+
+@media (max-width: 960px) {
+  .builder {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
   }
 
-  body {
-    padding: 0;
-    background: #ffffff;
+  .builder-side {
+    position: static;
+    max-height: none;
+    padding-right: 0;
+    overflow: visible;
   }
 
-  .main-layout-container {
-    padding: 0;
-    max-width: 100%;
+  .exams-layout {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .app-card {
-    border: none;
-    box-shadow: none;
-    padding: 0;
+  .exams-layout[data-panel="all"] .my-exams,
+  .exams-layout[data-panel="mine"] .exam-results { display: none; }
+
+  .my-exams {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
+
+  .show-narrow { display: flex !important; }
 }
 
-@media (max-width: 768px) {
-  .main-layout-container {
-    padding: 0.85rem;
-    gap: 1rem;
+/* Phones ---------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  body { font-size: 15px; }
+
+  .hide-narrow { display: none !important; }
+
+  .app-header-inner {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand actions"
+      "tabs tabs";
+    gap: 0 8px;
+    height: auto;
+    padding: 8px 16px 10px;
   }
 
-  .top-navbar {
-    padding: 0.65rem 0.75rem;
-  }
+  .wordmark { grid-area: brand; }
+  .header-actions { grid-area: actions; }
+  .tool-tabs { grid-area: tabs; display: flex; margin-top: 6px; }
+  .tool-tabs > button { flex: 1; }
 
-  .nav-actions {
-    gap: 0.1rem;
-  }
+  .page { padding: 20px 16px 40px; }
+  .page-head h1 { font-size: 21px; }
+  .page-head p { font-size: 14px; }
 
-  .nav-btn { padding: 0.45rem; }
-
-  .app-card {
-    gap: 1.25rem;
-    padding: 0.5rem 0;
-  }
-
-  .workspace-header { align-items: flex-start; flex-direction: column; }
-  .builder-content { grid-template-columns: 1fr; }
-  .builder-controls { position: static; max-height: none; overflow: visible; }
-  .builder-preview { min-height: auto; }
-  .selection-nudge { min-height: 13rem; }
-  .upload-container { grid-template-columns: 1fr; }
-
-  .cta-action-bar {
-    width: 100%;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .cta-btn {
-    width: 100%;
-  }
-
-  .share-actions-bar {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .name-input {
-    width: 100%;
-  }
-
-  .preview-header {
+  .app-footer {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+    padding: 20px 16px 28px;
   }
 
-  .preview-actions {
+  .dropzone-body { padding: 32px 16px; }
+  .dropzone-body .btn { width: 100%; }
+
+  .input,
+  .search-field input,
+  .searchable-select-input { font-size: 16px; } /* stops iOS zooming into fields */
+
+  .toolbar { align-items: stretch; }
+  .toolbar-title h2 { font-size: 18px; }
+
+  .toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     width: 100%;
+  }
+
+  .toolbar-actions .segmented { grid-column: 1 / -1; }
+  .toolbar-actions .segmented > button { flex: 1; }
+  .toolbar-actions .btn { width: 100%; padding: 0 8px; }
+  .toolbar-actions .hide-narrow { display: inline !important; }
+
+  .jump-bar {
+    position: fixed;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 16px;
+    z-index: var(--z-sticky);
+    display: flex;
+    align-items: center;
     justify-content: space-between;
+    height: 46px;
+    padding: 0 16px;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--accent-text);
+    box-shadow: var(--shadow-pop);
+    font-size: 14px;
+    font-weight: 500;
+    animation: toast-in 0.18s ease-out;
   }
 
-  .preview-actions .btn {
-    flex: 1;
+  .jump-bar span { opacity: 0.7; font-weight: 400; }
+
+  .list-wrap,
+  .list-wrap + .hint { display: none; }
+  .agenda { display: grid; }
+
+  .result {
+    grid-template-columns: 16px minmax(0, 1fr);
+    gap: 4px 12px;
   }
 
-  .timetable-grid-wrapper {
-    padding: 0.75rem;
+  .result-time,
+  .result-room {
+    grid-column: 2;
+    text-align: left;
+    font-size: 12.5px;
   }
 
-  .grid-time-header {
-    width: 60px;
-    min-width: 60px;
+  .result-time:empty,
+  .result-room:empty { display: none; }
+
+  .result-date { top: 96px; }
+
+  .filters { flex-direction: column; }
+  .filters select.input { max-width: none; width: 100%; }
+
+  .my-exams { padding: 14px; }
+  .my-exam-list { margin: 0 -14px; }
+  .my-exam-list li { padding-left: 14px; }
+  .row-actions { opacity: 1; }
+
+  .overlay { align-items: flex-end; padding: 0; }
+
+  .dialog {
+    max-width: none;
+    max-height: 88dvh;
+    border-bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 
-  .mobile-agenda { display: grid; gap: 1rem; }
-  .timetable-wrapper { display: none; }
-  .mixed-row { grid-template-columns: 1fr; }
-  .mixed-row .btn-icon { width: 100%; }
-  .file-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
-  .file-actions .btn-danger-outline { grid-column: 1 / -1; }
+  .drawer {
+    width: 100%;
+    height: auto;
+    max-height: 88dvh;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation-name: sheet-in;
+  }
+
+  @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } }
+
+  .mapping-grid { grid-template-columns: 1fr 1fr; }
+  .preview-table th:nth-child(4),
+  .preview-table td:nth-child(4) { display: none; }
 }
 
-@media (max-width: 480px) {
-  .app-card {
+/* Print ----------------------------------------------------------------- */
+
+@media print {
+  @page { margin: 12mm; }
+
+  html, body { background: #fff !important; }
+  body * { visibility: hidden; }
+  .app { display: block; }
+
+  body[data-tool="timetable"] .export-sheet,
+  body[data-tool="timetable"] .export-sheet *,
+  body[data-tool="exams"] .my-exams,
+  body[data-tool="exams"] .my-exams * { visibility: visible; }
+
+  body[data-tool="timetable"] .export-sheet {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     padding: 0;
   }
 
-  .upload-dropzone {
-    min-height: 8rem;
-    padding: 1rem;
-    border-radius: var(--radius-md);
+  body[data-tool="exams"] .my-exams {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid !important;
+    width: 100%;
+    max-height: none;
+    border: 0;
+    color: #1b1b19;
+    overflow: visible;
   }
 
-  .upload-meta-chips .meta-chip:nth-child(2) { display: none; }
-  .cta-action-bar { grid-template-columns: 1fr; }
+  .no-print,
+  .my-exams .add-exam,
+  .my-exams .exam-form { display: none !important; }
+  .week-scroll { break-inside: avoid; }
 }

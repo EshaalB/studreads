@@ -1,23 +1,27 @@
 # StudReads
 
-StudReads is a privacy-first timetable and exam planner for university students. It supports common university Excel layouts and text-based PDF date sheets, turning them into personal weekly schedules and searchable exam plans directly in the browser.
+StudReads is a privacy-first timetable and exam planner for university students. It turns timetable spreadsheets and exam date sheets in almost any format into personal weekly schedules and searchable exam plans, entirely in the browser.
 
 ## Features
 
-- Parses grid-style and column-based `.xlsx` and `.xls` timetables
-- Builds a timetable manually when no spreadsheet is available
-- Lets students review detected columns and sample rows before importing
-- Checks every worksheet and chooses the strongest timetable candidate
-- Keeps spreadsheet processing in the browser
-- Supports primary sections and courses from other sections
-- Provides a mobile agenda and desktop weekly grid
-- Detects overlapping classes
-- Supports inline edits, colour themes, PNG export, and self-contained share links
-- Saves display preferences locally
-- Restores manually created timetables after a refresh
-- Reads text-based PDF, `.xlsx`, and `.xls` exam date sheets
-- Searches exams by subject, course code, programme, or room
-- Builds a personal exam list and exports it as an `.ics` calendar file
+**Timetable**
+- Parses grid-style and column-based `.xlsx`, `.xls`, `.ods` and `.csv` timetables, checking every worksheet
+- Lets students confirm detected columns before importing
+- Supports a primary section plus courses taken in other sections
+- Builds a timetable by hand when no file is available, or turns an imported one into an editable list
+- List and week views, a phone agenda, clash detection and inline corrections
+- Custom name, five colour palettes plus per-course colours, choice of visible details, 12 or 24-hour clock
+- Exports to PNG, print/PDF, calendar (`.ics`, weekly for 16 weeks), CSV and a restorable `.json` backup
+- Share links that open as an editable copy for the recipient
+- Remembers the imported timetable and settings after a refresh; light and dark appearance
+
+**Exam finder**
+- Reads date sheets from PDF (text or scanned), Excel, OpenDocument, CSV, Word `.docx`, photos and screenshots, or pasted text
+- Handles header tables, grids with dates or time slots across the top, and free-text lists with dates on their own lines
+- Copes with merged date cells, two-row headers, wrapped titles, multi-page PDFs, landscape pages and dates without a year
+- Uses printed weekdays to tell day/month from month/day
+- Search and programme filter, a personal exam list with clash warnings, and exams added or edited by hand
+- Exports to calendar (`.ics`), CSV and print, and shares the list as a link
 
 ## Run locally
 
@@ -44,17 +48,17 @@ The importer handles two broad structures:
 
 University spreadsheets vary widely. If a workbook contains several plausible timetable sheets, StudReads evaluates them and reports which sheet it selected. Unsupported or incomplete files receive an actionable error instead of being silently accepted.
 
-For exam date sheets, StudReads recognizes common columns such as subject, course code, date, day, time, and venue. It can also infer these fields from simple text rows in a PDF. Image-only scanned PDFs are intentionally rejected with guidance to run OCR first.
+For exam date sheets, every source is reduced to rows of cells (PDF text and OCR keep each word's position). Three readings run over the same rows: a header-driven table, a date or time-slot grid, and a line-by-line text reading. A table with a recognised header wins unless another reading finds clearly more exams. Scanned PDFs and images go through Tesseract OCR, so results should be checked against the original.
 
 ## Privacy
 
-Uploaded spreadsheet contents are parsed locally in the browser. The application does not include a backend or upload timetable files to a server. Preferences are stored in browser `localStorage`.
+Files are parsed locally in the browser. The application has no backend and never uploads timetable or exam files. Reading an image or scanned PDF downloads the OCR engine and English language data from a public CDN on first use; the image itself stays on the device. Timetables, exam lists and preferences are stored in browser `localStorage`. Share links carry their data inside the URL.
 
 ## Tech stack
 
 - React 19
 - Vite 7
-- SheetJS (`xlsx`) and PDF.js, loaded only during import
+- SheetJS (`xlsx`), PDF.js and Tesseract.js, loaded only during import
 - html2canvas, loaded only during PNG export
 - Vanilla modular CSS
 

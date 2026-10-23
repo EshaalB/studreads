@@ -1,0 +1,387 @@
+/* Toolbar --------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.toolbar-title { min-width: 0; }
+
+.toolbar-title h2 {
+  overflow: hidden;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbar-title p {
+  margin-top: 2px;
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* List view ------------------------------------------------------------- */
+
+.list-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.list-table thead th {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.list-table td,
+.list-table tbody th {
+  padding: 10px 14px;
+  vertical-align: top;
+  text-align: left;
+}
+
+.list-table tr.is-day-start > * { border-top: 1px solid var(--border); }
+.list-table tbody tr:first-child > * { border-top: 0; }
+
+.list-table tbody th.col-day {
+  border-right: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.col-day { width: 120px; }
+.col-time { width: 172px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.col-room { width: 140px; color: var(--text-2); }
+
+.course-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.course-text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+
+.course-text > span:first-child,
+.course-text > .cell-edit:first-child { font-weight: 500; }
+
+.course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+
+.cell-edit {
+  max-width: 100%;
+  margin: -2px -5px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: inherit;
+  text-align: left;
+  font-weight: inherit;
+}
+
+.cell-edit:hover { background: var(--surface-2); }
+
+.cell-input {
+  width: 100%;
+  margin: -4px -6px;
+  padding: 3px 6px;
+  border: 1px solid var(--focus);
+  border-radius: 4px;
+  outline: none;
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent);
+  font-size: 13.5px;
+}
+
+/* Agenda (phones) ------------------------------------------------------- */
+
+.agenda {
+  display: none;
+  gap: 20px;
+}
+
+.agenda-day h3 {
+  margin-bottom: 8px;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.agenda-day ul {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.agenda-item {
+  display: grid;
+  grid-template-columns: 74px 3px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.agenda-item:first-child { border-top: 0; }
+
+.agenda-time {
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.agenda-bar {
+  align-self: stretch;
+  border-radius: 2px;
+}
+
+.agenda-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.agenda-text strong { font-size: 14px; font-weight: 500; line-height: 1.35; }
+.agenda-text span { color: var(--text-3); font-size: 12.5px; }
+.agenda-text span:empty { display: none; }
+
+/* Week view ------------------------------------------------------------- */
+
+.week-scroll {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+.week {
+  --time-col: 56px;
+  min-width: calc(var(--time-col) + var(--days) * 96px);
+}
+
+.week-head,
+.week-body {
+  display: grid;
+  grid-template-columns: var(--time-col) repeat(var(--days), minmax(0, 1fr));
+}
+
+.week-head {
+  border-bottom: 1px solid var(--border);
+}
+
+.week-day {
+  padding: 10px 8px;
+  border-left: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.week-body {
+  position: relative;
+  box-sizing: content-box;
+  padding-bottom: 8px;
+}
+
+.week-times { position: relative; }
+
+.week-times span {
+  position: absolute;
+  right: 8px;
+  color: var(--text-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transform: translateY(4px);
+}
+
+.week-col {
+  position: relative;
+  border-left: 1px solid var(--border);
+  background-image: linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size: 100% var(--hour);
+}
+
+.week-block {
+  position: absolute;
+  display: grid;
+  align-content: start;
+  gap: 1px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+  font-size: 11.5px;
+  line-height: 1.3;
+  overflow: hidden;
+}
+
+.week-block strong {
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.week-block span {
+  overflow: hidden;
+  opacity: 0.78;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-block.is-short { padding-top: 3px; }
+.week-block.is-short span { display: none; }
+.week-block.has-clash { box-shadow: inset 0 0 0 2px var(--warn-line); }
+
+/* Export sheet: off-screen copy used for images and printing ------------ */
+
+.export-sheet {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f4f4f2;
+  --text: #1b1b19;
+  --text-2: #5d5d58;
+  --text-3: #8a8a84;
+  --border: #e3e3de;
+  --border-strong: #cfcfc9;
+  --warn-line: #d9a23a;
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 1040px;
+  padding: 32px;
+  background: #ffffff;
+  color: #1b1b19;
+  color-scheme: light;
+  pointer-events: none;
+}
+
+.export-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.export-head strong { font-size: 20px; letter-spacing: -0.02em; }
+.export-head span { color: var(--text-3); font-size: 13px; }
+.export-sheet .week-scroll { overflow: visible; }
+/* html2canvas draws inset shadows too heavily; a hairline border matches the screen. */
+.export-sheet .week-block { box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.06); }
+.export-sheet .week-block.has-clash { border: 2px solid var(--warn-line); }
+
+/* Customize panel ------------------------------------------------------- */
+
+.palette-list { display: grid; gap: 4px; }
+
+.palette-option {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.palette-option:hover { background: var(--surface-2); }
+.palette-option[aria-checked="true"] { background: var(--surface-2); font-weight: 500; }
+
+.palette-strip {
+  display: flex;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.palette-strip span { flex: 1; }
+
+.colour-list { display: grid; gap: 14px; }
+.colour-list li { display: grid; gap: 6px; }
+
+.colour-name {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.swatch-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.swatch-btn[aria-checked="true"] { outline: 2px solid var(--text); outline-offset: 1px; }
+
+.swatch-custom {
+  background: conic-gradient(#f87171, #fbbf24, #34d399, #60a5fa, #a78bfa, #f472b6, #f87171);
+}
+
+.swatch-custom.is-custom { outline: 2px solid var(--text); outline-offset: 1px; }
+
+.swatch-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}

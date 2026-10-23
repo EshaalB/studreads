@@ -6,47 +6,36 @@ const AboutModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <article ref={dialogRef} className="modal-card" role="dialog" aria-modal="true" aria-labelledby="about-title" onClick={(event) => event.stopPropagation()}>
-        <header className="modal-header">
-          <div className="modal-title">
-            <h2 id="about-title">Why I built StudReads</h2>
-          </div>
-          <button type="button" className="btn-icon" onClick={onClose} aria-label="Close project notes">
-            <X size={20} />
-          </button>
+    <div className="overlay" onClick={onClose}>
+      <article ref={dialogRef} className="dialog" role="dialog" aria-modal="true" aria-labelledby="about-title" onClick={(event) => event.stopPropagation()}>
+        <header className="dialog-header">
+          <h2 id="about-title">About StudReads</h2>
+          <button type="button" className="icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
         </header>
 
-        <div className="modal-body about-story">
+        <div className="dialog-body prose">
           <p>
-            I built this after dealing with university timetable workbooks that were useful for administration but difficult for one student to read. Finding one section meant searching across a large sheet and rebuilding the week by hand.
+            I built this after dealing with university timetable workbooks that were useful for administration but hard for one student to read. Finding one section meant searching a huge sheet and rebuilding the week by hand.
           </p>
           <p>
-            StudReads checks the worksheets in an Excel file, finds the most likely timetable, and turns its rows or grid cells into course entries. You can then choose your own classes and see the week update beside them.
+            StudReads checks every worksheet in the file, finds the most likely timetable, and turns its rows or grid cells into classes. You choose your section and courses and the week builds beside them.
           </p>
           <p>
-            I later added the exam finder for the same reason: date sheets are often long files that students repeatedly search by hand. It reads Excel files and text-based PDFs, then lets you search, save only your exams, and add them to a calendar.
+            The exam finder came from the same problem. Date sheets arrive as PDFs, spreadsheets, Word files and photos of notice boards. It reads all of them, tries table, grid and plain-text layouts, and keeps whichever finds the most exams.
           </p>
 
-          <h3>What I worked on</h3>
-          <ul className="about-list">
-            <li>Handling both column-based and grid-style timetable sheets</li>
-            <li>Finding course, section, day, room and time information</li>
-            <li>Detecting clashes and joining multi-period classes</li>
-            <li>Extracting searchable exam records from spreadsheets and PDFs</li>
-            <li>Providing a manual builder when a timetable file is unavailable</li>
-            <li>Making the result useful on a phone as well as a laptop</li>
+          <h3>Worth knowing</h3>
+          <ul>
+            <li>Shared links open as an editable copy for the person you send them to.</li>
+            <li>Exports include an image, a print-ready page, a calendar file, a spreadsheet and a backup you can restore.</li>
+            <li>Photos and scans are read with text recognition, so check names and times against the original.</li>
           </ul>
-
-          <p className="about-limit">
-            University files vary a lot, so the importers support common layouts rather than every possible file. Scanned PDFs need OCR before the exam finder can read them.
-          </p>
-
-          <div className="about-links">
-            <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" className="btn btn-primary">View the source code</a>
-            <a href="mailto:eshaalrehamat@gmail.com" className="btn btn-secondary">Email me</a>
-          </div>
         </div>
+
+        <footer className="dialog-footer">
+          <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" className="btn">Source code</a>
+          <a href="mailto:eshaalrehamat@gmail.com" className="btn btn-primary">Email me</a>
+        </footer>
       </article>
     </div>
   );

@@ -1,33 +1,32 @@
-import { AlertTriangle, Clock3, MapPin, UserRound } from 'lucide-react';
 import { DAY_ORDER } from '../../utils/constants';
-import { useTimetable } from '../../context/useTimetable';
+import { displayTimeRange } from '../../utils/timeUtils';
 
-const MobileAgenda = ({ classes, getOrAssignColor }) => {
-  const { conflicts, displayOptions } = useTimetable();
+const MobileAgenda = ({ classes, getOrAssignColor, displayOptions, conflicts }) => {
   const days = [...new Set(classes.map((item) => item.day))]
     .sort((a, b) => (DAY_ORDER[a] || 99) - (DAY_ORDER[b] || 99));
 
   return (
-    <div className="mobile-agenda" aria-label="Mobile timetable agenda">
+    <div className="agenda">
       {days.map((day) => (
-        <section className="agenda-day" key={day}>
+        <section className="agenda-day" key={day} aria-label={day}>
           <h3>{day}</h3>
-          <div className="agenda-day-list">
+          <ul>
             {classes.filter((item) => item.day === day).map((item, index) => (
-              <article className={`agenda-item ${conflicts.has(item.id) ? 'has-conflict' : ''}`} key={`${item.id}-${index}`}>
-                <span className="agenda-colour" style={{ backgroundColor: getOrAssignColor(item.name) }} aria-hidden="true" />
-                <div className="agenda-copy">
-                  <div className="agenda-title-row">
-                    <h4>{item.name}</h4>
-                    {conflicts.has(item.id) && <span className="conflict-label"><AlertTriangle size={12} /> Clash</span>}
-                  </div>
-                  <p><Clock3 size={14} /> {item.startTime} to {item.endTime}</p>
-                  {item.room && <p><MapPin size={14} /> {item.room}</p>}
-                  {displayOptions.showTeacher && item.teacher && <p><UserRound size={14} /> {item.teacher}</p>}
-                </div>
-              </article>
+              <li className="agenda-item" key={`${item.id}-${index}`}>
+                <span className="agenda-time">{displayTimeRange(item.startTime, item.endTime, displayOptions.timeFormat)}</span>
+                <span className="agenda-bar" style={{ background: getOrAssignColor(item.name) }} aria-hidden="true" />
+                <span className="agenda-text">
+                  <strong>{item.name}</strong>
+                  <span>{[
+                    displayOptions.showRoom && item.room,
+                    displayOptions.showTeacher && item.teacher,
+                    displayOptions.showSection && item.section
+                  ].filter(Boolean).join(' · ')}</span>
+                </span>
+                {conflicts.has(item.id) && <span className="badge badge-warn">Clash</span>}
+              </li>
             ))}
-          </div>
+          </ul>
         </section>
       ))}
     </div>

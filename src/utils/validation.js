@@ -25,11 +25,11 @@ export const validateFile = (file) => {
 
   const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
   if (!ACCEPTED_FILE_TYPES.includes(fileExtension)) {
-    return { valid: false, error: 'Invalid file type. Please upload an Excel file (.xlsx or .xls)' };
+    return { valid: false, error: 'Choose an Excel, OpenDocument or CSV file.' };
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return { valid: false, error: 'File size exceeds 10MB limit' };
+    return { valid: false, error: 'The file must be smaller than 10 MB.' };
   }
 
   return { valid: true };

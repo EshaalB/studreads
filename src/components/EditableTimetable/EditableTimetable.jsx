@@ -1,148 +1,164 @@
-import { ChevronDown, ChevronUp, Download, Grid3X3, List, Palette } from 'lucide-react';
+import { CalendarPlus, ChevronDown, Download, FileJson, FileSpreadsheet, Image, Link2, Printer, SlidersHorizontal } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { DAY_ORDER } from '../../utils/constants';
-import { showError } from '../../utils/errorHandler';
+import { showError, showSuccess } from '../../utils/errorHandler';
+import { classesToCsv, classesToIcs, downloadFile, fileSlug } from '../../utils/exportUtils';
+import { encodeShare, shareOrCopy } from '../../utils/sharingUtils';
 import { parseTime } from '../../utils/timeUtils';
-import ColorCustomization from '../ColorCustomization';
+import { buildTimetableBackup, buildTimetableShare } from '../../utils/transfer';
+import Menu from '../ui/Menu';
+import CustomizePanel from './CustomizePanel';
+import MobileAgenda from './MobileAgenda';
 import TimetableGrid from './TimetableGrid';
 import TimetableTable from './TimetableTable';
-import MobileAgenda from './MobileAgenda';
 
 const EditableTimetable = () => {
-  const { finalActiveClasses, getOrAssignColor, displayOptions, updateClassField } = useTimetable();
-  const tableRef = useRef();
+  const {
+    finalActiveClasses, getOrAssignColor, displayOptions, setDisplayOptions, updateClassField,
+    conflicts, colorMap, selectedTheme, isManual
+  } = useTimetable();
+  const exportRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
   const [editingCell, setEditingCell] = useState(null);
-  const [editValue, setEditValue] = useState('');
-  const [isColorPaletteOpen, setIsColorPaletteOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+  const [isCustomizeOpen, setIsCustomizeOpen] = useState(false);
+  const view = displayOptions.view === 'grid' ? 'grid' : 'list';
+  const title = displayOptions.title.trim() || 'My timetable';
+  const slug = fileSlug(displayOptions.title, 'timetable');
 
-  const sortedClasses = useMemo(() => {
-    return [...finalActiveClasses].sort((a, b) => {
-      const dayDiff = (DAY_ORDER[a.day] || 99) - (DAY_ORDER[b.day] || 99);
-      if (dayDiff !== 0) return dayDiff;
-      return (parseTime(a.startTime) || 0) - (parseTime(b.startTime) || 0);
-    });
-  }, [finalActiveClasses]);
+  const sortedClasses = useMemo(() => [...finalActiveClasses].sort((a, b) =>
+    (DAY_ORDER[a.day] || 99) - (DAY_ORDER[b.day] || 99) || (parseTime(a.startTime) || 0) - (parseTime(b.startTime) || 0)
+  ), [finalActiveClasses]);
 
-  const getContrastYIQ = useCallback((hex) => {
-    if (!hex || typeof hex !== 'string') return 'black';
-    const cleanHex = hex.replace('#', '');
-    if (cleanHex.length !== 6) return 'black';
-    const r = parseInt(cleanHex.substring(0, 2), 16);
-    const g = parseInt(cleanHex.substring(2, 4), 16);
-    const b = parseInt(cleanHex.substring(4, 6), 16);
-    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-    return (yiq >= 128) ? 'black' : 'white';
-  }, []);
+  const courseCount = useMemo(() => new Set(sortedClasses.map((cls) => cls.name)).size, [sortedClasses]);
+  const clashCount = useMemo(() => Math.ceil(sortedClasses.filter((cls) => conflicts.has(cls.id)).length / 2), [sortedClasses, conflicts]);
 
-  const startEdit = useCallback((classKey, field, currentValue) => {
-    setEditingCell(`${classKey}-${field}`);
-    setEditValue(currentValue || '');
-  }, []);
-
-  const saveEdit = useCallback((classKey, field) => {
+  const saveEdit = useCallback((editKey, field, value) => {
     if (field === 'time') {
-      const parts = editValue.split('-').map(s => s.trim());
-      if (parts.length >= 2) { updateClassField(classKey, 'startTime', parts[0]); updateClassField(classKey, 'endTime', parts[1]); }
-    } else { updateClassField(classKey, field, editValue); }
-    setEditingCell(null); setEditValue('');
-  }, [editValue, updateClassField]);
+      const [start, end] = value.split(/\s*(?:-|–|to)\s*/i).map((part) => part.trim());
+      if (parseTime(start) === null || parseTime(end) === null) {
+        showError('Use a time range such as 9:00 AM - 10:30 AM.');
+        return;
+      }
+      updateClassField(editKey, 'startTime', start);
+      updateClassField(editKey, 'endTime', end);
+    } else if (field !== 'name' || value.trim()) {
+      updateClassField(editKey, field, value);
+    }
+  }, [updateClassField]);
 
-  const cancelEdit = useCallback(() => { setEditingCell(null); setEditValue(''); }, []);
-
-  const exportAsPng = useCallback(async () => {
-    if (!tableRef.current) return;
+  const exportImage = useCallback(async () => {
+    if (!exportRef.current) return;
     setIsExporting(true);
     try {
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(tableRef.current, {
+      const canvas = await html2canvas(exportRef.current, {
         scale: 2,
         backgroundColor: '#ffffff',
-        useCORS: true,
         logging: false,
-        onclone: (clonedDoc) => {
-          const content = clonedDoc.querySelector('.timetable-wrapper') || clonedDoc.querySelector('.timetable-grid-wrapper');
-          if (content) {
-            content.style.overflow = 'visible';
-            content.style.width = 'fit-content';
-            content.style.height = 'auto';
-            content.style.padding = '20px';
-          }
-        },
-        windowWidth: 1200
+        windowWidth: 1200,
+        onclone: (clonedDocument) => {
+          const sheet = clonedDocument.querySelector('.export-sheet');
+          if (sheet) sheet.style.left = '0';
+        }
       });
-      const link = document.createElement('a');
-      link.download = `timetable-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch { showError('Failed to export timetable.'); } finally { setIsExporting(false); }
-  }, []);
+      canvas.toBlob((blob) => {
+        if (blob) downloadFile(`${slug}.png`, blob);
+        else showError('The image could not be created.');
+      }, 'image/png');
+    } catch {
+      showError('The image could not be created.');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [slug]);
+
+  const share = useCallback(async () => {
+    try {
+      const code = await encodeShare(buildTimetableShare({ classes: sortedClasses, title: displayOptions.title.trim(), colorMap, theme: selectedTheme }));
+      const url = `${window.location.origin}${window.location.pathname}?t=${code}`;
+      const result = await shareOrCopy({ url, title });
+      if (result === 'copied') showSuccess('Link copied. Anyone with it can open and edit their own copy.');
+    } catch {
+      showError('The link could not be copied.');
+    }
+  }, [sortedClasses, displayOptions.title, colorMap, selectedTheme, title]);
+
+  const exportItems = [
+    { label: 'Image', hint: 'PNG of the week view', icon: <Image size={15} />, onSelect: exportImage, disabled: isExporting },
+    { label: 'Print or PDF', hint: 'Use “Save as PDF” in the print dialog', icon: <Printer size={15} />, onSelect: () => window.print() },
+    { label: 'Calendar', hint: '.ics, repeats weekly for 16 weeks', icon: <CalendarPlus size={15} />, onSelect: () => downloadFile(`${slug}.ics`, classesToIcs(sortedClasses, { title }), 'text/calendar') },
+    { label: 'Spreadsheet', hint: '.csv for Excel or Sheets', icon: <FileSpreadsheet size={15} />, onSelect: () => downloadFile(`${slug}.csv`, classesToCsv(sortedClasses), 'text/csv') },
+    { separator: true },
+    {
+      label: 'Backup',
+      hint: '.json you can restore later',
+      icon: <FileJson size={15} />,
+      onSelect: () => downloadFile(`${slug}.json`, JSON.stringify(buildTimetableBackup({ classes: sortedClasses, title: displayOptions.title.trim(), colorMap, theme: selectedTheme, display: displayOptions }), null, 2), 'application/json')
+    }
+  ];
 
   if (sortedClasses.length === 0) return null;
 
+  const shared = { getOrAssignColor, displayOptions, conflicts };
+
   return (
-    <div className="timetable-preview-section">
-      <div className="preview-header">
-        <div>
-          <h2>Your week</h2>
+    <div className="timetable">
+      <div className="toolbar">
+        <div className="toolbar-title">
+          <h2>{title}</h2>
+          <p>
+            {courseCount} {courseCount === 1 ? 'course' : 'courses'} · {sortedClasses.length} {sortedClasses.length === 1 ? 'class' : 'classes'} a week
+            {clashCount > 0 && <span className="text-warn"> · {clashCount} {clashCount === 1 ? 'clash' : 'clashes'}</span>}
+          </p>
         </div>
-        <div className="preview-actions">
-          <div className="view-toggle">
-            <button
-              type="button"
-              className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
-              aria-label="List view"
-              title="List view"
-            >
-              <List size={16} />
-            </button>
-            <button
-              type="button"
-              className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-              onClick={() => setViewMode('grid')}
-              aria-label="Grid view"
-              title="Grid view"
-            >
-              <Grid3X3 size={16} />
-            </button>
+        <div className="toolbar-actions">
+          <div className="segmented" role="radiogroup" aria-label="Layout">
+            <button type="button" role="radio" aria-checked={view === 'list'} onClick={() => setDisplayOptions((current) => ({ ...current, view: 'list' }))}>List</button>
+            <button type="button" role="radio" aria-checked={view === 'grid'} onClick={() => setDisplayOptions((current) => ({ ...current, view: 'grid' }))}>Week</button>
           </div>
-          <button type="button" className="btn btn-primary" onClick={exportAsPng} disabled={isExporting}>
-            <Download size={16} /> {isExporting ? 'Saving…' : 'Save as image'}
+          <button type="button" className="btn" onClick={() => setIsCustomizeOpen(true)}>
+            <SlidersHorizontal size={15} /> <span className="hide-narrow">Customize</span>
           </button>
+          <button type="button" className="btn" onClick={share}>
+            <Link2 size={15} /> Share
+          </button>
+          <Menu
+            triggerClassName="btn btn-primary"
+            trigger={<><Download size={15} /> {isExporting ? 'Saving' : 'Export'} <ChevronDown size={14} /></>}
+            items={exportItems}
+          />
         </div>
       </div>
 
-      <button
-        type="button"
-        className="accordion-trigger"
-        onClick={() => setIsColorPaletteOpen(!isColorPaletteOpen)}
-        aria-expanded={isColorPaletteOpen}
-        aria-controls="colour-palette-panel"
-      >
-        <div className="accordion-label"><Palette size={16} /><span>Change course colours</span></div>
-        {isColorPaletteOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
-      {isColorPaletteOpen && <div className="accordion-content" id="colour-palette-panel"><ColorCustomization /></div>}
-
-      {viewMode === 'list' ? (
+      {view === 'list' ? (
         <>
-          <MobileAgenda classes={sortedClasses} getOrAssignColor={getOrAssignColor} />
+          <MobileAgenda classes={sortedClasses} {...shared} />
           <TimetableTable
-            tableRef={tableRef} sortedClasses={sortedClasses} getOrAssignColor={getOrAssignColor} getContrastYIQ={getContrastYIQ}
-            displayOptions={displayOptions} editingCell={editingCell} editValue={editValue} setEditValue={setEditValue} startEdit={startEdit} saveEdit={saveEdit} cancelEdit={cancelEdit}
+            classes={sortedClasses}
+            {...shared}
+            editable={!isManual}
+            editingCell={editingCell}
+            setEditingCell={setEditingCell}
+            onSave={saveEdit}
           />
         </>
       ) : (
-        <div ref={tableRef}>
-          <TimetableGrid
-            sortedClasses={sortedClasses} getOrAssignColor={getOrAssignColor} getContrastYIQ={getContrastYIQ}
-            displayOptions={displayOptions}
-          />
-        </div>
+        <TimetableGrid classes={sortedClasses} {...shared} />
       )}
+
+      {!isManual && view === 'list' && <p className="hint hide-narrow">Click a time, course, teacher or room to correct it.</p>}
+
+      {/* Rendered off-screen for image export and shown on its own when printing. */}
+      <div className="export-sheet" ref={exportRef} aria-hidden="true">
+        <div className="export-head">
+          <strong>{title}</strong>
+          <span>{courseCount} courses · {sortedClasses.length} classes a week</span>
+        </div>
+        <TimetableGrid classes={sortedClasses} {...shared} />
+      </div>
+
+      <CustomizePanel isOpen={isCustomizeOpen} onClose={() => setIsCustomizeOpen(false)} />
     </div>
   );
 };

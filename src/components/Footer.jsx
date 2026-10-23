@@ -1,16 +1,15 @@
-const Footer = ({ onOpenPrivacy }) => {
-  return (
-    <footer className="app-footer" id="contact">
-      <p className="footer-note">
-        Built by <a href="https://github.com/EshaalB" target="_blank" rel="noopener noreferrer">Eshaal</a> after getting tired of rebuilding university timetables by hand.
-      </p>
-      <div className="footer-simple-links">
-        <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer">Source code</a>
-        <button type="button" onClick={onOpenPrivacy}>Privacy</button>
-        <a href="mailto:eshaalrehamat@gmail.com">Email</a>
-      </div>
-    </footer>
-  );
-};
+const Footer = ({ onOpenPrivacy, onOpenAbout }) => (
+  <footer className="app-footer">
+    <p>
+      Built by <a href="https://github.com/EshaalB" target="_blank" rel="noopener noreferrer">Eshaal</a>. Files are read in your browser and never uploaded.
+    </p>
+    <nav aria-label="Footer">
+      <button type="button" className="link-btn" onClick={onOpenAbout}>About</button>
+      <button type="button" className="link-btn" onClick={onOpenPrivacy}>Privacy</button>
+      <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer">Source</a>
+      <a href="mailto:eshaalrehamat@gmail.com">Contact</a>
+    </nav>
+  </footer>
+);
 
 export default Footer;

@@ -43,6 +43,23 @@ export const formatTime = (totalMinutes) => {
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 };
 
+// Displays a stored time string ("08:30", "8:30 AM") in the chosen clock format.
+export const displayTime = (timeStr, format = '12h') => {
+  const minutes = parseTime(timeStr);
+  if (minutes === null) return timeStr || '';
+  if (format === '24h') return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+  return formatTime(minutes);
+};
+
+export const displayTimeRange = (start, end, format = '12h') => [displayTime(start, format), displayTime(end, format)].filter(Boolean).join(' – ');
+
+// "08:30" style value for <input type="time">.
+export const toInputTime = (timeStr) => {
+  const minutes = parseTime(timeStr);
+  if (minutes === null) return '';
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+};
+
 export const checkOverlap = (slot1, slot2) => {
   if (slot1.day !== slot2.day) return false;
 

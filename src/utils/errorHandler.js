@@ -1,31 +1,16 @@
-export const showError = (message) => {
-  const errorDiv = document.createElement('div');
-  errorDiv.className = 'app-toast app-toast-error';
-  errorDiv.textContent = message;
-  errorDiv.setAttribute('role', 'alert');
-
-  document.body.appendChild(errorDiv);
-
-  setTimeout(() => {
-    errorDiv.style.animation = 'slideOut 0.3s ease-out';
-    setTimeout(() => {
-      document.body.removeChild(errorDiv);
-    }, 300);
-  }, 5000);
-};
-export const showSuccess = (message) => {
-const successDiv = document.createElement('div');
-  successDiv.className = 'app-toast app-toast-success';
-  successDiv.textContent = message;
-  successDiv.setAttribute('role', 'status');
-  successDiv.setAttribute('aria-live', 'polite');
-
-  document.body.appendChild(successDiv);
+const showToast = (message, { tone, duration }) => {
+  document.querySelectorAll('.app-toast').forEach((toast) => toast.remove());
+  const toast = document.createElement('div');
+  toast.className = `app-toast app-toast-${tone}`;
+  toast.textContent = message;
+  toast.setAttribute('role', tone === 'error' ? 'alert' : 'status');
+  document.body.appendChild(toast);
 
   setTimeout(() => {
-    successDiv.style.animation = 'slideOut 0.3s ease-out';
-    setTimeout(() => {
-      document.body.removeChild(successDiv);
-    }, 300);
-  }, 3000);
+    toast.classList.add('is-leaving');
+    setTimeout(() => toast.remove(), 200);
+  }, duration);
 };
+
+export const showError = (message) => showToast(message, { tone: 'error', duration: 5000 });
+export const showSuccess = (message) => showToast(message, { tone: 'success', duration: 3200 });

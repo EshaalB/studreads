@@ -1,337 +1,84 @@
-import { Calendar, Github, Share2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useTimetable } from '../../context/useTimetable';
-import { showError, showSuccess } from '../../utils/errorHandler';
-import { decodeState, encodeState } from '../../utils/sharingUtils';
-import { parseWorkbook } from '../../utils/spreadsheetParser';
-import { validateFile } from '../../utils/validation';
-import { normalizeManualEntry } from '../../utils/manualTimetable';
+import { Github, Monitor, Moon, Sun } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useAppearance } from '../../utils/useAppearance';
 import AboutModal from '../AboutModal';
-import EditableTimetable from '../EditableTimetable/EditableTimetable';
 import ExamFinder from '../ExamFinder';
 import Footer from '../Footer';
 import PrivacyModal from '../PrivacyModal';
-import AdditionalCourses from './AdditionalCourses';
-import CourseSelection from './CourseSelection';
-import DisplayOptions from './DisplayOptions';
-import FileUpload from './FileUpload';
-import ManualTimetable from './ManualTimetable';
+import Menu from '../ui/Menu';
+import TimetableWorkspace from './TimetableWorkspace';
+
+// Read once at start-up; the URL is cleaned after the shared data is applied.
+const launchParams = new URLSearchParams(window.location.search);
+const LAUNCH = {
+  timetable: launchParams.get('t'),
+  legacyTimetable: launchParams.get('s'),
+  exams: launchParams.get('x')
+};
+
+const APPEARANCE_ICONS = { system: Monitor, light: Sun, dark: Moon };
 
 const MainLayout = () => {
-  const savedManualEntries = useMemo(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('timetable_manual_v1') || '[]');
-      return Array.isArray(saved) ? saved.map(normalizeManualEntry).filter((entry) => entry.id && entry.courseName) : [];
-    } catch { return []; }
-  }, []);
-  const {
-    rawData, processData, rootSections, activeSection, setActiveSection,
-    selectedCourseIds, setSelectedCourseIds, extraSelections, setExtraSelections,
-    displayOptions, setDisplayOptions, getCoursesForSection, finalActiveClasses,
-    loadSharedTimetable, loadManualTimetable
-  } = useTimetable();
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [isExtraOpen, setIsExtraOpen] = useState(false);
-  const [userName, setUserName] = useState('');
+  const [activeTool, setActiveTool] = useState(LAUNCH.exams && !LAUNCH.timetable ? 'exams' : 'timetable');
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [fileSummary, setFileSummary] = useState(null);
-  const [pendingImport, setPendingImport] = useState(null);
-  const [activeTool, setActiveTool] = useState('timetable');
-  const [isManualMode, setIsManualMode] = useState(savedManualEntries.length > 0);
-  const [manualEntries, setManualEntries] = useState(savedManualEntries);
-  const fileInputRef = useRef();
+  const [appearance, setAppearance] = useAppearance();
+  const AppearanceIcon = APPEARANCE_ICONS[appearance] || Monitor;
+
+  // The print stylesheet prints the active tool.
+  useEffect(() => { document.body.dataset.tool = activeTool; }, [activeTool]);
 
   useEffect(() => {
-    if (!new URLSearchParams(window.location.search).has('s') && savedManualEntries.length > 0) {
-      loadManualTimetable(savedManualEntries);
+    if (LAUNCH.timetable || LAUNCH.legacyTimetable || LAUNCH.exams) {
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, [loadManualTimetable, savedManualEntries]);
-
-  // URL state restoration
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sharedState = params.get('s');
-    if (sharedState) {
-      const decoded = decodeState(sharedState);
-      if (decoded) {
-        if (Array.isArray(decoded.classes) && decoded.classes.length > 0) {
-          loadSharedTimetable(decoded.classes);
-        } else {
-          if (decoded.activeSection) setActiveSection(decoded.activeSection);
-          if (decoded.selectedCourseIds) setSelectedCourseIds(decoded.selectedCourseIds);
-          if (decoded.extraSelections) setExtraSelections(decoded.extraSelections);
-        }
-        window.history.replaceState({}, document.title, window.location.pathname);
-        showSuccess(`Restored ${decoded.userName ? `${decoded.userName}'s` : 'the shared'} timetable.`);
-      }
-    }
-  }, [loadSharedTimetable, setActiveSection, setSelectedCourseIds, setExtraSelections]);
-
-  const handleShare = useCallback(() => {
-    const state = {
-      activeSection,
-      selectedCourseIds,
-      extraSelections,
-      classes: finalActiveClasses,
-      userName: userName.trim()
-    };
-    const encoded = encodeState(state);
-    const url = `${window.location.origin}${window.location.pathname}?s=${encoded}`;
-
-    navigator.clipboard.writeText(url).then(() => {
-      showSuccess('Share link copied to clipboard.');
-    }).catch(() => {
-      showError('Failed to copy link.');
-    });
-  }, [activeSection, selectedCourseIds, extraSelections, finalActiveClasses, userName]);
-
-  const handleFileUpload = useCallback((e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const validation = validateFile(file);
-    if (!validation.valid) { setError(validation.error); showError(validation.error); return; }
-    setIsLoading(true); setError('');
-    const reader = new FileReader();
-    reader.onerror = () => {
-      const message = 'The file could not be read. Try saving it as a new .xlsx file.';
-      setIsLoading(false);
-      setError(message);
-      showError(message);
-    };
-    reader.onload = async (evt) => {
-      try {
-        const XLSX = await import('xlsx');
-        const workbook = XLSX.read(evt.target.result, { type: 'array', cellDates: true });
-        const parsed = parseWorkbook(XLSX, workbook);
-        setPendingImport({
-          rows: parsed.rows,
-          mapping: parsed.mapping,
-          kind: parsed.kind,
-          name: file.name,
-          sheetName: parsed.sheetName,
-          rowCount: parsed.rows.length,
-          warnings: parsed.warnings
-        });
-        showSuccess(`Found ${parsed.rows.length} entries. Review them before building your timetable.`);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'The spreadsheet could not be parsed.';
-        setError(message);
-        showError(message);
-      } finally {
-        setIsLoading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      }
-    };
-    reader.readAsArrayBuffer(file);
   }, []);
-
-  const confirmImport = useCallback(() => {
-    if (!pendingImport) return;
-    if (!pendingImport.mapping.courseName || !pendingImport.mapping.day || !pendingImport.mapping.startTime) {
-      setError('Choose the course, day and start-time columns before continuing.');
-      return;
-    }
-    processData(pendingImport.rows, pendingImport.mapping);
-    setFileSummary({
-      name: pendingImport.name,
-      sheetName: pendingImport.sheetName,
-      rowCount: pendingImport.rowCount,
-      warnings: pendingImport.warnings
-    });
-    setPendingImport(null);
-    setError('');
-    showSuccess(`Loaded ${pendingImport.rowCount} timetable entries from ${pendingImport.sheetName}.`);
-  }, [pendingImport, processData]);
-
-  const updatePendingMapping = useCallback((field, column) => {
-    setPendingImport((current) => current ? {
-      ...current,
-      mapping: { ...current.mapping, [field]: column }
-    } : current);
-  }, []);
-
-  const coursesInActiveSection = useMemo(() => {
-    if (!activeSection) return [];
-    const courses = getCoursesForSection(activeSection);
-    const unique = []; const seen = new Set();
-    courses.forEach(c => { if (!seen.has(c.name)) { unique.push(c); seen.add(c.name); } });
-    return unique.sort((a, b) => a.name.localeCompare(b.name));
-  }, [activeSection, getCoursesForSection]);
-
-  const sectionOptions = useMemo(() => rootSections.map(s => ({ value: s, label: s })), [rootSections]);
-  const toggleCourse = useCallback((id) => setSelectedCourseIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]), [setSelectedCourseIds]);
-  const handleSectionChange = useCallback((v) => { setActiveSection(v); setSelectedCourseIds([]); }, [setActiveSection, setSelectedCourseIds]);
-  const addExtra = useCallback(() => setExtraSelections(prev => [...prev, { id: Date.now() + Math.random(), courseName: '', section: '', courseId: '' }]), [setExtraSelections]);
-  const removeExtra = useCallback((id) => setExtraSelections(prev => prev.filter(s => s.id !== id)), [setExtraSelections]);
-  const updateExtra = useCallback((id, updates) => setExtraSelections(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s)), [setExtraSelections]);
-  const resetUpload = useCallback(() => {
-    Object.keys(localStorage)
-      .filter((key) => key.startsWith('timetable_'))
-      .forEach((key) => localStorage.removeItem(key));
-    window.location.reload();
-  }, []);
-
-  const updateManualEntries = useCallback((entries) => {
-    setManualEntries(entries);
-    loadManualTimetable(entries);
-    try {
-      if (entries.length) localStorage.setItem('timetable_manual_v1', JSON.stringify(entries));
-      else localStorage.removeItem('timetable_manual_v1');
-    } catch {
-      showError('The timetable was updated, but this browser could not save it for your next visit.');
-    }
-  }, [loadManualTimetable]);
-
-  const leaveManualMode = useCallback(() => {
-    if (manualEntries.length > 0) {
-      if (window.confirm('Clear all manually added classes and start over?')) resetUpload();
-      return;
-    }
-    setIsManualMode(false);
-  }, [manualEntries.length, resetUpload]);
-
-  const displayOptionsList = useMemo(() => [
-    { key: 'showTeacher', label: 'Teacher names' },
-    { key: 'showCredits', label: 'Course credits' },
-    { key: 'showSection', label: 'Section labels' }
-  ], []);
-
-  const hasSelectedCourses = selectedCourseIds.length > 0 || extraSelections.filter(s => s.courseId).length > 0;
 
   return (
-    <div className="main-layout-container">
-      <a className="skip-link" href="#main-content">Skip to timetable builder</a>
-      {/* Top Navbar */}
-      <nav className="top-navbar">
-        <div className="nav-brand">
-          <div className="brand-icon"><Calendar size={19} /></div>
-          <div className="brand-lockup">
-            <span className="brand-title">StudReads</span>
-            <small>timetable maker</small>
-          </div>
-        </div>
-        <div className="tool-switch" role="tablist" aria-label="Choose planner tool">
-          <button type="button" role="tab" aria-selected={activeTool === 'timetable'} className={activeTool === 'timetable' ? 'active' : ''} onClick={() => setActiveTool('timetable')}>Weekly timetable</button>
-          <button type="button" role="tab" aria-selected={activeTool === 'exams'} className={activeTool === 'exams' ? 'active' : ''} onClick={() => setActiveTool('exams')}>Exam finder</button>
-        </div>
-        <div className="nav-actions">
-          <button type="button" className="nav-btn" onClick={() => setIsAboutOpen(true)}>
-            <span>Project notes</span>
-          </button>
-          <a className="nav-btn" href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer">
-            <Github size={16} /> <span>Source</span>
+    <div className="app">
+      <a className="skip-link" href="#main-content">Skip to content</a>
+      <header className="app-header">
+        <div className="app-header-inner">
+          <a className="wordmark" href="./" aria-label="StudReads, start page">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="1" width="16" height="16" rx="4" fill="currentColor" /><path d="M5 6.5h8M5 9.5h5M5 12.5h6.5" stroke="var(--surface)" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            StudReads
           </a>
-        </div>
-      </nav>
 
-      {activeTool === 'timetable' ? <div className="app-card" id="main-content">
-        <header className="workspace-header">
-          <div>
-            <h1>Build your week</h1>
-            <p>Upload a timetable or build your own, then see your week immediately.</p>
+          <div className="segmented tool-tabs" role="tablist" aria-label="Planner">
+            <button type="button" role="tab" aria-selected={activeTool === 'timetable'} onClick={() => setActiveTool('timetable')}>Timetable</button>
+            <button type="button" role="tab" aria-selected={activeTool === 'exams'} onClick={() => setActiveTool('exams')}>Exams</button>
           </div>
 
-          {hasSelectedCourses && (
-            <div className="share-actions-bar">
-              <input
-                type="text"
-                placeholder="Name on shared schedule"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                className="input-field name-input"
-              />
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleShare}
-              >
-                <Share2 size={16} /> Copy share link
-              </button>
-            </div>
-          )}
-        </header>
+          <div className="header-actions">
+            <Menu
+              triggerClassName="icon-btn"
+              triggerLabel={`Appearance: ${appearance}`}
+              trigger={<AppearanceIcon size={17} />}
+              items={[
+                { label: 'System', icon: <Monitor size={15} />, active: appearance === 'system', onSelect: () => setAppearance('system') },
+                { label: 'Light', icon: <Sun size={15} />, active: appearance === 'light', onSelect: () => setAppearance('light') },
+                { label: 'Dark', icon: <Moon size={15} />, active: appearance === 'dark', onSelect: () => setAppearance('dark') }
+              ]}
+            />
+            <button type="button" className="btn btn-ghost btn-sm hide-narrow" onClick={() => setIsAboutOpen(true)}>About</button>
+            <a className="icon-btn" href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" aria-label="Source code on GitHub">
+              <Github size={17} />
+            </a>
+          </div>
+        </div>
+      </header>
 
-        {/* Step 1: Upload */}
-        {isManualMode ? (
-          <ManualTimetable entries={manualEntries} onChange={updateManualEntries} onCancel={leaveManualMode} />
-        ) : (
-          <FileUpload
-            rawData={rawData}
-            isLoading={isLoading}
-            error={error}
-            fileSummary={fileSummary}
-            setFileSummary={setFileSummary}
-            fileInputRef={fileInputRef}
-            handleFileUpload={handleFileUpload}
-            resetUpload={resetUpload}
-            processData={processData}
-            onStartManual={() => setIsManualMode(true)}
-            pendingImport={pendingImport}
-            onConfirmImport={confirmImport}
-            onCancelImport={() => { setPendingImport(null); setError(''); }}
-            onUpdateMapping={updatePendingMapping}
-          />
-        )}
+      <main className="page" id="main-content">
+        {/* Both tools stay mounted so switching tabs keeps unsaved work. */}
+        <div hidden={activeTool !== 'timetable'}>
+          <TimetableWorkspace sharedTimetable={LAUNCH.timetable} legacyTimetable={LAUNCH.legacyTimetable} />
+        </div>
+        <div hidden={activeTool !== 'exams'}>
+          <ExamFinder sharedExams={LAUNCH.exams} />
+        </div>
+      </main>
 
-        {rawData.length > 0 && (
-          <main className="builder-content">
-            <aside className="builder-controls" aria-label="Timetable options">
-              <div className="builder-heading">
-                <h2>Your courses</h2>
-                <p>Choose a section, then tick your classes.</p>
-              </div>
-              <CourseSelection
-                sectionOptions={sectionOptions}
-                activeSection={activeSection}
-                handleSectionChange={handleSectionChange}
-                coursesInActiveSection={coursesInActiveSection}
-                selectedCourseIds={selectedCourseIds}
-                toggleCourse={toggleCourse}
-              />
-
-              <AdditionalCourses
-                isExtraOpen={isExtraOpen}
-                setIsExtraOpen={setIsExtraOpen}
-                extraSelections={extraSelections}
-                getCoursesForSection={getCoursesForSection}
-                updateExtra={updateExtra}
-                removeExtra={removeExtra}
-                addExtra={addExtra}
-              />
-
-              <section className="display-preferences" aria-labelledby="display-title">
-                <div>
-                  <h3 id="display-title">Class details</h3>
-                  <p>Choose what appears on the timetable.</p>
-                </div>
-                <DisplayOptions
-                  displayOptions={displayOptions}
-                  setDisplayOptions={setDisplayOptions}
-                  displayOptionsList={displayOptionsList}
-                />
-              </section>
-            </aside>
-
-            <section className="builder-preview" aria-label="Timetable preview">
-              {hasSelectedCourses ? <EditableTimetable /> : (
-                <div className="selection-nudge" role="status">
-                  <Calendar size={28} />
-                  <strong>Your timetable will build here</strong>
-                  <span>{activeSection ? 'Tick a course to add it instantly.' : 'Choose your main section to get started.'}</span>
-                </div>
-              )}
-            </section>
-          </main>
-        )}
-      </div> : <ExamFinder />}
-
-      <Footer
-        onOpenPrivacy={() => setIsPrivacyOpen(true)}
-      />
-
+      <Footer onOpenPrivacy={() => setIsPrivacyOpen(true)} onOpenAbout={() => setIsAboutOpen(true)} />
       <PrivacyModal isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
       <AboutModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </div>
