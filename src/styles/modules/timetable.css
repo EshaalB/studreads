@@ -19,19 +19,6 @@
   background: var(--surface-2);
 }
 
-.bar-icon {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: var(--control);
-  height: var(--control);
-  border-radius: var(--radius);
-  color: var(--text-2);
-}
-
-.bar-icon:hover { background: var(--surface-3); color: var(--text); }
-
 .schedule-title {
   flex: 1;
   min-width: 0;
@@ -119,6 +106,28 @@
 
 .canvas-summary { color: var(--text-2); font-size: var(--text-sm); }
 .canvas-hint { margin-top: var(--space-3); color: var(--text-3); font-size: var(--text-sm); text-align: center; }
+
+/* Shown on an empty timetable: the quickest ways to fill it */
+.welcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.welcome > div:first-child { display: grid; gap: 2px; max-width: 52ch; }
+.welcome strong { font-family: var(--font-display); font-size: var(--text-lg); }
+.welcome span { color: var(--text-2); font-size: var(--text-sm); }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Dropping a file anywhere on the timetable */
+.schedule.is-dragging { outline: 2px dashed var(--focus); outline-offset: 4px; }
 
 /* Settings */
 .settings-section { display: grid; gap: var(--space-3); padding-bottom: var(--space-5); }

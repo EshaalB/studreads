@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarPlus, Image, Link2, Plus, Printer, Search, Upload, X } from 'lucide-react';
+import { CalendarPlus, Image, Link2, Plus, Printer, Search, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { examColumns, examToItem, groupByColumn } from '../../utils/calendarItems';
@@ -9,11 +9,9 @@ import { downloadFile, examsToIcs } from '../../utils/exportUtils';
 import { saveElementAsImage } from '../../utils/imageExport';
 import { decodeShare, encodeShare, shareOrCopy } from '../../utils/sharingUtils';
 import { buildExamShare, readExamPayload } from '../../utils/transfer';
-import { useHistoryStep } from '../../utils/useHistoryStep';
 import AgendaList from '../calendar/AgendaList';
 import TimeGrid from '../calendar/TimeGrid';
 import Dropzone from '../ui/Dropzone';
-import ResumeCard from '../ui/ResumeCard';
 import Segmented from '../ui/Segmented';
 import ExamDialog from './ExamDialog';
 
@@ -68,7 +66,6 @@ const ExamTool = ({ sharedExams }) => {
   const [records, setRecords] = useState(saved.records);
   const [selectedIds, setSelectedIds] = useState(saved.selectedIds || []);
   const [fileInfo, setFileInfo] = useState(saved.fileInfo);
-  const [step, goTo, goBack] = useHistoryStep('exams', saved.records.length ? 'results' : 'start');
   const [panel, setPanel] = useState('all');
   const [view, setView] = useState(saved.view === 'grid' ? 'grid' : 'list');
   const { getOrAssignColor, displayOptions } = useTimetable();
@@ -97,8 +94,7 @@ const ExamTool = ({ sharedExams }) => {
     setProgram('');
     setError('');
     setPanel(selected.length ? 'mine' : 'all');
-    goTo('results');
-  }, [goTo]);
+  }, []);
 
   const loadResult = useCallback((result, name) => showResults(result.records, {
     name,
@@ -131,7 +127,6 @@ const ExamTool = ({ sharedExams }) => {
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : 'The date sheet could not be read.';
       setError(message);
-      if (step !== 'start') showError(message);
     } finally {
       setProgress('');
     }
@@ -220,7 +215,6 @@ const ExamTool = ({ sharedExams }) => {
     setSelectedIds((current) => (current.includes(record.id) ? current : [...current, record.id]));
     if (!fileInfo) setFileInfo({ name: 'My exams', source: 'exams you added', warnings: [] });
     setPanel('mine');
-    goTo('results');
   };
 
   const share = async () => {
@@ -238,63 +232,65 @@ const ExamTool = ({ sharedExams }) => {
     setRecords([]);
     setSelectedIds([]);
     setFileInfo(null);
-    goBack();
   };
 
   const fileInput = <input ref={inputRef} type="file" hidden accept={EXAM_FILE_ACCEPT} onChange={(event) => handleFile(event.target.files?.[0])} aria-label="Upload an exam date sheet" />;
   const dialog = <ExamDialog exam={editing} onSave={saveExam} onDelete={deleteExam} onClose={() => setEditing(null)} />;
 
-  if (step !== 'results' || (records.length === 0 && !editing)) {
+  const pastePanel = (
+    <div className="paste">
+      <label className="field">
+        <span className="field-label">Paste the date sheet</span>
+        <textarea
+          className="input textarea"
+          rows={9}
+          value={pasteText}
+          onChange={(event) => setPasteText(event.target.value)}
+          placeholder={'Monday 18 May 2026\nCS-204 Data Structures   9:00 AM - 12:00 PM   Hall B'}
+          autoFocus
+        />
+      </label>
+      {error && <p className="notice notice-error" role="alert">{error}</p>}
+      <div className="form-actions">
+        <button type="button" className="btn" onClick={() => { setIsPasteOpen(false); setError(''); }}>Cancel</button>
+        <button type="button" className="btn btn-primary" onClick={handlePaste} disabled={!pasteText.trim()}>Find exams</button>
+      </div>
+    </div>
+  );
+
+  // One screen: the bar always offers an upload; until a date sheet is loaded the body
+  // shows the drop area and the other ways to start.
+  if (records.length === 0) {
     return (
-      <section className="screen start" aria-labelledby="exam-start-title">
+      <div className="screen exams">
         {fileInput}
-        <header className="start-head">
-          <h1 id="exam-start-title">Find your exams</h1>
-          <p>Upload the exam date sheet in whatever format it came in, then keep a list of just your exams.</p>
-        </header>
-
-        {records.length > 0 && (
-          <ResumeCard title={fileInfo?.name || 'My exams'} detail={`${mine.length} of ${records.length} exams in your list`} onContinue={() => goTo('results')} />
-        )}
-
-        {isPasteOpen ? (
-          <div className="paste">
-            <label className="field">
-              <span className="field-label">Paste the date sheet</span>
-              <textarea
-                className="input textarea"
-                rows={9}
-                value={pasteText}
-                onChange={(event) => setPasteText(event.target.value)}
-                placeholder={'Monday 18 May 2026\nCS-204 Data Structures   9:00 AM - 12:00 PM   Hall B'}
-                autoFocus
-              />
-            </label>
-            {error && <p className="notice notice-error" role="alert">{error}</p>}
-            <div className="form-actions">
-              <button type="button" className="btn" onClick={() => { setIsPasteOpen(false); setError(''); }}>Cancel</button>
-              <button type="button" className="btn btn-primary" onClick={handlePaste} disabled={!pasteText.trim()}>Find exams</button>
-            </div>
+        <header className="schedule-bar">
+          <div className="bar-title">
+            <strong>Your exams</strong>
+            <span>Upload your date sheet to start</span>
           </div>
-        ) : (
-          <>
-            <Dropzone
-              title="Drop your exam date sheet"
-              hint="PDF, Excel, CSV, Word, or a photo or screenshot. Read on this device, never uploaded."
-              busy={Boolean(progress)}
-              busyText={progress}
-              onFile={handleFile}
-              onBrowse={() => inputRef.current?.click()}
-            />
-            {error && <p className="notice notice-error" role="alert">{error}</p>}
-            <div className="start-links">
-              <button type="button" className="btn" onClick={() => { setError(''); setIsPasteOpen(true); }}>Paste text</button>
-              <button type="button" className="btn" onClick={() => setEditing({ subject: '', date: '' })}>Add exams by hand</button>
-            </div>
-          </>
-        )}
+        </header>
+        <div className="exams-body">
+          {isPasteOpen ? pastePanel : (
+            <>
+              <Dropzone
+                title="Drop your exam date sheet"
+                hint="PDF, Excel, CSV, Word, or a photo or screenshot. Read on this device, never uploaded."
+                busy={Boolean(progress)}
+                busyText={progress}
+                onFile={handleFile}
+                onBrowse={() => inputRef.current?.click()}
+              />
+              {error && <p className="notice notice-error" role="alert">{error}</p>}
+              <div className="start-links">
+                <button type="button" className="btn" onClick={() => { setError(''); setIsPasteOpen(true); }}>Paste text</button>
+                <button type="button" className="btn" onClick={() => setEditing({ subject: '', date: '' })}>Add exams by hand</button>
+              </div>
+            </>
+          )}
+        </div>
         {dialog}
-      </section>
+      </div>
     );
   }
 
@@ -302,7 +298,6 @@ const ExamTool = ({ sharedExams }) => {
     <div className="screen exams">
       {fileInput}
       <header className="schedule-bar">
-        <button type="button" className="bar-icon" onClick={goBack} aria-label="Back to start"><ArrowLeft size={18} /></button>
         <div className="bar-title">
           <strong>{fileInfo?.name || 'My exams'}</strong>
           <span>{records.length} {records.length === 1 ? 'exam' : 'exams'} from {fileInfo?.source || 'your list'}</span>
@@ -313,6 +308,7 @@ const ExamTool = ({ sharedExams }) => {
       </header>
 
       <div className="exams-body">
+        {error && <p className="notice notice-error" role="alert">{error}</p>}
         {fileInfo?.warnings?.map((warning) => <p className="notice" key={warning}>{warning}</p>)}
 
         <Segmented

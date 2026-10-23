@@ -90,19 +90,7 @@
 .screen { animation: screen-in 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
 @keyframes screen-in { from { opacity: 0; transform: translateY(6px); } }
 
-/* Start screens: one centred column ---------------------------------------- */
-
-.start,
-.narrow {
-  display: grid;
-  gap: var(--space-4);
-  max-width: var(--narrow);
-  margin: 0 auto;
-}
-
-.start-head { margin-bottom: var(--space-2); text-align: center; }
-.start-head p { max-width: 46ch; margin: var(--space-2) auto 0; color: var(--text-2); font-size: var(--text-lg); }
-
+/* Ways to start, shown inside the exam frame until a date sheet is loaded */
 .start-links {
   display: flex;
   flex-wrap: wrap;
@@ -113,8 +101,7 @@
 .paste { display: grid; gap: var(--space-3); }
 .paste .form-actions { justify-content: flex-end; }
 
-/* Import review */
-.review { display: grid; gap: var(--space-4); }
+/* Import review dialog */
 
 .mapping-grid {
   display: grid;
@@ -151,7 +138,6 @@
 
   .page { padding: var(--space-5) var(--space-3) var(--space-6); }
   h1 { font-size: 22px; }
-  .start-head p { font-size: var(--text-md); }
   .start-links .btn { flex: 1 1 auto; }
   .mapping-grid { grid-template-columns: 1fr 1fr; }
 }

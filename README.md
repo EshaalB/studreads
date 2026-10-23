@@ -5,12 +5,12 @@ StudReads is a privacy-first timetable and exam planner for university students.
 ## Features
 
 **Timetable**
-- One centred editor, modelled on a paper planner: a week grid with labelled actions beside it
+- Opens straight to the week grid, modelled on a paper planner, with labelled actions beside it; upload or drop a file onto it at any time
 - Import grid-style or column-based `.xlsx`, `.xls`, `.ods` and `.csv` timetables, confirm the columns, then tick your courses (including courses taken with another section)
 - Or start from scratch: click an empty time slot or "Add class"; click any class to edit it, change its colour or delete it
 - Week and list views, clash detection, and a Customise panel: palettes or any colour per course, filled or tinted classes, row height, days shown, visible details, 12 or 24-hour clock
 - Save an image or print exactly what is on screen, or export a calendar (`.ics`) or backup (`.json`) that can be imported again
-- Share links that open as an editable copy; light and dark mode; Back works with the browser and phone gestures
+- Share links that open as an editable copy; light and dark mode
 
 **Exam finder**
 - Reads date sheets from PDF (text or scanned), Excel, OpenDocument, CSV, Word `.docx`, photos and screenshots, or pasted text
@@ -56,7 +56,7 @@ For exam date sheets, every source is reduced to rows of cells (PDF text and OCR
 src/
   components/
     layout/     app shell, header, footer, about and privacy dialogs
-    timetable/  start screen, import review, editor, week grid, list, class and course dialogs
+    timetable/  editor, column-check, class and course dialogs, customise panel
     exams/      exam finder and exam dialog
     calendar/   TimeGrid and AgendaList, shared by the timetable and "My exams"
     ui/         shared controls: Dialog, Menu, Segmented, Dropzone, ColorField, ThemeToggle

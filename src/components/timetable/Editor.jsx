@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarPlus, Download, FileJson, FilePlus2, Image, Link2, ListChecks, Plus, Printer, Settings, Upload } from 'lucide-react';
+import { CalendarPlus, Download, FileJson, FilePlus2, Image, Link2, ListChecks, Plus, Printer, Settings, Upload } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { classToItem, groupByColumn, weekColumns } from '../../utils/calendarItems';
@@ -17,14 +17,19 @@ import SettingsPanel from './SettingsPanel';
 
 const toClock = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
-const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
+const Editor = ({ isLoading, pickerRequest, onUpload, onFile, onSample, onNew }) => {
   const {
     classes, conflicts, getOrAssignColor, displayOptions, setDisplayOptions, colorMap, selectedTheme,
     hasSource, removeClass, addClasses
   } = useTimetable();
   const captureRef = useRef(null);
   const [editing, setEditing] = useState(null);
-  const [isPickerOpen, setIsPickerOpen] = useState(openPicker);
+  // The picker opens when asked from here, or whenever a new file has been loaded.
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [handledRequest, setHandledRequest] = useState(pickerRequest);
+  const pickerVisible = isPickerOpen || pickerRequest !== handledRequest;
+  const closePicker = () => { setIsPickerOpen(false); setHandledRequest(pickerRequest); };
+  const [isDragging, setIsDragging] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -81,9 +86,14 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
   ].map((item) => ({ ...item, disabled: empty }));
 
   return (
-    <div className="screen schedule">
+    <div
+      className={`screen schedule ${isDragging ? 'is-dragging' : ''}`}
+      onDragEnter={(event) => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setIsDragging(true); } }}
+      onDragOver={(event) => { if (event.dataTransfer.types.includes('Files')) event.preventDefault(); }}
+      onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsDragging(false); }}
+      onDrop={(event) => { event.preventDefault(); setIsDragging(false); onFile(event.dataTransfer.files?.[0]); }}
+    >
       <header className="schedule-bar">
-        <button type="button" className="bar-icon" onClick={onBack} aria-label="Back to start"><ArrowLeft size={18} /></button>
         <input
           className="schedule-title"
           value={displayOptions.title}
@@ -100,12 +110,12 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
       <div className="schedule-body">
         <nav className="schedule-actions" aria-label="Timetable actions">
           <button type="button" className="action action-primary" onClick={() => setEditing({ day: 'Monday', startTime: '09:00', endTime: '10:00' })}><Plus size={16} /> Add class</button>
+          <button type="button" className="action" onClick={onUpload} disabled={isLoading}><Upload size={16} /> {isLoading ? 'Reading…' : 'Upload file'}</button>
           {hasSource && <button type="button" className="action" onClick={() => setIsPickerOpen(true)}><ListChecks size={16} /> Choose courses</button>}
           <button type="button" className="action" onClick={saveImage} disabled={empty || isSaving}><Image size={16} /> {isSaving ? 'Saving…' : 'Save image'}</button>
           <button type="button" className="action" onClick={() => window.print()} disabled={empty}><Printer size={16} /> Print</button>
           <Menu triggerClassName="action" trigger={<><Download size={16} /> Export</>} items={exportItems} />
           <button type="button" className="action" onClick={share} disabled={empty}><Link2 size={16} /> Share</button>
-          <button type="button" className="action" onClick={onImport}><Upload size={16} /> Import</button>
           <button type="button" className="action" onClick={onNew}><FilePlus2 size={16} /> New timetable</button>
         </nav>
 
@@ -122,6 +132,19 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
               options={[{ value: 'grid', label: 'Week' }, { value: 'list', label: 'List' }]}
             />
           </div>
+
+          {empty && (
+            <div className="welcome" role="note">
+              <div>
+                <strong>{isLoading ? 'Reading your file…' : 'Start with your university’s timetable'}</strong>
+                <span>Upload or drop the Excel or CSV file, or click any time slot below to add classes yourself.</span>
+              </div>
+              <div className="welcome-actions">
+                <button type="button" className="btn btn-primary" onClick={onUpload} disabled={isLoading}><Upload size={15} /> Upload file</button>
+                <button type="button" className="btn" onClick={onSample}>Try the sample</button>
+              </div>
+            </div>
+          )}
 
           {/* What you see here is what is saved as an image and printed. */}
           <div className="capture" ref={captureRef} data-print-target="timetable">
@@ -144,16 +167,12 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
             )}
           </div>
 
-          <p className="canvas-hint">
-            {empty
-              ? (hasSource ? 'Choose your courses from the file, or click a time slot to add a class.' : 'Click a time slot or “Add class” to start.')
-              : 'Click a class to edit it, change its colour or delete it.'}
-          </p>
+          {!empty && <p className="canvas-hint">Click a class to edit it, change its colour or delete it. Drop a file here to import another timetable.</p>}
         </section>
       </div>
 
       <ClassDialog item={editing} onClose={() => setEditing(null)} />
-      {hasSource && <CoursePicker isOpen={isPickerOpen} onClose={() => setIsPickerOpen(false)} />}
+      {hasSource && <CoursePicker isOpen={pickerVisible} onClose={closePicker} />}
       <SettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
