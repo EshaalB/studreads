@@ -323,24 +323,19 @@ input[type="checkbox"] {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Menu (components/ui/Menu.jsx) */
-.menu { position: relative; }
-
+/* Menu (components/ui/Menu.jsx): rendered in <body>, positioned against its button */
 .menu-popover {
-  position: absolute;
-  top: calc(100% + 6px);
+  position: fixed;
   z-index: var(--z-menu);
-  min-width: 230px;
+  max-width: calc(100vw - 16px);
   padding: var(--space-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  color: var(--text);
   box-shadow: var(--shadow-pop);
   animation: pop 0.14s ease-out;
 }
-
-.menu-start { left: 0; }
-.menu-end { right: 0; }
 
 @keyframes pop { from { opacity: 0; transform: translateY(-4px); } }
 

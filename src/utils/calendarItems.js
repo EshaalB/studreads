@@ -2,9 +2,10 @@
 import { DAYS } from './constants.js';
 import { displayTimeRange, parseTime } from './timeUtils.js';
 
-// Monday to Friday always; weekends only when something is on them.
-export const weekColumns = (classes) => DAYS
-  .filter((day, index) => index < 5 || classes.some((cls) => cls.day === day))
+// days: 'auto' shows Monday to Friday plus any weekend day with classes,
+// 'six' Monday to Saturday, 'all' the whole week.
+export const weekColumns = (classes, days = 'auto') => DAYS
+  .filter((day, index) => days === 'all' || index < 5 || (days === 'six' && index === 5) || classes.some((cls) => cls.day === day))
   .map((day) => ({ key: day, label: day, short: day.slice(0, 3) }));
 
 export const classToItem = (cls, { getColor, displayOptions, conflicts }) => ({

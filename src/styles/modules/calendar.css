@@ -1,6 +1,24 @@
 /* Shared calendar views (components/calendar): the time grid and the agenda list.
    Used by the timetable editor and by "My exams". */
 
+/* Capture area: the part of the screen that "Save image" and "Print" reproduce.
+   Its heading only appears in the image and on paper; on screen the title bar shows it. */
+
+.capture { background: var(--surface); }
+.capture-head { display: none; align-items: baseline; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-3); }
+.capture-head strong { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 800; }
+.capture-head span { color: var(--text-3); font-size: var(--text-sm); }
+
+.capture.is-capturing { padding: var(--space-5); }
+.capture.is-capturing .capture-head { display: flex; }
+.capture.is-capturing .grid-scroll { overflow: visible; }
+.capture.is-capturing .agenda-row-remove { display: none; }
+/* The image renderer draws inset shadows too heavily; borders give the same look. */
+.capture.is-capturing .grid-block { box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.08); }
+.capture.is-capturing .grid-block.has-clash { border: 2px solid var(--warn-line); }
+.capture.is-capturing .is-tinted .grid-block,
+.capture.is-capturing .is-tinted .agenda-row { box-shadow: none; border-left: 3px solid var(--block); }
+
 /* Time grid ------------------------------------------------------------------ */
 
 .grid-scroll { overflow-x: auto; }
@@ -72,6 +90,8 @@
   gap: 2px;
   padding: 5px 7px;
   border-radius: var(--radius);
+  background: var(--block);
+  color: var(--block-text);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   font-size: var(--text-xs);
   line-height: 16px;
@@ -116,6 +136,16 @@
 
 .grid-block.has-clash { box-shadow: inset 0 0 0 2px var(--warn-line); }
 
+/* "Tinted" style: a light wash of the course colour with a solid edge. */
+.is-tinted .grid-block,
+.is-tinted .agenda-row {
+  background: color-mix(in srgb, var(--block) 26%, var(--surface));
+  color: var(--text);
+  box-shadow: inset 3px 0 0 var(--block);
+}
+
+.is-tinted .grid-block.has-clash { box-shadow: inset 3px 0 0 var(--block), inset 0 0 0 2px var(--warn-line); }
+
 /* Agenda list ---------------------------------------------------------------- */
 
 .agenda { display: grid; gap: var(--space-4); }
@@ -126,6 +156,8 @@
   display: flex;
   align-items: stretch;
   border-radius: var(--radius);
+  background: var(--block);
+  color: var(--block-text);
   overflow: hidden;
 }
 

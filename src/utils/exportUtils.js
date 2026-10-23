@@ -15,23 +15,6 @@ export const downloadFile = (fileName, content, type) => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
 
-const csvCell = (value) => {
-  const text = String(value ?? '');
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-};
-
-export const toCsv = (rows) => `\ufeff${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
-
-export const classesToCsv = (classes) => toCsv([
-  ['Day', 'Start', 'End', 'Course', 'Room', 'Teacher', 'Credits', 'Section'],
-  ...classes.map((item) => [item.day, item.startTime, item.endTime, item.name, item.room, item.teacher, item.credits, item.section])
-]);
-
-export const examsToCsv = (records) => toCsv([
-  ['Date', 'Day', 'Time', 'Code', 'Subject', 'Room', 'Programme'],
-  ...records.map((record) => [record.date, record.day, record.time, record.code, record.subject, record.room, record.program])
-]);
-
 const pad = (value) => String(value).padStart(2, '0');
 const icsText = (value) => String(value || '').replace(/([,;\\])/g, '\\$1').replace(/\n/g, '\\n');
 const icsDate = (date) => `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;

@@ -8,8 +8,8 @@ StudReads is a privacy-first timetable and exam planner for university students.
 - One centred editor, modelled on a paper planner: a week grid with labelled actions beside it
 - Import grid-style or column-based `.xlsx`, `.xls`, `.ods` and `.csv` timetables, confirm the columns, then tick your courses (including courses taken with another section)
 - Or start from scratch: click an empty time slot or "Add class"; click any class to edit it, change its colour or delete it
-- Week and list views, clash detection, palettes plus any custom colour per course, 12 or 24-hour clock
-- Save as an image, print, or export a calendar (`.ics`), spreadsheet (`.csv`) or backup (`.json`) that can be imported again
+- Week and list views, clash detection, and a Customise panel: palettes or any colour per course, filled or tinted classes, row height, days shown, visible details, 12 or 24-hour clock
+- Save an image or print exactly what is on screen, or export a calendar (`.ics`) or backup (`.json`) that can be imported again
 - Share links that open as an editable copy; light and dark mode; Back works with the browser and phone gestures
 
 **Exam finder**
@@ -20,7 +20,8 @@ StudReads is a privacy-first timetable and exam planner for university students.
 - Reads times written as `0900-1200`, separate hour columns, Excel fractions, "hrs", session names such as "Morning" defined in a note, or one time printed above the table
 - Uses printed weekdays to tell day/month from month/day
 - Search and programme filter, a personal exam list with clash warnings, and exams added or edited by hand
-- Exports to calendar (`.ics`), CSV and print, and shares the list as a link
+- "My exams" in list or calendar view (the same components as the timetable), with remove, delete and Undo
+- Saves as an image, prints, exports to calendar (`.ics`) and shares the list as a link
 
 ## Run locally
 
@@ -57,6 +58,7 @@ src/
     layout/     app shell, header, footer, about and privacy dialogs
     timetable/  start screen, import review, editor, week grid, list, class and course dialogs
     exams/      exam finder and exam dialog
+    calendar/   TimeGrid and AgendaList, shared by the timetable and "My exams"
     ui/         shared controls: Dialog, Menu, Segmented, Dropzone, ColorField, ThemeToggle
   context/      timetable state (one list of classes, the imported file, colours, settings)
   utils/        parsers, exporters, share links and other plain functions

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { readableText } from '../../utils/themes';
 import { displayTime } from '../../utils/timeUtils';
 
-const HOUR_HEIGHT = 64;
+const ROW_HEIGHTS = { compact: 48, regular: 64, large: 84 };
 const DEFAULT_HOURS = [8, 15];
 
 // Items that overlap in one column sit side by side.
@@ -43,7 +43,8 @@ const hourLabel = (hour, format) => (format === '24h' ? `${String(hour).padStart
  * items:   [{ id, column, start, end, title, time, details, color, clash }] with start/end
  *          in minutes; items without a start are shown in an "untimed" row under the header.
  */
-const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHours = DEFAULT_HOURS }) => {
+const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHours = DEFAULT_HOURS, rowHeight = 'regular', blockStyle = 'filled' }) => {
+  const HOUR_HEIGHT = ROW_HEIGHTS[rowHeight] || ROW_HEIGHTS.regular;
   const { startHour, endHour, timed, untimed } = useMemo(() => {
     const placed = items.filter((item) => item.start !== null && item.start !== undefined);
     const min = Math.min(...placed.map((item) => item.start));
@@ -70,7 +71,7 @@ const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHo
       type="button"
       key={item.id}
       className={`grid-block ${item.clash ? 'has-clash' : ''} ${className}`}
-      style={{ ...style, background: item.color, color: readableText(item.color) }}
+      style={{ ...style, '--block': item.color, '--block-text': readableText(item.color) }}
       onClick={() => onSelect?.(item.id)}
       tabIndex={onSelect ? 0 : -1}
       aria-label={[item.title, item.time, ...item.details].filter(Boolean).join(', ')}
@@ -83,7 +84,7 @@ const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHo
 
   return (
     <div className="grid-scroll">
-      <div className="time-grid" style={{ '--columns': columns.length, '--hour': `${HOUR_HEIGHT}px` }}>
+      <div className={`time-grid ${blockStyle === 'tinted' ? 'is-tinted' : ''}`} style={{ '--columns': columns.length, '--hour': `${HOUR_HEIGHT}px` }}>
         <div className="grid-head" aria-hidden="true">
           <span />
           {columns.map((column) => (

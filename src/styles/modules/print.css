@@ -1,26 +1,38 @@
-/* Printing shows only the active tool's document:
-   the timetable's week view, or the "My exams" list. */
+/* Printing shows the same capture area as "Save image" for the active tool,
+   on a light background so it does not use a page of ink in dark mode. */
 
 @media print {
   @page { margin: 12mm; }
 
-  html, body { background: #fff !important; color: #0a356a; }
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f3ead0;
+    --text: #0a356a;
+    --text-2: #43597c;
+    --text-3: #6f7d94;
+    --border: #e6d9b8;
+    --border-strong: #cdbd94;
+  }
+
+  html, body { background: #fff !important; }
   body * { visibility: hidden; }
 
-  body[data-tool="timetable"] .export-sheet,
-  body[data-tool="timetable"] .export-sheet *,
-  body[data-tool="exams"] .print-area,
-  body[data-tool="exams"] .print-area * { visibility: visible; }
+  body[data-tool="timetable"] [data-print-target="timetable"],
+  body[data-tool="timetable"] [data-print-target="timetable"] *,
+  body[data-tool="exams"] [data-print-target="exams"],
+  body[data-tool="exams"] [data-print-target="exams"] * { visibility: visible; }
 
-  body[data-tool="timetable"] .export-sheet,
-  body[data-tool="exams"] .print-area {
+  [data-print-target] {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    padding: 0;
   }
 
-  .print-only { display: block; margin-bottom: 12px; }
-  .grid-scroll { break-inside: avoid; }
+  [data-print-target] .capture-head { display: flex; }
+  [data-print-target] .grid-scroll { overflow: visible; }
+  [data-print-target] .time-grid { min-width: 0; }
+  [data-print-target] .agenda-row-remove { display: none; }
+  .grid-block, .agenda-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
 }

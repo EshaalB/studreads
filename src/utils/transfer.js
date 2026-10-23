@@ -30,7 +30,10 @@ export const buildTimetableBackup = ({ classes, title, colorMap, theme, display 
   }))
 });
 
-const DISPLAY_KEYS = { showTeacher: 'boolean', showRoom: 'boolean', showCredits: 'boolean', showSection: 'boolean', timeFormat: 'string', view: 'string' };
+const DISPLAY_KEYS = {
+  showTeacher: 'boolean', showRoom: 'boolean', showCredits: 'boolean', showSection: 'boolean',
+  timeFormat: 'string', view: 'string', days: 'string', rowHeight: 'string', blockStyle: 'string'
+};
 
 // Accepts a share payload, a backup file or a link from the previous format.
 export const readTimetablePayload = (data) => {

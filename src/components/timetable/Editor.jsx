@@ -1,9 +1,10 @@
-import { ArrowLeft, CalendarPlus, Download, FileJson, FilePlus2, FileSpreadsheet, Image, Link2, ListChecks, Plus, Printer, Settings, Upload } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Download, FileJson, FilePlus2, Image, Link2, ListChecks, Plus, Printer, Settings, Upload } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { classToItem, groupByColumn, weekColumns } from '../../utils/calendarItems';
 import { showError, showSuccess } from '../../utils/errorHandler';
-import { classesToCsv, classesToIcs, downloadFile, fileSlug } from '../../utils/exportUtils';
+import { classesToIcs, downloadFile, fileSlug } from '../../utils/exportUtils';
+import { saveElementAsImage } from '../../utils/imageExport';
 import { encodeShare, shareOrCopy } from '../../utils/sharingUtils';
 import { buildTimetableBackup, buildTimetableShare } from '../../utils/transfer';
 import AgendaList from '../calendar/AgendaList';
@@ -17,19 +18,25 @@ import SettingsPanel from './SettingsPanel';
 const toClock = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
 const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
-  const { classes, conflicts, getOrAssignColor, displayOptions, setDisplayOptions, colorMap, selectedTheme, hasSource, removeClass, addClasses } = useTimetable();
-  const exportRef = useRef(null);
+  const {
+    classes, conflicts, getOrAssignColor, displayOptions, setDisplayOptions, colorMap, selectedTheme,
+    hasSource, removeClass, addClasses
+  } = useTimetable();
+  const captureRef = useRef(null);
   const [editing, setEditing] = useState(null);
   const [isPickerOpen, setIsPickerOpen] = useState(openPicker);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const view = displayOptions.view === 'list' ? 'list' : 'grid';
   const title = displayOptions.title.trim();
   const slug = fileSlug(title, 'timetable');
+  const empty = classes.length === 0;
   const courseCount = new Set(classes.map((cls) => cls.name)).size;
   const clashCount = Math.ceil(conflicts.size / 2);
-  const columns = useMemo(() => weekColumns(classes), [classes]);
+  const summary = empty ? 'No classes yet' : `${courseCount} ${courseCount === 1 ? 'course' : 'courses'}, ${classes.length} ${classes.length === 1 ? 'class' : 'classes'} a week`;
+
+  const columns = useMemo(() => weekColumns(classes, displayOptions.days), [classes, displayOptions.days]);
   const items = useMemo(() => classes.map((cls) => classToItem(cls, { getColor: getOrAssignColor, displayOptions, conflicts })), [classes, getOrAssignColor, displayOptions, conflicts]);
   const selectClass = (id) => setEditing(classes.find((cls) => cls.id === id));
 
@@ -40,28 +47,18 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
     showSuccess(`Deleted ${removed.name} (${removed.day.slice(0, 3)}).`, { label: 'Undo', onClick: () => addClasses([removed]) });
   };
 
+  // The image is taken from the timetable on screen, so it looks exactly like what you see.
   const saveImage = useCallback(async () => {
-    if (!exportRef.current || classes.length === 0) return;
-    setIsExporting(true);
+    if (!captureRef.current || empty) return;
+    setIsSaving(true);
     try {
-      const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(exportRef.current, {
-        scale: 2,
-        backgroundColor: '#f9f3e2',
-        logging: false,
-        windowWidth: 1200,
-        onclone: (clonedDocument) => {
-          const sheet = clonedDocument.querySelector('.export-sheet');
-          if (sheet) sheet.style.left = '0';
-        }
-      });
-      canvas.toBlob((blob) => (blob ? downloadFile(`${slug}.png`, blob) : showError('The image could not be created.')), 'image/png');
+      await saveElementAsImage(captureRef.current, `${slug}.png`);
     } catch {
       showError('The image could not be created.');
     } finally {
-      setIsExporting(false);
+      setIsSaving(false);
     }
-  }, [classes.length, slug]);
+  }, [empty, slug]);
 
   const share = useCallback(async () => {
     try {
@@ -73,10 +70,8 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
     }
   }, [classes, title, colorMap, selectedTheme]);
 
-  const empty = classes.length === 0;
   const exportItems = [
-    { label: 'Calendar', hint: '.ics, repeats weekly for 16 weeks', icon: <CalendarPlus size={15} />, onSelect: () => downloadFile(`${slug}.ics`, classesToIcs(classes, { title: title || 'Timetable' }), 'text/calendar') },
-    { label: 'Spreadsheet', hint: '.csv for Excel or Google Sheets', icon: <FileSpreadsheet size={15} />, onSelect: () => downloadFile(`${slug}.csv`, classesToCsv(classes), 'text/csv') },
+    { label: 'Calendar', hint: '.ics for Google, Apple or Outlook', icon: <CalendarPlus size={15} />, onSelect: () => downloadFile(`${slug}.ics`, classesToIcs(classes, { title: title || 'Timetable' }), 'text/calendar') },
     {
       label: 'Backup',
       hint: '.json you can import later',
@@ -98,7 +93,7 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
           aria-label="Timetable name"
         />
         <button type="button" className="bar-button" onClick={() => setIsSettingsOpen(true)}>
-          <Settings size={16} /> <span>Settings</span>
+          <Settings size={16} /> <span>Customise</span>
         </button>
       </header>
 
@@ -106,9 +101,9 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
         <nav className="schedule-actions" aria-label="Timetable actions">
           <button type="button" className="action action-primary" onClick={() => setEditing({ day: 'Monday', startTime: '09:00', endTime: '10:00' })}><Plus size={16} /> Add class</button>
           {hasSource && <button type="button" className="action" onClick={() => setIsPickerOpen(true)}><ListChecks size={16} /> Choose courses</button>}
-          <button type="button" className="action" onClick={saveImage} disabled={empty || isExporting}><Image size={16} /> {isExporting ? 'Saving…' : 'Save image'}</button>
+          <button type="button" className="action" onClick={saveImage} disabled={empty || isSaving}><Image size={16} /> {isSaving ? 'Saving…' : 'Save image'}</button>
           <button type="button" className="action" onClick={() => window.print()} disabled={empty}><Printer size={16} /> Print</button>
-          <Menu triggerClassName="action" align="start" trigger={<><Download size={16} /> Export</>} items={exportItems} />
+          <Menu triggerClassName="action" trigger={<><Download size={16} /> Export</>} items={exportItems} />
           <button type="button" className="action" onClick={share} disabled={empty}><Link2 size={16} /> Share</button>
           <button type="button" className="action" onClick={onImport}><Upload size={16} /> Import</button>
           <button type="button" className="action" onClick={onNew}><FilePlus2 size={16} /> New timetable</button>
@@ -117,7 +112,7 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
         <section className="schedule-canvas" aria-label="Timetable">
           <div className="canvas-head">
             <p className="canvas-summary">
-              {empty ? 'No classes yet' : `${courseCount} ${courseCount === 1 ? 'course' : 'courses'}, ${classes.length} ${classes.length === 1 ? 'class' : 'classes'} a week`}
+              {summary}
               {clashCount > 0 && <span className="text-warn"> · {clashCount} {clashCount === 1 ? 'clash' : 'clashes'}</span>}
             </p>
             <Segmented
@@ -128,17 +123,26 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
             />
           </div>
 
-          {view === 'grid' || empty ? (
-            <TimeGrid
-              columns={columns}
-              items={items}
-              timeFormat={displayOptions.timeFormat}
-              onSelect={selectClass}
-              onAddAt={(day, minutes) => setEditing({ day, startTime: toClock(minutes), endTime: toClock(Math.min(minutes + 60, 23 * 60 + 59)) })}
-            />
-          ) : (
-            <AgendaList groups={groupByColumn(columns, items)} onSelect={selectClass} onRemove={deleteClass} removeLabel="Delete" />
-          )}
+          {/* What you see here is what is saved as an image and printed. */}
+          <div className="capture" ref={captureRef} data-print-target="timetable">
+            <div className="capture-head">
+              <strong>{title || 'My timetable'}</strong>
+              <span>{summary}</span>
+            </div>
+            {view === 'grid' || empty ? (
+              <TimeGrid
+                columns={columns}
+                items={items}
+                timeFormat={displayOptions.timeFormat}
+                rowHeight={displayOptions.rowHeight}
+                blockStyle={displayOptions.blockStyle}
+                onSelect={selectClass}
+                onAddAt={(day, minutes) => setEditing({ day, startTime: toClock(minutes), endTime: toClock(Math.min(minutes + 60, 23 * 60 + 59)) })}
+              />
+            ) : (
+              <AgendaList groups={groupByColumn(columns, items)} onSelect={selectClass} onRemove={deleteClass} removeLabel="Delete" blockStyle={displayOptions.blockStyle} />
+            )}
+          </div>
 
           <p className="canvas-hint">
             {empty
@@ -146,15 +150,6 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
               : 'Click a class to edit it, change its colour or delete it.'}
           </p>
         </section>
-      </div>
-
-      {/* Off-screen copy used for the image export, and the only thing printed. */}
-      <div className="export-sheet" ref={exportRef} aria-hidden="true">
-        <div className="export-head">
-          <strong>{title || 'My timetable'}</strong>
-          <span>{courseCount} courses · {classes.length} classes a week</span>
-        </div>
-        <TimeGrid columns={columns} items={items} timeFormat={displayOptions.timeFormat} />
       </div>
 
       <ClassDialog item={editing} onClose={() => setEditing(null)} />

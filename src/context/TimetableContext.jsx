@@ -28,7 +28,10 @@ const DEFAULT_DISPLAY = {
   showCredits: false,
   showSection: false,
   timeFormat: '12h',
-  view: 'grid'
+  view: 'grid',
+  days: 'auto',
+  rowHeight: 'regular',
+  blockStyle: 'filled'
 };
 
 const readStored = (key, fallback) => {

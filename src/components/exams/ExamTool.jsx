@@ -1,11 +1,12 @@
-import { ArrowLeft, CalendarPlus, FileSpreadsheet, Link2, Plus, Printer, Search, Upload, X } from 'lucide-react';
+import { ArrowLeft, CalendarPlus, Image, Link2, Plus, Printer, Search, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { examColumns, examToItem, groupByColumn } from '../../utils/calendarItems';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { EXAM_FILE_ACCEPT, readExamFile, readExamText } from '../../utils/examLoaders';
 import { formatClock } from '../../utils/examParser';
-import { downloadFile, examsToCsv, examsToIcs } from '../../utils/exportUtils';
+import { downloadFile, examsToIcs } from '../../utils/exportUtils';
+import { saveElementAsImage } from '../../utils/imageExport';
 import { decodeShare, encodeShare, shareOrCopy } from '../../utils/sharingUtils';
 import { buildExamShare, readExamPayload } from '../../utils/transfer';
 import { useHistoryStep } from '../../utils/useHistoryStep';
@@ -61,6 +62,7 @@ const findClashes = (records) => {
 
 const ExamTool = ({ sharedExams }) => {
   const inputRef = useRef(null);
+  const captureRef = useRef(null);
   const sharedAppliedRef = useRef(false);
   const [saved] = useState(readSaved);
   const [records, setRecords] = useState(saved.records);
@@ -69,7 +71,7 @@ const ExamTool = ({ sharedExams }) => {
   const [step, goTo, goBack] = useHistoryStep('exams', saved.records.length ? 'results' : 'start');
   const [panel, setPanel] = useState('all');
   const [view, setView] = useState(saved.view === 'grid' ? 'grid' : 'list');
-  const { getOrAssignColor } = useTimetable();
+  const { getOrAssignColor, displayOptions } = useTimetable();
   const [query, setQuery] = useState('');
   const [program, setProgram] = useState('');
   const [progress, setProgress] = useState('');
@@ -367,9 +369,9 @@ const ExamTool = ({ sharedExams }) => {
             {mine.length > 0 && (
               <div className="my-actions">
                 <button type="button" className="btn" onClick={() => downloadFile('my-exams.ics', examsToIcs(mine), 'text/calendar')}><CalendarPlus size={15} /> Add to calendar</button>
-                <button type="button" className="btn" onClick={share}><Link2 size={15} /> Share</button>
-                <button type="button" className="btn" onClick={() => downloadFile('my-exams.csv', examsToCsv(mine), 'text/csv')}><FileSpreadsheet size={15} /> Spreadsheet</button>
+                <button type="button" className="btn" onClick={() => saveElementAsImage(captureRef.current, 'my-exams.png').catch(() => showError('The image could not be created.'))}><Image size={15} /> Save image</button>
                 <button type="button" className="btn" onClick={() => window.print()}><Printer size={15} /> Print</button>
+                <button type="button" className="btn" onClick={share}><Link2 size={15} /> Share</button>
               </div>
             )}
             {nextExam && <p className="next-exam">Next: <strong>{nextExam.subject}</strong>, {relativeDay(nextExam.date)}</p>}
@@ -386,11 +388,15 @@ const ExamTool = ({ sharedExams }) => {
                   />
                   <button type="button" className="link-btn" onClick={clearMine}>Clear list</button>
                 </div>
-                <div className="print-area">
-                  <h2 className="print-only">My exams</h2>
+                {/* What you see here is what is saved as an image and printed. */}
+                <div className="capture" ref={captureRef} data-print-target="exams">
+                  <div className="capture-head">
+                    <strong>My exams</strong>
+                    <span>{mine.length} {mine.length === 1 ? 'exam' : 'exams'}</span>
+                  </div>
                   {view === 'grid'
-                    ? <TimeGrid columns={columns} items={items} onSelect={openExam} minHours={EXAM_HOURS} />
-                    : <AgendaList groups={groupByColumn(columns, items)} onSelect={openExam} onRemove={deleteExam} removeLabel="Remove" />}
+                    ? <TimeGrid columns={columns} items={items} onSelect={openExam} minHours={EXAM_HOURS} rowHeight={displayOptions.rowHeight} blockStyle={displayOptions.blockStyle} />
+                    : <AgendaList groups={groupByColumn(columns, items)} onSelect={openExam} onRemove={deleteExam} removeLabel="Remove" blockStyle={displayOptions.blockStyle} />}
                 </div>
               </>
             ) : <p className="empty-note">No exams yet. Tick them in “All exams”, or add one yourself.</p>}

@@ -6,14 +6,14 @@ import { readableText } from '../../utils/themes';
  * the row opens the item, and an optional remove button sits at its end.
  * groups: [{ key, label, items: [{ id, time, title, details, color, clash }] }]
  */
-const AgendaList = ({ groups, onSelect, onRemove, removeLabel = 'Delete' }) => (
-  <div className="agenda">
+const AgendaList = ({ groups, onSelect, onRemove, removeLabel = 'Delete', blockStyle = 'filled' }) => (
+  <div className={`agenda ${blockStyle === 'tinted' ? 'is-tinted' : ''}`}>
     {groups.map((group) => (
       <section className="agenda-group" key={group.key} aria-label={group.label}>
         <h3>{group.label}</h3>
         <ul>
           {group.items.map((item) => (
-            <li key={item.id} className="agenda-row" style={{ background: item.color, color: readableText(item.color) }}>
+            <li key={item.id} className="agenda-row" style={{ '--block': item.color, '--block-text': readableText(item.color) }}>
               <button type="button" className="agenda-row-main" onClick={() => onSelect(item.id)}>
                 <span className="agenda-row-time">{item.time || 'Time not listed'}</span>
                 <span className="agenda-row-text">

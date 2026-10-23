@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useId } from 'react';
+import { createPortal } from 'react-dom';
 import { useModalAccessibility } from '../../utils/useModalAccessibility';
 
 // Centred modal on wide screens, bottom sheet on phones. `side` turns it into a side panel.
@@ -8,7 +9,8 @@ const Dialog = ({ isOpen, onClose, title, children, footer, side = false, width 
   const titleId = useId();
   if (!isOpen) return null;
 
-  return (
+  // Rendered in <body> so no ancestor (scroll areas, animated screens) can clip or cover it.
+  return createPortal(
     <div className={`overlay ${side ? 'overlay-side' : ''}`} onClick={onClose}>
       <div
         ref={dialogRef}
@@ -26,7 +28,8 @@ const Dialog = ({ isOpen, onClose, title, children, footer, side = false, width 
         <div className="dialog-body">{children}</div>
         {footer && <footer className="dialog-footer">{footer}</footer>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
