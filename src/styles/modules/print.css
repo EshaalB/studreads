@@ -22,5 +22,5 @@
   }
 
   .print-only { display: block; margin-bottom: 12px; }
-  .week-scroll { break-inside: avoid; }
+  .grid-scroll { break-inside: avoid; }
 }

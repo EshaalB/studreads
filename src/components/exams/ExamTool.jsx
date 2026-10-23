@@ -1,5 +1,7 @@
 import { ArrowLeft, CalendarPlus, FileSpreadsheet, Link2, Plus, Printer, Search, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTimetable } from '../../context/useTimetable';
+import { examColumns, examToItem, groupByColumn } from '../../utils/calendarItems';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { EXAM_FILE_ACCEPT, readExamFile, readExamText } from '../../utils/examLoaders';
 import { formatClock } from '../../utils/examParser';
@@ -7,12 +9,15 @@ import { downloadFile, examsToCsv, examsToIcs } from '../../utils/exportUtils';
 import { decodeShare, encodeShare, shareOrCopy } from '../../utils/sharingUtils';
 import { buildExamShare, readExamPayload } from '../../utils/transfer';
 import { useHistoryStep } from '../../utils/useHistoryStep';
+import AgendaList from '../calendar/AgendaList';
+import TimeGrid from '../calendar/TimeGrid';
 import Dropzone from '../ui/Dropzone';
 import ResumeCard from '../ui/ResumeCard';
 import Segmented from '../ui/Segmented';
 import ExamDialog from './ExamDialog';
 
 const STORAGE_KEY = 'studreads_exams_v1';
+const EXAM_HOURS = [9, 17];
 
 const readSaved = () => {
   try {
@@ -21,7 +26,7 @@ const readSaved = () => {
   } catch {
     // Fall through to an empty list.
   }
-  return { records: [], selectedIds: [], fileInfo: null };
+  return { records: [], selectedIds: [], fileInfo: null, view: 'list' };
 };
 
 const formatDate = (isoDate, style = 'long') => new Intl.DateTimeFormat('en-GB', style === 'long'
@@ -38,6 +43,8 @@ const relativeDay = (isoDate) => {
   const days = Math.round((Date.parse(`${isoDate}T00:00:00Z`) - Date.parse(`${todayIso()}T00:00:00Z`)) / 86400000);
   return days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
 };
+
+const isAddedByHand = (record) => record.source === 'Added by you';
 
 const byDateAndTime = (a, b) => a.date.localeCompare(b.date) || (a.start ?? 0) - (b.start ?? 0);
 
@@ -61,6 +68,8 @@ const ExamTool = ({ sharedExams }) => {
   const [fileInfo, setFileInfo] = useState(saved.fileInfo);
   const [step, goTo, goBack] = useHistoryStep('exams', saved.records.length ? 'results' : 'start');
   const [panel, setPanel] = useState('all');
+  const [view, setView] = useState(saved.view === 'grid' ? 'grid' : 'list');
+  const { getOrAssignColor } = useTimetable();
   const [query, setQuery] = useState('');
   const [program, setProgram] = useState('');
   const [progress, setProgress] = useState('');
@@ -71,12 +80,12 @@ const ExamTool = ({ sharedExams }) => {
 
   useEffect(() => {
     try {
-      if (records.length) localStorage.setItem(STORAGE_KEY, JSON.stringify({ records, selectedIds, fileInfo }));
+      if (records.length) localStorage.setItem(STORAGE_KEY, JSON.stringify({ records, selectedIds, fileInfo, view }));
       else localStorage.removeItem(STORAGE_KEY);
     } catch {
       // Very large date sheets may not fit in storage; the list still works for this visit.
     }
-  }, [records, selectedIds, fileInfo]);
+  }, [records, selectedIds, fileInfo, view]);
 
   const showResults = useCallback((nextRecords, info, selected = []) => {
     setRecords(nextRecords);
@@ -162,6 +171,33 @@ const ExamTool = ({ sharedExams }) => {
 
   const toggle = (id) => setSelectedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
 
+  const columns = useMemo(() => examColumns(mine), [mine]);
+  const items = useMemo(() => mine.map((record) => examToItem(record, { getColor: getOrAssignColor, clashes })), [mine, getOrAssignColor, clashes]);
+
+  // Exams from the date sheet leave "My exams" but stay in the full list; exams added
+  // by hand are deleted. Either way the toast offers Undo.
+  const deleteExam = (id) => {
+    const record = records.find((item) => item.id === id);
+    if (!record) return;
+    setSelectedIds((current) => current.filter((item) => item !== id));
+    if (isAddedByHand(record)) {
+      setRecords((current) => current.filter((item) => item.id !== id));
+      showSuccess(`Deleted ${record.subject}.`, { label: 'Undo', onClick: () => { setRecords((current) => [...current, record].sort(byDateAndTime)); setSelectedIds((current) => [...current, id]); } });
+    } else {
+      showSuccess(`Removed ${record.subject} from your exams.`, { label: 'Undo', onClick: () => setSelectedIds((current) => (current.includes(id) ? current : [...current, id])) });
+    }
+  };
+
+  const clearMine = () => {
+    if (!window.confirm(`Remove all ${mine.length} exams from your list?`)) return;
+    const previous = { records, selectedIds };
+    setSelectedIds([]);
+    setRecords((current) => current.filter((record) => !isAddedByHand(record)));
+    showSuccess('Cleared your exam list.', { label: 'Undo', onClick: () => { setRecords(previous.records); setSelectedIds(previous.selectedIds); } });
+  };
+
+  const openExam = (id) => setEditing(records.find((record) => record.id === id));
+
   const saveExam = (values) => {
     const time = values.start !== null ? (values.end !== null ? `${formatClock(values.start)} – ${formatClock(values.end)}` : formatClock(values.start)) : '';
     const record = {
@@ -204,7 +240,7 @@ const ExamTool = ({ sharedExams }) => {
   };
 
   const fileInput = <input ref={inputRef} type="file" hidden accept={EXAM_FILE_ACCEPT} onChange={(event) => handleFile(event.target.files?.[0])} aria-label="Upload an exam date sheet" />;
-  const dialog = <ExamDialog exam={editing} onSave={saveExam} onDelete={toggle} onClose={() => setEditing(null)} />;
+  const dialog = <ExamDialog exam={editing} onSave={saveExam} onDelete={deleteExam} onClose={() => setEditing(null)} />;
 
   if (step !== 'results' || (records.length === 0 && !editing)) {
     return (
@@ -339,24 +375,25 @@ const ExamTool = ({ sharedExams }) => {
             {nextExam && <p className="next-exam">Next: <strong>{nextExam.subject}</strong>, {relativeDay(nextExam.date)}</p>}
             {clashes.size > 0 && <p className="notice notice-warn">Some of your exams are on the same day at overlapping times.</p>}
 
-            <div className="print-area">
-              <h2 className="print-only">My exams</h2>
-              {mine.length > 0 ? (
-                <ol className="my-exams">
-                  {mine.map((record) => (
-                    <li key={record.id} className={clashes.has(record.id) ? 'has-clash' : ''}>
-                      <button type="button" className="my-exam" onClick={() => setEditing(record)}>
-                        <time dateTime={record.date}>{formatDate(record.date, 'short')}</time>
-                        <span className="my-exam-text">
-                          <strong>{record.subject}</strong>
-                          <span>{[record.time || 'Time not listed', record.room].filter(Boolean).join(' · ')}</span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              ) : <p className="empty-note">No exams yet. Tick them in “All exams”, or add one yourself.</p>}
-            </div>
+            {mine.length > 0 ? (
+              <>
+                <div className="my-view">
+                  <Segmented
+                    label="View"
+                    value={view}
+                    onChange={setView}
+                    options={[{ value: 'list', label: 'List' }, { value: 'grid', label: 'Calendar' }]}
+                  />
+                  <button type="button" className="link-btn" onClick={clearMine}>Clear list</button>
+                </div>
+                <div className="print-area">
+                  <h2 className="print-only">My exams</h2>
+                  {view === 'grid'
+                    ? <TimeGrid columns={columns} items={items} onSelect={openExam} minHours={EXAM_HOURS} />
+                    : <AgendaList groups={groupByColumn(columns, items)} onSelect={openExam} onRemove={deleteExam} removeLabel="Remove" />}
+                </div>
+              </>
+            ) : <p className="empty-note">No exams yet. Tick them in “All exams”, or add one yourself.</p>}
 
             <button type="button" className="btn add-exam" onClick={() => setEditing({ subject: '', date: '' })}><Plus size={15} /> Add an exam</button>
           </section>

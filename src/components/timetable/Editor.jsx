@@ -1,22 +1,23 @@
 import { ArrowLeft, CalendarPlus, Download, FileJson, FilePlus2, FileSpreadsheet, Image, Link2, ListChecks, Plus, Printer, Settings, Upload } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
+import { classToItem, groupByColumn, weekColumns } from '../../utils/calendarItems';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { classesToCsv, classesToIcs, downloadFile, fileSlug } from '../../utils/exportUtils';
 import { encodeShare, shareOrCopy } from '../../utils/sharingUtils';
 import { buildTimetableBackup, buildTimetableShare } from '../../utils/transfer';
+import AgendaList from '../calendar/AgendaList';
+import TimeGrid from '../calendar/TimeGrid';
 import Menu from '../ui/Menu';
 import Segmented from '../ui/Segmented';
 import ClassDialog from './ClassDialog';
-import ClassList from './ClassList';
 import CoursePicker from './CoursePicker';
 import SettingsPanel from './SettingsPanel';
-import WeekGrid from './WeekGrid';
 
 const toClock = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
 const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
-  const { classes, conflicts, getOrAssignColor, displayOptions, setDisplayOptions, colorMap, selectedTheme, hasSource } = useTimetable();
+  const { classes, conflicts, getOrAssignColor, displayOptions, setDisplayOptions, colorMap, selectedTheme, hasSource, removeClass, addClasses } = useTimetable();
   const exportRef = useRef(null);
   const [editing, setEditing] = useState(null);
   const [isPickerOpen, setIsPickerOpen] = useState(openPicker);
@@ -28,7 +29,16 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
   const slug = fileSlug(title, 'timetable');
   const courseCount = new Set(classes.map((cls) => cls.name)).size;
   const clashCount = Math.ceil(conflicts.size / 2);
-  const shared = { classes, getOrAssignColor, displayOptions, conflicts };
+  const columns = useMemo(() => weekColumns(classes), [classes]);
+  const items = useMemo(() => classes.map((cls) => classToItem(cls, { getColor: getOrAssignColor, displayOptions, conflicts })), [classes, getOrAssignColor, displayOptions, conflicts]);
+  const selectClass = (id) => setEditing(classes.find((cls) => cls.id === id));
+
+  const deleteClass = (id) => {
+    const removed = classes.find((cls) => cls.id === id);
+    if (!removed) return;
+    removeClass(id);
+    showSuccess(`Deleted ${removed.name} (${removed.day.slice(0, 3)}).`, { label: 'Undo', onClick: () => addClasses([removed]) });
+  };
 
   const saveImage = useCallback(async () => {
     if (!exportRef.current || classes.length === 0) return;
@@ -119,13 +129,15 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
           </div>
 
           {view === 'grid' || empty ? (
-            <WeekGrid
-              {...shared}
-              onSelect={setEditing}
+            <TimeGrid
+              columns={columns}
+              items={items}
+              timeFormat={displayOptions.timeFormat}
+              onSelect={selectClass}
               onAddAt={(day, minutes) => setEditing({ day, startTime: toClock(minutes), endTime: toClock(Math.min(minutes + 60, 23 * 60 + 59)) })}
             />
           ) : (
-            <ClassList {...shared} onSelect={setEditing} />
+            <AgendaList groups={groupByColumn(columns, items)} onSelect={selectClass} onRemove={deleteClass} removeLabel="Delete" />
           )}
 
           <p className="canvas-hint">
@@ -142,7 +154,7 @@ const Editor = ({ onBack, onImport, onNew, openPicker = false }) => {
           <strong>{title || 'My timetable'}</strong>
           <span>{courseCount} courses · {classes.length} classes a week</span>
         </div>
-        <WeekGrid {...shared} />
+        <TimeGrid columns={columns} items={items} timeFormat={displayOptions.timeFormat} />
       </div>
 
       <ClassDialog item={editing} onClose={() => setEditing(null)} />

@@ -41,24 +41,7 @@
 .my-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .next-exam { color: var(--text-2); }
 
-.my-exams { border: 1px solid var(--border); border-radius: var(--radius); }
-.my-exams li + li { border-top: 1px solid var(--border); }
-.my-exams li.has-clash { box-shadow: inset 3px 0 0 var(--warn-line); }
-
-.my-exam {
-  display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: var(--space-3);
-  width: 100%;
-  padding: 10px 12px;
-  text-align: left;
-}
-
-.my-exam:hover { background: var(--surface-2); }
-.my-exam time { color: var(--text-2); font-size: var(--text-sm); }
-.my-exam-text { display: grid; }
-.my-exam-text strong { font-weight: 700; }
-.my-exam-text span { color: var(--text-2); font-size: var(--text-sm); }
+.my-view { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 
 .add-exam { justify-self: start; }
 .empty-note { padding: var(--space-4) 0; color: var(--text-3); text-align: center; }
@@ -71,5 +54,4 @@
   .exam-row { grid-template-columns: 16px minmax(0, 1fr); }
   .exam-row-meta { grid-column: 2; text-align: left; }
   .my-actions .btn { flex: 1 1 auto; }
-  .my-exam { grid-template-columns: 1fr; gap: 2px; }
 }

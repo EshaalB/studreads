@@ -2,6 +2,7 @@
 @import './modules/base.css';
 @import './modules/components.css';
 @import './modules/layout.css';
+@import './modules/calendar.css';
 @import './modules/timetable.css';
 @import './modules/exams.css';
 @import './modules/print.css';

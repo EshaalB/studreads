@@ -261,3 +261,11 @@ assert.deepEqual(slotsNoCodes.records.map((r) => [r.date, r.subject]), [['2026-0
 const slotsLabelled = extractExams([['Date', 'Code', 'Slot 1 (9:00-12:00)', 'Code', 'Slot 2 (2:00-5:00)'], ['18/05/2026', 'CS-204', 'Data Structures', 'MA-201', 'Linear Algebra']]);
 assert.deepEqual(slotsLabelled.records.map((r) => [r.code, r.time]), [['CS-204', '9:00 AM – 12:00 PM'], ['MA-201', '2:00 PM – 5:00 PM']]);
 console.log('✓ date sheets with time-slot columns');
+
+// A remembered time does not leak into the next day.
+const nextDay = extractExams(textToRows(`Tuesday, 3 November 2026
+SE-301 Software Engineering   2:00 PM - 5:00 PM   Lab 4
+Wednesday, 4 November 2026
+HU-110 Pakistan Studies   Hall A`));
+assert.deepEqual(nextDay.records.map((r) => [r.code, r.time]), [['SE-301', '2:00 PM – 5:00 PM'], ['HU-110', '']]);
+console.log('✓ times stay on their own date');

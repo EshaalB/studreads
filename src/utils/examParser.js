@@ -501,6 +501,8 @@ const parseTable = (rows, source, dateOptions) => {
     const { values, byAnchor } = assignToColumns(row, anchors);
     const dateText = flat([values.date, values.day].filter(Boolean).join(' '));
     const date = findDate(dateText, dateOptions);
+    // A time carried down from earlier rows never crosses into a new date.
+    if (date && date.iso !== context.date) context.time = null;
     if (date) context.date = date.iso;
 
     let time = null;
@@ -690,6 +692,7 @@ const parseLoose = (rows, source, dateOptions) => {
     if (axisCells.filter((info) => info.date).length >= 2 || axisCells.filter((info) => info.time && !info.date).length >= 2) return;
 
     const date = findDate(line, dateOptions);
+    if (date && date.iso !== context.date) context.time = null;
     if (date) context.date = date.iso;
     const remaining = cells.map((text) => {
       let value = text;

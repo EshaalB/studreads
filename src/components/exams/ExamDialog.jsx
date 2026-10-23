@@ -59,7 +59,11 @@ const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
       </label>
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="form-actions">
-        {exam.id && <button type="button" className="btn btn-danger" onClick={() => { onDelete(exam.id); onClose(); }}>Remove from my exams</button>}
+        {exam.id && (
+          <button type="button" className="btn btn-danger" onClick={() => { onClose(); onDelete(exam.id); }}>
+            {exam.source === 'Added by you' ? 'Delete exam' : 'Remove from my exams'}
+          </button>
+        )}
         <span className="spacer" />
         <button type="button" className="btn" onClick={onClose}>Cancel</button>
         <button type="submit" className="btn btn-primary">Save</button>

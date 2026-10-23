@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { isDuplicateClass, validateClass } from '../../utils/classes';
 import { DAYS } from '../../utils/constants';
+import { showSuccess } from '../../utils/errorHandler';
 import { toInputTime } from '../../utils/timeUtils';
 import ColorField from '../ui/ColorField';
 import Dialog from '../ui/Dialog';
@@ -47,6 +48,7 @@ const ClassForm = ({ item, onClose }) => {
   const remove = () => {
     removeClass(item.id);
     onClose();
+    showSuccess(`Deleted ${item.name} (${item.day.slice(0, 3)}).`, { label: 'Undo', onClick: () => addClasses([item]) });
   };
 
   const previewColor = color || (draft.name.trim() ? getOrAssignColor(draft.name.trim()) : palette[0]);
