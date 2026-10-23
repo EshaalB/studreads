@@ -3,6 +3,7 @@ import { importClasses, newClassId, normalizeClass, validateClass } from '../uti
 import { DAY_ORDER } from '../utils/constants';
 import { COLOR_THEMES, getThemeColors } from '../utils/themes';
 import { coursesForSection, findSections, legacySelectionToClasses } from '../utils/timetableSource';
+import { readStored, writeStored } from '../utils/storage';
 import { parseTime } from '../utils/timeUtils';
 import { sanitizeObject, sanitizeString } from '../utils/validation';
 import { TimetableContext } from './useTimetable';
@@ -32,26 +33,6 @@ const DEFAULT_DISPLAY = {
   days: 'auto',
   rowHeight: 'regular',
   blockStyle: 'filled'
-};
-
-const readStored = (key, fallback) => {
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw === null) return fallback;
-    const parsed = JSON.parse(raw);
-    return parsed !== null && typeof parsed === typeof fallback && Array.isArray(parsed) === Array.isArray(fallback) ? parsed : fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const writeStored = (key, value) => {
-  try {
-    if (value === undefined || value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Storage can be full or disabled; the app keeps working for this visit.
-  }
 };
 
 const initialClasses = (source) => {

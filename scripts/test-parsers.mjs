@@ -269,3 +269,15 @@ Wednesday, 4 November 2026
 HU-110 Pakistan Studies   Hall A`));
 assert.deepEqual(nextDay.records.map((r) => [r.code, r.time]), [['SE-301', '2:00 PM – 5:00 PM'], ['HU-110', '']]);
 console.log('✓ times stay on their own date');
+
+// Saved data reads back in the right shape (a saved list must survive a reload).
+const memory = new Map();
+globalThis.localStorage = { getItem: (key) => (memory.has(key) ? memory.get(key) : null), setItem: (key, value) => memory.set(key, String(value)), removeItem: (key) => memory.delete(key) };
+const { readStored, writeStored } = await import('../src/utils/storage.js');
+writeStored('list', [{ id: 'a' }]);
+assert.deepEqual(readStored('list', null), [{ id: 'a' }]);
+assert.deepEqual(readStored('list', {}), {}, 'a list is not accepted where an object is expected');
+assert.equal(readStored('missing', null), null);
+writeStored('list', null);
+assert.equal(readStored('list', 'x'), 'x');
+console.log('✓ saved data reads back');

@@ -17,7 +17,7 @@
 .capture.is-capturing .grid-block { box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.08); }
 .capture.is-capturing .grid-block.has-clash { border: 2px solid var(--warn-line); }
 .capture.is-capturing .is-tinted .grid-block,
-.capture.is-capturing .is-tinted .agenda-row { box-shadow: none; border-left: 3px solid var(--block); }
+.capture.is-capturing .is-tinted .agenda-row { box-shadow: none; border: 1px solid color-mix(in srgb, var(--block) 70%, transparent); }
 
 /* Time grid ------------------------------------------------------------------ */
 
@@ -136,15 +136,15 @@
 
 .grid-block.has-clash { box-shadow: inset 0 0 0 2px var(--warn-line); }
 
-/* "Tinted" style: a light wash of the course colour with a solid edge. */
+/* "Tinted" style: a light wash of the course colour with a thin outline in the same colour. */
 .is-tinted .grid-block,
 .is-tinted .agenda-row {
   background: color-mix(in srgb, var(--block) 26%, var(--surface));
   color: var(--text);
-  box-shadow: inset 3px 0 0 var(--block);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--block) 70%, transparent);
 }
 
-.is-tinted .grid-block.has-clash { box-shadow: inset 3px 0 0 var(--block), inset 0 0 0 2px var(--warn-line); }
+.is-tinted .grid-block.has-clash { box-shadow: inset 0 0 0 2px var(--warn-line); }
 
 /* Agenda list ---------------------------------------------------------------- */
 
