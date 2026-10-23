@@ -1,7 +1,7 @@
-import { ChevronRight, Upload } from 'lucide-react';
+import { ArrowRight, ChevronRight, Upload } from 'lucide-react';
 import { useState } from 'react';
 
-const FileUpload = ({ isLoading, error, onFile, onBrowse, onSample, onManual }) => {
+const FileUpload = ({ isLoading, error, onFile, onBrowse, onSample, onManual, resume }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = (event) => {
@@ -16,6 +16,20 @@ const FileUpload = ({ isLoading, error, onFile, onBrowse, onSample, onManual }) 
         <h1 id="start-title">Build your weekly timetable</h1>
         <p>Upload the timetable your university shared, pick your section and courses, then export or share the result.</p>
       </header>
+
+      {resume && (
+        <div className="resume-card">
+          <div className="resume-text">
+            <span>Continue where you left off</span>
+            <strong>{resume.title}</strong>
+            <small>{resume.detail}</small>
+          </div>
+          <div className="actions">
+            <button type="button" className="btn btn-ghost btn-sm" onClick={resume.onClear}>Delete</button>
+            <button type="button" className="btn btn-primary" onClick={resume.onContinue}>Continue <ArrowRight size={15} /></button>
+          </div>
+        </div>
+      )}
 
       <div
         className={`dropzone ${isDragging ? 'is-dragging' : ''}`}

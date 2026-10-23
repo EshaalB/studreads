@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { readableText } from '../../utils/themes';
+import ColorPicker from '../ui/ColorPicker';
 import { displayTimeRange } from '../../utils/timeUtils';
 
 // A value that turns into a text field when clicked.
@@ -29,7 +30,7 @@ const EditableText = ({ value, display, label, isEditing, editable, onStart, onS
   );
 };
 
-const TimetableTable = ({ classes, getOrAssignColor, displayOptions, conflicts, editingCell, setEditingCell, onSave, editable }) => {
+const TimetableTable = ({ classes, getOrAssignColor, displayOptions, conflicts, editingCell, setEditingCell, onSave, editable, palette, onColorChange }) => {
   const field = (cls, name) => ({
     editable,
     isEditing: editingCell === `${cls.editKey}:${name}`,
@@ -75,6 +76,7 @@ const TimetableTable = ({ classes, getOrAssignColor, displayOptions, conflicts, 
                 </td>
                 <td>
                   <div className="course-cell">
+                    <ColorPicker value={getOrAssignColor(cls.name)} palette={palette} label={cls.name} onChange={(color) => onColorChange(cls.name, color)} />
                     <div className="course-text">
                       <EditableText {...field(cls, 'name')} label="Course name" value={cls.name} />
                       {(meta.length > 0 || (editable && displayOptions.showTeacher)) && (

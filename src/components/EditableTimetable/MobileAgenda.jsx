@@ -1,8 +1,9 @@
 import { DAY_ORDER } from '../../utils/constants';
 import { readableText } from '../../utils/themes';
 import { displayTimeRange } from '../../utils/timeUtils';
+import ColorPicker from '../ui/ColorPicker';
 
-const MobileAgenda = ({ classes, getOrAssignColor, displayOptions, conflicts }) => {
+const MobileAgenda = ({ classes, getOrAssignColor, displayOptions, conflicts, palette, onColorChange }) => {
   const days = [...new Set(classes.map((item) => item.day))]
     .sort((a, b) => (DAY_ORDER[a] || 99) - (DAY_ORDER[b] || 99));
 
@@ -27,7 +28,10 @@ const MobileAgenda = ({ classes, getOrAssignColor, displayOptions, conflicts }) 
                     displayOptions.showSection && item.section
                   ].filter(Boolean).join(' · ')}</span>
                 </span>
-                {conflicts.has(item.id) && <span className="badge badge-warn">Clash</span>}
+                <span className="agenda-end">
+                  {conflicts.has(item.id) && <span className="badge badge-warn">Clash</span>}
+                  <ColorPicker value={getOrAssignColor(item.name)} palette={palette} label={item.name} onChange={(color) => onColorChange(item.name, color)} />
+                </span>
               </li>
             ))}
           </ul>

@@ -5,9 +5,11 @@ import { DAY_ORDER } from '../../utils/constants';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { classesToCsv, classesToIcs, downloadFile, fileSlug } from '../../utils/exportUtils';
 import { encodeShare, shareOrCopy } from '../../utils/sharingUtils';
+import { getThemeColors } from '../../utils/themes';
 import { parseTime } from '../../utils/timeUtils';
 import { buildTimetableBackup, buildTimetableShare } from '../../utils/transfer';
 import Menu from '../ui/Menu';
+import Segmented from '../ui/Segmented';
 import CustomizePanel from './CustomizePanel';
 import MobileAgenda from './MobileAgenda';
 import TimetableGrid from './TimetableGrid';
@@ -16,7 +18,7 @@ import TimetableTable from './TimetableTable';
 const EditableTimetable = () => {
   const {
     finalActiveClasses, getOrAssignColor, displayOptions, setDisplayOptions, updateClassField,
-    conflicts, colorMap, selectedTheme, isManual
+    conflicts, colorMap, setColorMap, selectedTheme, isManual
   } = useTimetable();
   const exportRef = useRef(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -101,6 +103,7 @@ const EditableTimetable = () => {
   if (sortedClasses.length === 0) return null;
 
   const shared = { getOrAssignColor, displayOptions, conflicts };
+  const colouring = { palette: getThemeColors(selectedTheme), onColorChange: (name, color) => setColorMap((current) => ({ ...current, [name]: color })) };
 
   return (
     <div className="timetable">
@@ -113,10 +116,12 @@ const EditableTimetable = () => {
           </p>
         </div>
         <div className="toolbar-actions">
-          <div className="segmented" role="radiogroup" aria-label="Layout">
-            <button type="button" role="radio" aria-checked={view === 'list'} onClick={() => setDisplayOptions((current) => ({ ...current, view: 'list' }))}>List</button>
-            <button type="button" role="radio" aria-checked={view === 'grid'} onClick={() => setDisplayOptions((current) => ({ ...current, view: 'grid' }))}>Week</button>
-          </div>
+          <Segmented
+            label="Layout"
+            value={view}
+            onChange={(next) => setDisplayOptions((current) => ({ ...current, view: next }))}
+            options={[{ value: 'list', label: 'List' }, { value: 'grid', label: 'Week' }]}
+          />
           <button type="button" className="btn" onClick={() => setIsCustomizeOpen(true)}>
             <SlidersHorizontal size={15} /> <span className="hide-narrow">Customize</span>
           </button>
@@ -133,10 +138,11 @@ const EditableTimetable = () => {
 
       {view === 'list' ? (
         <>
-          <MobileAgenda classes={sortedClasses} {...shared} />
+          <MobileAgenda classes={sortedClasses} {...shared} {...colouring} />
           <TimetableTable
             classes={sortedClasses}
             {...shared}
+            {...colouring}
             editable={!isManual}
             editingCell={editingCell}
             setEditingCell={setEditingCell}

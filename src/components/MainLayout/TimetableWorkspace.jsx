@@ -1,4 +1,4 @@
-import { FileSpreadsheet, MoreHorizontal, PencilLine } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { DEMO_TIMETABLE_DATA } from '../../utils/demoData';
@@ -7,9 +7,9 @@ import { classesToManualEntries, normalizeManualEntry } from '../../utils/manual
 import { decodeLegacyState, decodeShare } from '../../utils/sharingUtils';
 import { parseWorkbook } from '../../utils/spreadsheetParser';
 import { readTimetablePayload } from '../../utils/transfer';
+import { useHistoryStep } from '../../utils/useHistoryStep';
 import { validateFile } from '../../utils/validation';
 import EditableTimetable from '../EditableTimetable/EditableTimetable';
-import Menu from '../ui/Menu';
 import AdditionalCourses from './AdditionalCourses';
 import CourseSelection from './CourseSelection';
 import FileUpload from './FileUpload';
@@ -28,6 +28,14 @@ const readManualEntries = () => {
     return Array.isArray(saved) ? saved.map(normalizeManualEntry).filter((entry) => entry.id && entry.courseName) : [];
   } catch {
     return [];
+  }
+};
+
+const clearSavedTimetable = () => {
+  try {
+    Object.keys(localStorage).filter((key) => key.startsWith('timetable_')).forEach((key) => localStorage.removeItem(key));
+  } catch {
+    // Nothing saved to clear.
   }
 };
 
@@ -50,6 +58,10 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
   const sharedAppliedRef = useRef(false);
   const previewRef = useRef(null);
   const [isPreviewVisible, setIsPreviewVisible] = useState(true);
+  const [step, goTo, goBack] = useHistoryStep('timetable', savedManualEntries.length > 0 || rawData.length > 0 ? 'builder' : 'start');
+
+  const hasExisting = manualEntries.length > 0 || rawData.length > 0;
+  const screen = step === 'review' && !pendingImport ? 'start' : step === 'builder' && !hasExisting && !isManualMode ? 'start' : step;
 
   useEffect(() => {
     if (savedManualEntries.length > 0) loadManualTimetable(savedManualEntries);
@@ -66,17 +78,14 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
     }
   }, [loadManualTimetable]);
 
-  const hasExisting = manualEntries.length > 0 || rawData.length > 0;
-
   // On phones the timetable sits below the course list; offer a shortcut while it is off screen.
-  const hasPreview = rawData.length > 0 || isManualMode;
   useEffect(() => {
     const node = previewRef.current;
     if (!node || typeof IntersectionObserver === 'undefined') return undefined;
     const observer = new IntersectionObserver(([entry]) => setIsPreviewVisible(entry.isIntersecting || entry.boundingClientRect.top < 0));
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasPreview, pendingImport]);
+  }, [screen]);
 
   // Opens classes from a share link or backup file as an editable timetable.
   const openPayload = useCallback((payload, label) => {
@@ -93,8 +102,9 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
     if (payload.theme) setSelectedTheme(payload.theme);
     if (Object.keys(payload.colors).length) setColorMap((current) => ({ ...current, ...payload.colors }));
     setDisplayOptions((current) => ({ ...current, ...payload.display, title: payload.title || current.title }));
+    goTo('builder');
     showSuccess(`Opened ${payload.title || `the ${label}`}.`);
-  }, [hasExisting, updateManualEntries, setSelectedTheme, setColorMap, setDisplayOptions]);
+  }, [hasExisting, updateManualEntries, setSelectedTheme, setColorMap, setDisplayOptions, goTo]);
 
   useEffect(() => {
     if (sharedAppliedRef.current || (!sharedTimetable && !legacyTimetable)) return;
@@ -144,13 +154,14 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
         rowCount: parsed.rows.length,
         warnings: parsed.warnings
       });
+      goTo('review');
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : 'The spreadsheet could not be read.');
     } finally {
       setIsLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
-  }, [restoreBackup]);
+  }, [restoreBackup, goTo]);
 
   const confirmImport = useCallback(() => {
     if (!pendingImport) return;
@@ -170,22 +181,28 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
     });
     setPendingImport(null);
     setError('');
-  }, [pendingImport, processData, manualEntries.length, updateManualEntries]);
+    goTo('builder');
+  }, [pendingImport, processData, manualEntries.length, updateManualEntries, goTo]);
 
   const loadDemo = useCallback(() => {
     if (manualEntries.length) updateManualEntries([]);
     setIsManualMode(false);
     processData(DEMO_TIMETABLE_DATA, DEMO_MAPPING, { name: 'Sample timetable', sheetName: 'Sample', rowCount: DEMO_TIMETABLE_DATA.length, warnings: [] });
     setError('');
-  }, [manualEntries.length, processData, updateManualEntries]);
+    goTo('builder');
+  }, [manualEntries.length, processData, updateManualEntries, goTo]);
 
-  const startOver = useCallback(() => {
-    if (!window.confirm('Clear this timetable, your selections and your colours?')) return;
-    try {
-      Object.keys(localStorage).filter((key) => key.startsWith('timetable_')).forEach((key) => localStorage.removeItem(key));
-    } catch {
-      // Nothing saved to clear.
-    }
+  const startManual = useCallback(() => {
+    if (!isManualMode && rawData.length && !window.confirm('Start a new timetable by hand? Your uploaded timetable will be cleared.')) return;
+    if (!isManualMode && rawData.length) { clearSavedTimetable(); loadManualTimetable([]); }
+    setError('');
+    setIsManualMode(true);
+    goTo('builder');
+  }, [isManualMode, rawData.length, loadManualTimetable, goTo]);
+
+  const clearAll = useCallback(() => {
+    if (!window.confirm('Delete your saved timetable, selections and colours from this browser?')) return;
+    clearSavedTimetable();
     window.location.reload();
   }, []);
 
@@ -214,6 +231,12 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
   const removeExtra = useCallback((id) => setExtraSelections((current) => current.filter((item) => item.id !== id)), [setExtraSelections]);
   const updateExtra = useCallback((id, updates) => setExtraSelections((current) => current.map((item) => item.id === id ? { ...item, ...updates } : item)), [setExtraSelections]);
 
+  const hasSelectedCourses = finalActiveClasses.length > 0;
+  const sourceName = isManualMode ? 'Your classes' : sourceMeta?.name || 'Timetable file';
+  const sourceDetail = isManualMode
+    ? `${manualEntries.length} ${manualEntries.length === 1 ? 'class' : 'classes'}`
+    : `${sourceMeta?.sheetName ? `${sourceMeta.sheetName} · ` : ''}${rawData.length} entries`;
+
   const fileInput = (
     <input
       ref={fileInputRef}
@@ -225,24 +248,25 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
     />
   );
 
-  if (pendingImport) {
+  if (screen === 'review') {
     return (
-      <>
+      <div className="screen" key="review">
         {fileInput}
+        <button type="button" className="back-btn" onClick={goBack}><ArrowLeft size={16} /> Back</button>
         <ImportReview
           pendingImport={pendingImport}
           error={error}
           onConfirm={confirmImport}
-          onCancel={() => { setPendingImport(null); setError(''); }}
+          onCancel={() => { setPendingImport(null); setError(''); goBack(); }}
           onUpdateMapping={(field, column) => setPendingImport((current) => ({ ...current, mapping: { ...current.mapping, [field]: column } }))}
         />
-      </>
+      </div>
     );
   }
 
-  if (!isManualMode && rawData.length === 0) {
+  if (screen === 'start') {
     return (
-      <>
+      <div className="screen" key="start">
         {fileInput}
         <FileUpload
           isLoading={isLoading}
@@ -250,40 +274,23 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
           onFile={handleFile}
           onBrowse={() => fileInputRef.current?.click()}
           onSample={loadDemo}
-          onManual={() => { setError(''); setIsManualMode(true); }}
+          onManual={startManual}
+          resume={hasExisting || isManualMode ? { title: sourceName, detail: sourceDetail, onContinue: () => goTo('builder'), onClear: clearAll } : null}
         />
-      </>
+      </div>
     );
   }
 
-  const hasSelectedCourses = finalActiveClasses.length > 0;
-  const sourceName = isManualMode ? 'Your classes' : sourceMeta?.name || 'Timetable file';
-  const sourceDetail = isManualMode
-    ? `${manualEntries.length} ${manualEntries.length === 1 ? 'class' : 'classes'}`
-    : `${sourceMeta?.sheetName ? `${sourceMeta.sheetName} · ` : ''}${rawData.length} entries`;
-
   return (
-    <div className="builder">
+    <div className="screen builder" key="builder">
       {fileInput}
       <aside className="builder-side" aria-label="Classes">
-        <div className="source-bar">
-          <span className="source-icon" aria-hidden="true">{isManualMode ? <PencilLine size={15} /> : <FileSpreadsheet size={15} />}</span>
+        <div className="side-head">
+          <button type="button" className="back-btn" onClick={goBack}><ArrowLeft size={16} /> Back</button>
           <div className="source-text">
             <strong title={sourceName}>{sourceName}</strong>
             <span>{sourceDetail}</span>
           </div>
-          <Menu
-            triggerClassName="icon-btn"
-            triggerLabel="Timetable source options"
-            trigger={<MoreHorizontal size={17} />}
-            items={[
-              { label: 'Upload a different file', onSelect: () => fileInputRef.current?.click() },
-              ...(!isManualMode ? [{ label: 'Edit as my own list', hint: 'Add, remove and change any class', onSelect: convertToManual, disabled: !hasSelectedCourses }] : []),
-              { label: 'Open sample timetable', onSelect: loadDemo },
-              { separator: true },
-              { label: 'Start over', hint: 'Clears this timetable from the browser', onSelect: startOver }
-            ]}
-          />
         </div>
         {error && <p className="notice notice-error" role="alert">{error}</p>}
         {!isManualMode && sourceMeta?.warnings?.length > 0 && (
@@ -312,6 +319,11 @@ const TimetableWorkspace = ({ sharedTimetable, legacyTimetable }) => {
                 removeExtra={removeExtra}
                 addExtra={addExtra}
               />
+            )}
+            {hasSelectedCourses && (
+              <button type="button" className="link-btn side-link" onClick={convertToManual}>
+                Edit classes freely (add, remove or change any class)
+              </button>
             )}
           </>
         )}

@@ -11,7 +11,7 @@
   gap: 12px;
 }
 
-.exams-head .source-bar { flex: 1; min-width: 220px; }
+.exams-head .side-head { flex: 1; min-width: 220px; }
 
 .exams-layout {
   display: grid;

@@ -1,11 +1,12 @@
-import { Github, Monitor, Moon, Sun } from 'lucide-react';
+import { Github } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAppearance } from '../../utils/useAppearance';
 import AboutModal from '../AboutModal';
 import ExamFinder from '../ExamFinder';
 import Footer from '../Footer';
 import PrivacyModal from '../PrivacyModal';
-import Menu from '../ui/Menu';
+import Segmented from '../ui/Segmented';
+import ThemeToggle from '../ui/ThemeToggle';
 import TimetableWorkspace from './TimetableWorkspace';
 
 // Read once at start-up; the URL is cleaned after the shared data is applied.
@@ -16,14 +17,11 @@ const LAUNCH = {
   exams: launchParams.get('x')
 };
 
-const APPEARANCE_ICONS = { system: Monitor, light: Sun, dark: Moon };
-
 const MainLayout = () => {
   const [activeTool, setActiveTool] = useState(LAUNCH.exams && !LAUNCH.timetable ? 'exams' : 'timetable');
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [appearance, setAppearance] = useAppearance();
-  const AppearanceIcon = APPEARANCE_ICONS[appearance] || Monitor;
+  const [theme, toggleTheme] = useAppearance();
 
   // The print stylesheet prints the active tool.
   useEffect(() => { document.body.dataset.tool = activeTool; }, [activeTool]);
@@ -44,22 +42,17 @@ const MainLayout = () => {
             <span>Stud<span className="wordmark-accent">Reads</span></span>
           </a>
 
-          <div className="segmented tool-tabs" role="tablist" aria-label="Planner">
-            <button type="button" role="tab" aria-selected={activeTool === 'timetable'} onClick={() => setActiveTool('timetable')}>Timetable</button>
-            <button type="button" role="tab" aria-selected={activeTool === 'exams'} onClick={() => setActiveTool('exams')}>Exams</button>
-          </div>
+          <Segmented
+            kind="tabs"
+            label="Planner"
+            className="tool-tabs"
+            value={activeTool}
+            onChange={setActiveTool}
+            options={[{ value: 'timetable', label: 'Timetable' }, { value: 'exams', label: 'Exams' }]}
+          />
 
           <div className="header-actions">
-            <Menu
-              triggerClassName="icon-btn"
-              triggerLabel={`Appearance: ${appearance}`}
-              trigger={<AppearanceIcon size={17} />}
-              items={[
-                { label: 'System', icon: <Monitor size={15} />, active: appearance === 'system', onSelect: () => setAppearance('system') },
-                { label: 'Light', icon: <Sun size={15} />, active: appearance === 'light', onSelect: () => setAppearance('light') },
-                { label: 'Dark', icon: <Moon size={15} />, active: appearance === 'dark', onSelect: () => setAppearance('dark') }
-              ]}
-            />
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <button type="button" className="btn btn-ghost btn-sm hide-narrow" onClick={() => setIsAboutOpen(true)}>About</button>
             <a className="icon-btn" href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" aria-label="Source code on GitHub">
               <Github size={17} />

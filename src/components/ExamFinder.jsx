@@ -1,4 +1,4 @@
-import { CalendarPlus, ChevronDown, ChevronRight, Download, FileSpreadsheet, Link2, Pencil, Plus, Printer, Search, Upload, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarPlus, ChevronDown, ChevronRight, Download, FileSpreadsheet, Link2, Pencil, Plus, Printer, Search, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { showError, showSuccess } from '../utils/errorHandler';
 import { EXAM_FILE_ACCEPT, readExamFile, readExamText } from '../utils/examLoaders';
@@ -7,7 +7,9 @@ import { downloadFile, examsToCsv, examsToIcs } from '../utils/exportUtils';
 import { decodeShare, encodeShare, shareOrCopy } from '../utils/sharingUtils';
 import { parseTime } from '../utils/timeUtils';
 import { buildExamShare, readExamPayload } from '../utils/transfer';
+import { useHistoryStep } from '../utils/useHistoryStep';
 import Menu from './ui/Menu';
+import Segmented from './ui/Segmented';
 
 const STORAGE_KEY = 'studreads_exams_v1';
 const EMPTY_FORM = { subject: '', code: '', date: '', start: '', end: '', room: '' };
@@ -118,6 +120,7 @@ const ExamFinder = ({ sharedExams }) => {
   const [form, setForm] = useState(null);
   const [mobilePanel, setMobilePanel] = useState('all');
   const sharedAppliedRef = useRef(false);
+  const [step, goTo, goBack] = useHistoryStep('exams', saved.records.length ? 'results' : 'start');
   const isLoading = Boolean(progress);
 
   useEffect(() => {
@@ -135,6 +138,7 @@ const ExamFinder = ({ sharedExams }) => {
     setQuery('');
     setProgram('');
     setMobilePanel('all');
+    goTo('results');
     setFileInfo({
       name,
       source: result.source,
@@ -143,7 +147,7 @@ const ExamFinder = ({ sharedExams }) => {
         ...(result.hasAmbiguousDates ? ['Dates such as 03/04 are read as day/month. Check them before adding exams to your calendar.'] : [])
       ]
     });
-  }, []);
+  }, [goTo]);
 
   useEffect(() => {
     if (sharedAppliedRef.current || !sharedExams) return;
@@ -155,10 +159,11 @@ const ExamFinder = ({ sharedExams }) => {
       setRecords(shared);
       setSelectedIds(shared.map((record) => record.id));
       setFileInfo({ name: 'Shared exam list', source: 'a shared link', warnings: [] });
+      goTo('results');
       setMobilePanel('mine');
       showSuccess(`Opened ${shared.length} shared ${shared.length === 1 ? 'exam' : 'exams'}.`);
     })();
-  }, [sharedExams, records.length]);
+  }, [sharedExams, records.length, goTo]);
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -262,11 +267,14 @@ const ExamFinder = ({ sharedExams }) => {
     setProgram('');
     setError('');
     setForm(null);
+    goBack();
   };
+
+  const addByHand = () => { setForm({ ...EMPTY_FORM }); goTo('results'); };
 
   const fileInput = <input ref={inputRef} type="file" hidden accept={EXAM_FILE_ACCEPT} onChange={(event) => handleFile(event.target.files?.[0])} aria-label="Upload an exam date sheet" />;
 
-  if (records.length === 0 && !form) {
+  if (step === 'start' || (records.length === 0 && !form)) {
     return (
       <section className="start" aria-labelledby="exam-start-title">
         {fileInput}
@@ -274,6 +282,19 @@ const ExamFinder = ({ sharedExams }) => {
           <h1 id="exam-start-title">Find your exams</h1>
           <p>Upload the exam date sheet in whatever format it came in, search for your subjects and keep a list of just your exams.</p>
         </header>
+
+        {records.length > 0 && (
+          <div className="resume-card">
+            <div className="resume-text">
+              <span>Continue where you left off</span>
+              <strong>{fileInfo?.name || 'My exams'}</strong>
+              <small>{selectedRecords.length} of {records.length} exams in your list</small>
+            </div>
+            <div className="actions">
+              <button type="button" className="btn btn-primary" onClick={() => goTo('results')}>Continue <ArrowRight size={15} /></button>
+            </div>
+          </div>
+        )}
 
         {isPasteOpen ? (
           <div className="panel paste-panel">
@@ -325,7 +346,7 @@ const ExamFinder = ({ sharedExams }) => {
                 <span><strong>Paste text</strong><small>Copied from a website, email, PDF or group chat</small></span>
                 <ChevronRight size={16} aria-hidden="true" />
               </button>
-              <button type="button" className="option-row" onClick={() => setForm({ ...EMPTY_FORM })}>
+              <button type="button" className="option-row" onClick={addByHand}>
                 <span><strong>Add exams by hand</strong><small>Type in your own dates and times</small></span>
                 <ChevronRight size={16} aria-hidden="true" />
               </button>
@@ -340,8 +361,8 @@ const ExamFinder = ({ sharedExams }) => {
     <div className="exams">
       {fileInput}
       <div className="exams-head">
-        <div className="source-bar source-bar-flat">
-          <span className="source-icon" aria-hidden="true"><FileSpreadsheet size={15} /></span>
+        <div className="side-head">
+          <button type="button" className="back-btn" onClick={goBack}><ArrowLeft size={16} /> Back</button>
           <div className="source-text">
             <strong title={fileInfo?.name}>{fileInfo?.name || 'My exams'}</strong>
             <span>{records.length} {records.length === 1 ? 'exam' : 'exams'} from {fileInfo?.source || 'your list'}</span>
@@ -357,10 +378,15 @@ const ExamFinder = ({ sharedExams }) => {
       {error && <p className="notice notice-error" role="alert">{error}</p>}
       {fileInfo?.warnings?.map((warning) => <p className="notice" key={warning}>{warning}</p>)}
 
-      <div className="segmented segmented-full show-narrow" role="tablist" aria-label="Exam lists">
-        <button type="button" role="tab" aria-selected={mobilePanel === 'all'} onClick={() => setMobilePanel('all')}>All exams</button>
-        <button type="button" role="tab" aria-selected={mobilePanel === 'mine'} onClick={() => setMobilePanel('mine')}>My exams ({selectedRecords.length})</button>
-      </div>
+      <Segmented
+        full
+        kind="tabs"
+        label="Exam lists"
+        className="show-narrow"
+        value={mobilePanel}
+        onChange={setMobilePanel}
+        options={[{ value: 'all', label: 'All exams' }, { value: 'mine', label: `My exams (${selectedRecords.length})` }]}
+      />
 
       <div className="exams-layout" data-panel={mobilePanel}>
         <section className="exam-results" aria-label="All exams">

@@ -50,11 +50,8 @@
 .app-header .segmented > button { color: rgba(249, 243, 226, 0.78); }
 .app-header .segmented > button:hover { color: var(--cream); }
 
-.app-header .segmented > button[aria-selected="true"] {
-  background: var(--pink);
-  color: var(--navy);
-  box-shadow: none;
-}
+.app-header .segmented-indicator { background: var(--pink); box-shadow: none; }
+.app-header .segmented > button[data-active="true"] { color: var(--navy); }
 
 .app-header .icon-btn,
 .app-header .btn-ghost { color: rgba(249, 243, 226, 0.82); }
@@ -275,6 +272,7 @@
 }
 
 .builder-main { min-width: 0; scroll-margin-top: 112px; }
+.side-link { justify-self: start; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
 .jump-bar { display: none; }
 
 .source-bar {

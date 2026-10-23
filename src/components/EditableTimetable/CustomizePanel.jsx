@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { getThemeColors, readableText } from '../../utils/themes';
 import Drawer from '../ui/Drawer';
+import Segmented from '../ui/Segmented';
 
 const FIELDS = [
   ['showRoom', 'Room'],
@@ -125,10 +126,13 @@ const CustomizePanel = ({ isOpen, onClose }) => {
 
       <section className="panel-section" aria-labelledby="clock-title">
         <h3 className="panel-title" id="clock-title">Clock</h3>
-        <div className="segmented segmented-full" role="radiogroup" aria-labelledby="clock-title">
-          <button type="button" role="radio" aria-checked={displayOptions.timeFormat !== '24h'} onClick={() => setOption('timeFormat', '12h')}>12-hour</button>
-          <button type="button" role="radio" aria-checked={displayOptions.timeFormat === '24h'} onClick={() => setOption('timeFormat', '24h')}>24-hour</button>
-        </div>
+        <Segmented
+          full
+          label="Clock"
+          value={displayOptions.timeFormat === '24h' ? '24h' : '12h'}
+          onChange={(next) => setOption('timeFormat', next)}
+          options={[{ value: '12h', label: '12-hour' }, { value: '24h', label: '24-hour' }]}
+        />
       </section>
     </Drawer>
   );

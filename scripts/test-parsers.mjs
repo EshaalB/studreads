@@ -179,3 +179,33 @@ assert.equal(reopened.length, 1);
 assert.equal(reopened[0].startTime, '08:30');
 assert.equal(classesToManualEntries([{ name: 'No day', day: 'Someday', startTime: '9:00', endTime: '10:00' }]).length, 0);
 console.log('✓ share links and backups');
+
+// Sheets that print only course codes in the schedule and the titles elsewhere.
+const codesWithLegend = extractExams([
+  ['Date', '9:00 AM - 12:00 PM', '2:00 PM - 5:00 PM'],
+  ['18/05/2026', 'CS-204', 'MA-201'],
+  ['19/05/2026', 'SE-301', ''],
+  ['Course Code', 'Course Title'],
+  ['CS-204', 'Data Structures'], ['MA-201', 'Linear Algebra'], ['SE-301', 'Software Engineering']
+]);
+assert.deepEqual(codesWithLegend.records.map((r) => [r.code, r.subject]), [
+  ['CS-204', 'Data Structures'], ['MA-201', 'Linear Algebra'], ['SE-301', 'Software Engineering']
+]);
+
+const longHeader = extractExams([
+  ['Sr', 'Course Code', 'Name of the Course / Subject', 'Exam Date', 'Time'],
+  ['1', 'CS-204', 'Data Structures', '18/05/2026', '9:00 AM']
+]);
+assert.equal(longHeader.records[0].subject, 'Data Structures');
+assert.equal(extractExams([['Code', 'Descr.', 'Date', 'Time'], ['CS-204', 'Data Structures', '18/05/2026', '9:00 AM']]).records[0].subject, 'Data Structures');
+
+const legendBook = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(legendBook, XLSX.utils.aoa_to_sheet([
+  ['Date', 'Slot 1 (9:00-12:00)', 'Slot 2 (2:00-5:00)'],
+  ['Mon 18-May-2026', 'CS-204, MA-201', 'SE-301']
+]), 'Schedule');
+XLSX.utils.book_append_sheet(legendBook, XLSX.utils.aoa_to_sheet([
+  ['Code', 'Title', 'Credit Hours'], ['CS-204', 'Data Structures', 3], ['MA-201', 'Linear Algebra', 3], ['SE-301', 'Software Engineering', 3]
+]), 'Courses');
+assert.deepEqual(parseExamWorkbook(XLSX, legendBook).records.map((r) => r.subject), ['Data Structures', 'Linear Algebra', 'Software Engineering']);
+console.log('✓ course titles found for code-only date sheets');

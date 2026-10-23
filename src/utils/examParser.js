@@ -205,7 +205,7 @@ const center = (cell) => (cell.x + cell.x2) / 2;
 
 const matchHeader = (text) => {
   const key = headerKey(text);
-  if (!key || key.length > 32 || key.split(' ').length > 4) return null;
+  if (!key || key.length > 48 || key.split(' ').length > 6) return null;
   const rule = HEADER_RULES.find(([, pattern]) => pattern.test(key));
   return rule ? rule[0] : null;
 };
@@ -295,7 +295,12 @@ const makeRecord = (values, source, index) => {
 // A cell can hold several courses ("CS-101 Programming\nMA-102 Calculus") or one course
 // with extra lines ("Data Structures\nBSCS-3A\nHall 2").
 const parseCellCourses = (text) => {
-  const lines = clean(text).split(/\n|;/).map((part) => part.trim()).filter(Boolean);
+  const lines = clean(text).split(/\n|;/).map((part) => part.trim()).filter(Boolean)
+    // "CS-204, MA-201" or "CS-204 / MA-201": several codes on one line.
+    .flatMap((line) => {
+      const parts = line.split(/\s*[,/&]\s*/).filter(Boolean);
+      return parts.length > 1 && parts.every((part) => CODE_PATTERN.test(part) && part.replace(CODE_PATTERN, '').trim().length < 3) ? parts : [line];
+    });
   if (lines.length > 1 && lines.every((line) => CODE_PATTERN.test(line))) {
     return lines.map((line) => ({ subject: line, room: '', program: '' }));
   }
@@ -369,8 +374,8 @@ const assignToColumns = (row, anchors) => {
       const score = overlap > 0 ? -overlap : Math.abs(center(cell) - center(anchor));
       if (!best || score < best.score) best = { anchor, score };
     });
-    const field = best?.anchor.field;
-    if (!field) return;
+    // Columns with an unrecognised header are kept aside as a fallback for titles.
+    const field = best?.anchor.field || '_other';
     values[field] = values[field] ? `${values[field]}\n${cell.text}` : cell.text;
   });
   return values;
@@ -448,7 +453,7 @@ const parseTable = (rows, source, dateOptions) => {
     if (time) context.time = time;
     if (values.program) context.program = flat(values.program);
 
-    const subjectText = values.subject || '';
+    const subjectText = values.subject || (values.code ? pickTitle(values._other) : '');
     const codeText = values.code || '';
     if (!subjectText && !codeText) return;
 
@@ -481,6 +486,13 @@ const parseTable = (rows, source, dateOptions) => {
 
   return records;
 };
+
+// A course title among unlabelled cells: the longest text that is not a code, date,
+// time or room.
+const pickTitle = (text) => clean(text).split('\n')
+  .map((line) => line.trim())
+  .filter((line) => line.length >= 4 && /[a-z]{3}/i.test(line) && !isCodeOnly(line) && !findDate(line) && !findTime(line) && !ROOM_HINT.test(line) && !NOISE_LINE.test(line))
+  .sort((a, b) => b.length - a.length)[0] || '';
 
 // ---------------------------------------------------------------------------
 // Strategy 2: grids with dates or time slots across the top
@@ -524,8 +536,11 @@ const parseGrid = (rows, source, dateOptions) => {
   const records = [];
   const context = { date: '', time: null };
   let boundary = axisBoundary(axis);
+  let ended = false;
 
   rows.slice(start + 1).forEach((row, offset) => {
+    // A new header row ("Course Code | Course Title") starts a legend or another table.
+    if (ended || row.filter((cell) => matchHeader(cell.text)).length >= 2) { ended = true; return; }
     const rowIndex = start + 1 + offset;
     // A later axis row (next week, next block) replaces the current one.
     const right = row.filter((cell) => center(cell) >= boundary);
@@ -575,6 +590,8 @@ const parseLoose = (rows, source, dateOptions) => {
     const cells = row.map((cell) => flat(cell.text));
     const line = cells.join('  ');
     if (!line || NOISE_LINE.test(line) || line.length > 220) return;
+    // A header row ("Course Code | Course Title") starts a legend, not more exams.
+    if (row.filter((cell) => matchHeader(cell.text)).length >= 2) { context.date = ''; return; }
 
     const date = findDate(line, dateOptions);
     if (date) context.date = date.iso;
@@ -597,6 +614,15 @@ const parseLoose = (rows, source, dateOptions) => {
     const room = withoutTime.find((text) => ROOM_HINT.test(text) && !CODE_PATTERN.test(text) && text.length < 40) || '';
     const program = withoutTime.find((text) => text !== room && PROGRAM_HINT.test(text) && !CODE_PATTERN.test(text) && text.length < 60) || '';
     const rest = withoutTime.filter((text) => text !== room && text !== program);
+    // Several bare codes on one line are separate exams in the same slot.
+    const bareCodes = rest.flatMap((text) => text.split(/\s*[,/&]\s*|\s{2,}/)).filter(Boolean);
+    if (bareCodes.length > 1 && bareCodes.every(isCodeOnly)) {
+      bareCodes.forEach((code) => {
+        const record = makeRecord({ subject: code, code, date: context.date, time: time || context.time, room, program }, source, records.length);
+        if (record) records.push({ ...record, rowIndex });
+      });
+      return;
+    }
     const codeCell = rest.find((text) => CODE_PATTERN.test(text) && text.replace(CODE_PATTERN, '').trim().length < 3);
     const subjectCell = rest.filter((text) => text !== codeCell).sort((a, b) => b.length - a.length)[0] || codeCell || '';
     if (!subjectCell) return;
@@ -636,6 +662,41 @@ const dedupeAndSort = (records) => {
     .sort((a, b) => a.date.localeCompare(b.date) || (a.start ?? 0) - (b.start ?? 0) || a.subject.localeCompare(b.subject));
 };
 
+// Course codes mapped to titles, gathered from anywhere in the file. Date sheets often
+// print only codes in the schedule and list "CS-204  Data Structures" elsewhere.
+const codeKey = (code) => String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const isCodeOnly = (text) => {
+  const match = flat(text).match(CODE_PATTERN);
+  return Boolean(match) && flat(text).replace(match[0], '').replace(/[\s:–—\-|,/()]/g, '').length === 0;
+};
+
+const collectCourseTitles = (rows, titles = new Map()) => {
+  const looksLikeTitle = (text) => text.length >= 4 && /[a-z]{3}/i.test(text) && !CODE_PATTERN.test(text)
+    && !findDate(text) && !findTime(text) && !ROOM_HINT.test(text) && !matchHeader(text) && !NOISE_LINE.test(text);
+  const remember = (code, title) => {
+    const key = codeKey(code);
+    const cleaned = tidySubject(title);
+    if (key && cleaned && (!titles.has(key) || titles.get(key).length < cleaned.length)) titles.set(key, cleaned);
+  };
+  rows.forEach((row) => row.forEach((cell, index) => {
+    clean(cell.text).split('\n').forEach((line) => {
+      const match = line.match(CODE_PATTERN);
+      if (!match) return;
+      const rest = tidySubject(line.slice(0, match.index) + ' ' + line.slice(match.index + match[0].length));
+      if (rest && looksLikeTitle(rest)) { remember(match[0], rest); return; }
+      if (!isCodeOnly(line)) return;
+      const neighbour = row.slice(index + 1).map((other) => flat(other.text)).find(looksLikeTitle);
+      if (neighbour) remember(match[0], neighbour);
+    });
+  }));
+  return titles;
+};
+
+export const fillCourseTitles = (records, titles) => records.map((record) => {
+  const title = record.code && titles.get(codeKey(record.code));
+  return title && (!record.subject || record.subject === record.code) ? { ...record, subject: title } : record;
+});
+
 export const extractExams = (matrix, source = 'Uploaded file') => {
   const rows = normalizeRows(matrix).filter((row) => row.length > 0);
   const dateOptions = analyseDates(rows);
@@ -650,7 +711,8 @@ export const extractExams = (matrix, source = 'Uploaded file') => {
   const [table, ...others] = attempts;
   const bestOther = others.sort((a, b) => b.score - a.score)[0];
   const best = table.records.length > 0 && table.records.length >= bestOther.records.length * 0.6 ? table : [table, bestOther].sort((a, b) => b.score - a.score)[0];
-  return { records: dedupeAndSort(best.records), mode: best.mode, ambiguousDates: dateOptions.ambiguous };
+  const records = fillCourseTitles(best.records, collectCourseTitles(rows));
+  return { records: dedupeAndSort(records), mode: best.mode, ambiguousDates: dateOptions.ambiguous };
 };
 
 export const parseExamMatrix = (matrix, source = 'Uploaded file') => extractExams(matrix, source).records;
@@ -697,8 +759,10 @@ const readCell = (XLSX, cell) => {
 };
 
 export const parseExamWorkbook = (XLSX, workbook) => {
+  const titles = new Map();
   const candidates = workbook.SheetNames.map((sheetName) => {
     const matrix = sheetToMatrix(XLSX, workbook.Sheets[sheetName]);
+    collectCourseTitles(normalizeRows(matrix), titles);
     const result = extractExams(matrix, sheetName);
     return { sheetName, ...result };
   }).filter((candidate) => candidate.records.length > 0)
@@ -710,7 +774,7 @@ export const parseExamWorkbook = (XLSX, workbook) => {
   const combined = candidates.length > 1 && candidates[1].records.length >= Math.max(3, candidates[0].records.length * 0.2);
   const chosen = combined ? candidates : [candidates[0]];
   return {
-    records: dedupeAndSort(chosen.flatMap((candidate) => candidate.records)),
+    records: dedupeAndSort(fillCourseTitles(chosen.flatMap((candidate) => candidate.records), titles)),
     hasAmbiguousDates: chosen.some((candidate) => candidate.ambiguousDates),
     source: combined ? `${chosen.length} sheets` : candidates[0].sheetName,
     warnings: []
