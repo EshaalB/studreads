@@ -235,3 +235,29 @@ const sectionCourses = coursesForSection(DEMO_TIMETABLE_DATA, demoMapping, 'BSCS
 const carried = legacySelectionToClasses(DEMO_TIMETABLE_DATA, demoMapping, { section: 'BSCS-3A', selectedIds: [sectionCourses[0].id] });
 assert.ok(carried.length >= 1 && carried.every((cls) => cls.name === sectionCourses[0].name));
 console.log('✓ classes and older saved timetables');
+
+// Slot columns: headers that are themselves times, each paired with a "Code" column
+// (the layout of a real university mid-term date sheet).
+const slotSheet = extractExams([
+  ['COMPLETE DATE SHEET - MIDTERM-II'],
+  ['Fall 2026 Semester'],
+  ['Day', 'Date', 'Code', '09:00 - 10:00', 'Code', '10:30 - 11:30', 'Code', '14:00 - 15:00'],
+  ['Thursday', '29-Oct-2026', 'AF3006', 'Financing New Ventures', 'SS1022', 'Understanding of Holy Quran II/Introduction to Major World Religions II', 'SS2019', 'Psychology'],
+  ['Thursday', '29-Oct-2026', 'CS2009', 'Design and Analysis of Algorithms', '', '', 'CV4001', 'Environmental Engineering-II'],
+  [],
+  ['Friday', '30-Oct-2026', 'NS1002', 'Physics for Engineers', 'MT1003', 'Calculus and Analytical Geometry', '', '']
+]);
+assert.deepEqual(summary(slotSheet.records.filter((r) => ['AF3006', 'SS1022', 'SS2019', 'NS1002'].includes(r.code))), [
+  '2026-10-29 | 9:00 AM – 10:00 AM | AF3006 | Financing New Ventures | ',
+  '2026-10-29 | 10:30 AM – 11:30 AM | SS1022 | Understanding of Holy Quran II/Introduction to Major World Religions II | ',
+  '2026-10-29 | 2:00 PM – 3:00 PM | SS2019 | Psychology | ',
+  '2026-10-30 | 9:00 AM – 10:00 AM | NS1002 | Physics for Engineers | '
+]);
+assert.equal(slotSheet.records.length, 7);
+
+// The same idea without code columns, and with dates as the slot headers.
+const slotsNoCodes = extractExams([['Course Code', 'Mon 18/05/2026', 'Tue 19/05/2026'], ['CS-204', 'Data Structures', ''], ['MA-201', '', 'Linear Algebra']]);
+assert.deepEqual(slotsNoCodes.records.map((r) => [r.date, r.subject]), [['2026-05-18', 'Data Structures'], ['2026-05-19', 'Linear Algebra']]);
+const slotsLabelled = extractExams([['Date', 'Code', 'Slot 1 (9:00-12:00)', 'Code', 'Slot 2 (2:00-5:00)'], ['18/05/2026', 'CS-204', 'Data Structures', 'MA-201', 'Linear Algebra']]);
+assert.deepEqual(slotsLabelled.records.map((r) => [r.code, r.time]), [['CS-204', '9:00 AM – 12:00 PM'], ['MA-201', '2:00 PM – 5:00 PM']]);
+console.log('✓ date sheets with time-slot columns');

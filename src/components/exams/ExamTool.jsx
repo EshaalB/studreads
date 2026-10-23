@@ -139,9 +139,14 @@ const ExamTool = ({ sharedExams }) => {
   const programs = useMemo(() => [...new Set(records.map((record) => record.program).filter(Boolean))].sort(), [records]);
 
   const groups = useMemo(() => {
+    // "cs-2021", "cs 2021" and "CS2021" all find the same code.
+    const compact = (text) => text.toLowerCase().replace(/[^a-z0-9]/g, '');
     const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const list = records.filter((record) => (!program || record.program === program)
-      && terms.every((term) => [record.subject, record.code, record.program, record.room].join(' ').toLowerCase().includes(term)));
+    const list = records.filter((record) => {
+      if (program && record.program !== program) return false;
+      const text = [record.subject, record.code, record.program, record.room].join(' ').toLowerCase();
+      return terms.every((term) => text.includes(term)) || (compact(query) && compact(text).includes(compact(query)));
+    });
     const grouped = [];
     list.forEach((record) => {
       const last = grouped[grouped.length - 1];

@@ -404,10 +404,21 @@ const analyseDates = (rows) => {
 
 // Every header cell becomes an anchor, including unrecognised ones such as "Sr. No",
 // so their values are not pulled into a neighbouring column.
-const headerAnchors = (row) => row.map((cell) => ({ field: matchHeader(cell.text), x: cell.x, x2: cell.x2 }));
+// A header cell that is itself a time or date ("09:00 - 10:00", "Mon 18 May") marks a slot
+// column: its cells are courses examined at that time or on that date.
+const headerAnchors = (row, dateOptions) => row.map((cell) => {
+  const field = matchHeader(cell.text);
+  const slot = classify(cell.text, dateOptions);
+  // "Slot 1 (9:00-12:00)" names a time column but also carries the time itself.
+  if (field && !(field === 'time' && slot.time)) return { field, x: cell.x, x2: cell.x2 };
+  return slot.isAxis || slot.time
+    ? { field: 'slot', time: slot.time, date: slot.date?.iso || '', x: cell.x, x2: cell.x2 }
+    : { field: null, x: cell.x, x2: cell.x2 };
+});
 
 const assignToColumns = (row, anchors) => {
   const values = {};
+  const byAnchor = new Map();
   row.forEach((cell) => {
     let best = null;
     anchors.forEach((anchor) => {
@@ -415,11 +426,13 @@ const assignToColumns = (row, anchors) => {
       const score = overlap > 0 ? -overlap : Math.abs(center(cell) - center(anchor));
       if (!best || score < best.score) best = { anchor, score };
     });
+    if (!best) return;
+    byAnchor.set(best.anchor, byAnchor.has(best.anchor) ? `${byAnchor.get(best.anchor)}\n${cell.text}` : cell.text);
     // Columns with an unrecognised header are kept aside as a fallback for titles.
-    const field = best?.anchor.field || '_other';
+    const field = best.anchor.field || '_other';
     values[field] = values[field] ? `${values[field]}\n${cell.text}` : cell.text;
   });
-  return values;
+  return { values, byAnchor };
 };
 
 const isLabelRow = (text) => PROGRAM_HINT.test(text) && text.length < 60 && text.split(/\s+/).length <= 6
@@ -434,7 +447,7 @@ const parseTable = (rows, source, dateOptions) => {
 
   rows.forEach((row, rowIndex) => {
     if (scoreHeader(row)) {
-      anchors = headerAnchors(row);
+      anchors = headerAnchors(row, dateOptions);
       // Two-row headers such as "Time" above "From | To".
       rows[rowIndex + 1]?.forEach((cell) => {
         const field = matchHeader(cell.text);
@@ -485,7 +498,7 @@ const parseTable = (rows, source, dateOptions) => {
       if (used.size < row.length) anchors = anchors.map((anchor, index) => ({ ...anchor, x: row[index].x, x2: row[index].x2 }));
     }
 
-    const values = assignToColumns(row, anchors);
+    const { values, byAnchor } = assignToColumns(row, anchors);
     const dateText = flat([values.date, values.day].filter(Boolean).join(' '));
     const date = findDate(dateText, dateOptions);
     if (date) context.date = date.iso;
@@ -501,6 +514,33 @@ const parseTable = (rows, source, dateOptions) => {
     if (!time && date) time = findTime(dateText.slice(0, date.index) + ' ' + dateText.slice(date.index + date.length));
     if (time) context.time = time;
     if (values.program) context.program = flat(values.program);
+
+    // Slot columns: one exam per filled slot, its code taken from the "Code" column
+    // just before it (e.g. Code | 09:00 - 10:00 | Code | 10:30 - 11:30 ...).
+    if (anchors.some((anchor) => anchor.field === 'slot')) {
+      anchors.forEach((slot, index) => {
+        if (slot.field !== 'slot') return;
+        let code = '';
+        for (let i = index - 1; i >= 0 && anchors[i].field !== 'slot'; i -= 1) {
+          if (anchors[i].field === 'code' && byAnchor.get(anchors[i])) { code = flat(byAnchor.get(anchors[i])); break; }
+        }
+        const text = byAnchor.get(slot) || '';
+        if (!text && !code) return;
+        const courses = text ? parseCellCourses(text) : [{ subject: code, room: '', program: '' }];
+        courses.forEach((course) => {
+          const record = makeRecord({
+            subject: course.subject,
+            code: courses.length === 1 ? code : '',
+            date: slot.date || context.date,
+            time: slot.time || time || context.time || defaultTime,
+            room: values.room || course.room,
+            program: values.program || course.program || context.program
+          }, source, records.length);
+          if (record) records.push({ ...record, rowIndex });
+        });
+      });
+      return;
+    }
 
     const subjectText = values.subject || (values.code ? pickTitle(values._other) : '');
     const codeText = values.code || '';
@@ -602,12 +642,15 @@ const parseGrid = (rows, source, dateOptions) => {
     }
 
     let rowProgram = '';
+    let rowCode = '';
     const body = [];
     row.forEach((cell) => {
       const info = { ...cell, ...classify(cell.text, dateOptions) };
       if (center(cell) >= boundary) { body.push(info); return; }
       if (info.date) context.date = info.date.iso;
       if (info.time) context.time = info.time;
+      // A bare course code labelling the row is that row's course, not a programme.
+      if (!info.isAxis && isCodeOnly(info.text)) { rowCode = flat(info.text); return; }
       if (!info.isAxis && !/^\d+$/.test(info.text) && info.text.replace(DAY_PATTERN, '').trim()) rowProgram = rowProgram ? `${rowProgram} ${flat(info.text)}` : flat(info.text);
     });
 
@@ -620,7 +663,7 @@ const parseGrid = (rows, source, dateOptions) => {
       const date = column.cell.date?.iso || context.date;
       const time = column.cell.time || context.time;
       parseCellCourses(cell.text).forEach((course) => {
-        const record = makeRecord({ subject: course.subject, room: course.room, date, time, program: course.program || rowProgram }, source, records.length);
+        const record = makeRecord({ subject: course.subject, code: rowCode, room: course.room, date, time, program: course.program || rowProgram }, source, records.length);
         if (record) records.push({ ...record, rowIndex });
       });
     });
@@ -642,6 +685,9 @@ const parseLoose = (rows, source, dateOptions) => {
     if (!line || NOISE_LINE.test(line) || line.length > 220) return;
     // A header row ("Course Code | Course Title") starts a legend, not more exams.
     if (row.filter((cell) => matchHeader(cell.text)).length >= 2) { context.date = ''; return; }
+    // A row listing several dates or times is a column header, not an exam.
+    const axisCells = row.map((cell) => classify(cell.text, dateOptions)).filter((info) => info.isAxis);
+    if (axisCells.filter((info) => info.date).length >= 2 || axisCells.filter((info) => info.time && !info.date).length >= 2) return;
 
     const date = findDate(line, dateOptions);
     if (date) context.date = date.iso;
