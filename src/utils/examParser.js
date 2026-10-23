@@ -169,6 +169,46 @@ const findTime = (text, { strict = true } = {}) => {
   return null;
 };
 
+// Times inside a column known to hold times can be written loosely: "0900-1200",
+// "9" and "12" in separate columns, "09:00 hrs", an Excel fraction such as 0.375, or a
+// session name ("Morning") defined elsewhere in the sheet.
+const SESSION_WORD = '(morning|afternoon|evening|night|first|second|third|1st|2nd|3rd|(?:slot|session|shift|paper)\\s*(?:[a-c]|[1-3]|i{1,3}))';
+const SESSION_DEFINITION = new RegExp(`\\b${SESSION_WORD}\\b(?:\\s*(?:session|shift|slot|paper))?\\s*[:(=\\-–]?\\s*`, 'gi');
+const sessionKey = (word) => word.toLowerCase().replace(/\s+/g, '').replace(/^1st$/, 'first').replace(/^2nd$/, 'second').replace(/^3rd$/, 'third');
+
+const collectSessions = (rows) => {
+  const sessions = new Map();
+  rows.forEach((row) => row.forEach((cell) => {
+    const text = flat(cell.text);
+    for (const match of text.matchAll(SESSION_DEFINITION)) {
+      const time = findTime(text.slice(match.index + match[0].length, match.index + match[0].length + 40));
+      if (time && time.index < 4 && !sessions.has(sessionKey(match[1]))) sessions.set(sessionKey(match[1]), time);
+    }
+  }));
+  return sessions;
+};
+
+const sessionTime = (text, sessions) => {
+  if (!sessions?.size) return null;
+  const words = flat(text).toLowerCase();
+  for (const [key, time] of sessions) {
+    const pattern = new RegExp(`\\b${key.replace(/(\D)(\d|[a-c]|i+)$/, '$1\\s*$2')}\\b`, 'i');
+    if (pattern.test(words) || (key === 'first' && /\b1st\b/.test(words)) || (key === 'second' && /\b2nd\b/.test(words)) || (key === 'third' && /\b3rd\b/.test(words))) return time;
+  }
+  return null;
+};
+
+const findTimeLoose = (text, sessions) => {
+  let value = flat(text).replace(/\s*\b(?:hours|hrs?)\b\.?/gi, '');
+  if (!value) return null;
+  const fraction = value.match(/^0?\.\d+$/);
+  if (fraction) return { start: Math.round(Number(value) * 1440) % 1440, end: null };
+  const bare = value.match(/^(\d{1,2})$/);
+  if (bare && Number(bare[1]) >= 1 && Number(bare[1]) <= 23) return { start: assumeDaytime(Number(bare[1]) * 60, false), end: null };
+  value = value.replace(/\b([01]\d|2[0-3])([0-5]\d)\b/g, '$1:$2');
+  return findTime(value, { strict: false }) || sessionTime(value, sessions);
+};
+
 const timeLabel = (time) => {
   if (!time) return '';
   return time.end !== null ? `${formatClock(time.start)} – ${formatClock(time.end)}` : formatClock(time.start);
@@ -282,7 +322,7 @@ const makeRecord = (values, source, index) => {
     code,
     date: values.date,
     day: weekdayOf(values.date),
-    time: timeLabel(values.time),
+    time: timeLabel(values.time) || flat(values.timeText),
     start: values.time?.start ?? null,
     end: values.time?.end ?? null,
     room,
@@ -354,6 +394,7 @@ const analyseDates = (rows) => {
   return {
     dayFirst: monthFirstVotes <= dayFirstVotes,
     year: year ? Number(year) : new Date().getFullYear(),
+    sessions: collectSessions(rows),
     ambiguous: ambiguous && dayFirstVotes === monthFirstVotes
   };
 };
@@ -381,12 +422,14 @@ const assignToColumns = (row, anchors) => {
   return values;
 };
 
-const isLabelRow = (text) => PROGRAM_HINT.test(text) && text.length < 60 && !CODE_PATTERN.test(text) && !TITLE_LINE.test(text);
+const isLabelRow = (text) => PROGRAM_HINT.test(text) && text.length < 60 && text.split(/\s+/).length <= 6
+  && !CODE_PATTERN.test(text) && !TITLE_LINE.test(text) && !findTime(text);
 
 const parseTable = (rows, source, dateOptions) => {
   const records = [];
   let anchors = null;
   let pendingLabel = '';
+  let defaultTime = null;
   const context = { date: '', time: null, program: '' };
 
   rows.forEach((row, rowIndex) => {
@@ -423,7 +466,13 @@ const parseTable = (rows, source, dateOptions) => {
         return;
       }
     }
-    if (!anchors) return;
+    if (!anchors) {
+      // "All papers will be held from 9:00 AM to 12:00 PM" above the table.
+      const text = row.map((cell) => cell.text).join(' ');
+      const time = !findDate(text, dateOptions) && findTime(text);
+      if (time) defaultTime = time;
+      return;
+    }
     if (row.every((cell) => matchHeader(cell.text))) return;
 
     // A table continued on another PDF page can have different column widths. When a
@@ -444,11 +493,11 @@ const parseTable = (rows, source, dateOptions) => {
     let time = null;
     const startText = values.startTime || (values.endTime ? values.time : '');
     if (startText) {
-      const start = findTime(startText, { strict: false });
-      const end = findTime(values.endTime || '', { strict: false });
+      const start = findTimeLoose(startText, dateOptions.sessions);
+      const end = findTimeLoose(values.endTime || '', dateOptions.sessions);
       if (start) time = { start: start.start, end: end?.start ?? start.end ?? null };
     }
-    if (!time && values.time) time = findTime(values.time, { strict: false });
+    if (!time && values.time) time = findTimeLoose(values.time, dateOptions.sessions);
     if (!time && date) time = findTime(dateText.slice(0, date.index) + ' ' + dateText.slice(date.index + date.length));
     if (time) context.time = time;
     if (values.program) context.program = flat(values.program);
@@ -475,7 +524,8 @@ const parseTable = (rows, source, dateOptions) => {
         subject: course.subject,
         code: course.code,
         date: context.date,
-        time: time || context.time,
+        time: time || context.time || defaultTime,
+        timeText: values.time,
         room: values.room || course.room,
         program: values.program || course.program || context.program,
         teacher: values.teacher
@@ -501,7 +551,7 @@ const classify = (text, dateOptions) => {
   const value = flat(text);
   const date = findDate(value, dateOptions);
   const withoutDate = date ? value.slice(0, date.index) + ' ' + value.slice(date.index + date.length) : value;
-  const time = findTime(withoutDate, { strict: true });
+  const time = findTime(withoutDate, { strict: true }) || sessionTime(withoutDate, dateOptions.sessions);
   const leftover = (time ? withoutDate.slice(0, time.index) + withoutDate.slice(time.index + time.length) : withoutDate)
     .replace(DAY_PATTERN, '')
     .replace(/\b(morning|evening|afternoon|session|slot|shift|time|date|day|paper|exam|i|ii|iii|1st|2nd|3rd)\b/gi, '')
@@ -692,7 +742,7 @@ const collectCourseTitles = (rows, titles = new Map()) => {
   return titles;
 };
 
-export const fillCourseTitles = (records, titles) => records.map((record) => {
+const fillCourseTitles = (records, titles) => records.map((record) => {
   const title = record.code && titles.get(codeKey(record.code));
   return title && (!record.subject || record.subject === record.code) ? { ...record, subject: title } : record;
 });

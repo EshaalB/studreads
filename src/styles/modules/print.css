@@ -1,0 +1,26 @@
+/* Printing shows only the active tool's document:
+   the timetable's week view, or the "My exams" list. */
+
+@media print {
+  @page { margin: 12mm; }
+
+  html, body { background: #fff !important; color: #0a356a; }
+  body * { visibility: hidden; }
+
+  body[data-tool="timetable"] .export-sheet,
+  body[data-tool="timetable"] .export-sheet *,
+  body[data-tool="exams"] .print-area,
+  body[data-tool="exams"] .print-area * { visibility: visible; }
+
+  body[data-tool="timetable"] .export-sheet,
+  body[data-tool="exams"] .print-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0;
+  }
+
+  .print-only { display: block; margin-bottom: 12px; }
+  .week-scroll { break-inside: avoid; }
+}

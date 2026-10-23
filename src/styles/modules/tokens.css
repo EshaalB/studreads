@@ -1,0 +1,121 @@
+/* Design tokens: eshaaldev brand (regal navy, blush pink, cream).
+   Light theme by default; dark when the device asks for it or the user picks it. */
+
+:root {
+  color-scheme: light;
+
+  /* Brand */
+  --navy: #0a356a;
+  --pink: #ffa1bd;
+  --cream: #f9f3e2;
+
+  /* Surfaces and text */
+  --bg: #f9f3e2;
+  --surface: #fffcf3;
+  --surface-2: #f3ead0;
+  --surface-3: #e9dcb9;
+  --text: #0a356a;
+  --text-2: #43597c;
+  --text-3: #6f7d94;
+  --border: #e6d9b8;
+  --border-strong: #cdbd94;
+
+  /* Interaction */
+  --accent: #0a356a;
+  --accent-hover: #0f4582;
+  --accent-text: #f9f3e2;
+  --focus: #d9537d;
+  --header-bg: #0a356a;
+
+  /* States */
+  --danger: #b4332b;
+  --danger-bg: #fbeeea;
+  --warn: #8a5300;
+  --warn-bg: #fbf0d6;
+  --warn-line: #d9a23a;
+
+  --overlay: rgba(6, 30, 61, 0.42);
+  --shadow-pop: 0 1px 2px rgba(10, 53, 106, 0.06), 0 12px 28px rgba(10, 53, 106, 0.14);
+
+  /* Type */
+  --font: 'Helvetica Neue', Helvetica, Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+
+  /* Space, shape, size */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 8px;
+  --control: 36px;
+  --control-sm: 30px;
+  --content: 1120px;
+  --narrow: 600px;
+
+  --z-sticky: 10;
+  --z-menu: 30;
+  --z-overlay: 40;
+  --z-toast: 60;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #06264d;
+    --surface: #0a356a;
+    --surface-2: #0f3f79;
+    --surface-3: #164a88;
+    --text: #f9f3e2;
+    --text-2: #cbd0d8;
+    --text-3: #9aa9c2;
+    --border: #1a4a85;
+    --border-strong: #2f629d;
+    --accent: #ffa1bd;
+    --accent-hover: #ffb8cd;
+    --accent-text: #0a356a;
+    --focus: #ffa1bd;
+    --header-bg: #041d3b;
+    --danger: #ff9a90;
+    --danger-bg: #3a1c2a;
+    --warn: #f2c66d;
+    --warn-bg: #2f2c25;
+    --overlay: rgba(2, 14, 30, 0.6);
+    --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #06264d;
+  --surface: #0a356a;
+  --surface-2: #0f3f79;
+  --surface-3: #164a88;
+  --text: #f9f3e2;
+  --text-2: #cbd0d8;
+  --text-3: #9aa9c2;
+  --border: #1a4a85;
+  --border-strong: #2f629d;
+  --accent: #ffa1bd;
+  --accent-hover: #ffb8cd;
+  --accent-text: #0a356a;
+  --focus: #ffa1bd;
+  --header-bg: #041d3b;
+  --danger: #ff9a90;
+  --danger-bg: #3a1c2a;
+  --warn: #f2c66d;
+  --warn-bg: #2f2c25;
+  --overlay: rgba(2, 14, 30, 0.6);
+  --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.45);
+}

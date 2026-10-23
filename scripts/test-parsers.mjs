@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
 import { parseWorkbook } from '../src/utils/spreadsheetParser.js';
 import { docxXmlToRows, extractExams, hasAmbiguousNumericDates, normalizeExamDate, parseExamMatrix, parseExamWorkbook, positionedItemsToRows, textToRows } from '../src/utils/examParser.js';
-import { classesToManualEntries, isDuplicateManualEntry, normalizeManualEntry, validateManualEntry } from '../src/utils/manualTimetable.js';
+import { importClasses, isDuplicateClass, normalizeClass, validateClass } from '../src/utils/classes.js';
 import { buildTimetableShare, readTimetablePayload } from '../src/utils/transfer.js';
 import { checkOverlap, parseTime } from '../src/utils/timeUtils.js';
 
@@ -59,15 +59,17 @@ const workbookExams = parseExamWorkbook(XLSX, examWorkbook);
 assert.equal(workbookExams.records.length, 2);
 assert.equal(workbookExams.source, 'Final exams');
 
-const manualClass = normalizeManualEntry({
-  id: 'one', courseName: '  Data Structures  ', day: 'Monday',
+const manualClass = normalizeClass({
+  id: 'one', name: '  Data Structures  ', day: 'mon',
   startTime: '09:00', endTime: '10:00', room: '<Lab 4>'
 });
-assert.equal(manualClass.courseName, 'Data Structures');
-assert.equal(validateManualEntry(manualClass).valid, true);
-assert.equal(validateManualEntry({ ...manualClass, endTime: '08:00' }).valid, false);
-assert.equal(isDuplicateManualEntry(manualClass, [{ ...manualClass }]), true);
-assert.equal(isDuplicateManualEntry(manualClass, [{ ...manualClass }], 'one'), false);
+assert.equal(manualClass.name, 'Data Structures');
+assert.equal(manualClass.day, 'Monday');
+assert.equal(manualClass.room, 'Lab 4');
+assert.equal(validateClass(manualClass).valid, true);
+assert.equal(validateClass({ ...manualClass, endTime: '08:00' }).valid, false);
+assert.equal(isDuplicateClass(manualClass, [{ ...manualClass, startTime: '9:00 AM' }]), true, 'times compare by value');
+assert.equal(isDuplicateClass(manualClass, [{ ...manualClass }], 'one'), false);
 console.log('✓ Excel exam date-sheet parsing');
 
 // Exam sheets in the shapes universities actually publish.
@@ -174,10 +176,10 @@ const shared = readTimetablePayload(buildTimetableShare({
 }));
 assert.deepEqual(shared.colors, { 'Linear Algebra': '#123456' });
 assert.equal(shared.theme, 'earth');
-const reopened = classesToManualEntries(shared.classes);
+const reopened = importClasses(shared.classes);
 assert.equal(reopened.length, 1);
-assert.equal(reopened[0].startTime, '08:30');
-assert.equal(classesToManualEntries([{ name: 'No day', day: 'Someday', startTime: '9:00', endTime: '10:00' }]).length, 0);
+assert.ok(reopened[0].id);
+assert.equal(importClasses([{ name: 'No day', day: 'Someday', startTime: '9:00', endTime: '10:00' }]).length, 0);
 console.log('✓ share links and backups');
 
 // Sheets that print only course codes in the schedule and the titles elsewhere.
@@ -209,3 +211,27 @@ XLSX.utils.book_append_sheet(legendBook, XLSX.utils.aoa_to_sheet([
 ]), 'Courses');
 assert.deepEqual(parseExamWorkbook(XLSX, legendBook).records.map((r) => r.subject), ['Data Structures', 'Linear Algebra', 'Software Engineering']);
 console.log('✓ course titles found for code-only date sheets');
+
+// Times written loosely in a time column, or defined once for the whole sheet.
+const timeOf = (matrix) => extractExams(matrix).records.map((r) => r.time);
+assert.deepEqual(timeOf([['Subject', 'Date', 'Time'], ['Physics', '18/05/2026', '0900-1200']]), ['9:00 AM – 12:00 PM']);
+assert.deepEqual(timeOf([['Subject', 'Date', 'Start', 'End'], ['Physics', '18/05/2026', '9', '12']]), ['9:00 AM – 12:00 PM']);
+assert.deepEqual(timeOf([['Subject', 'Date', 'Timing'], ['Physics', '18/05/2026', '09:00 hrs to 12:00 hrs']]), ['9:00 AM – 12:00 PM']);
+assert.deepEqual(timeOf([['Course', 'Date', 'Start'], ['Physics', '18/05/2026', '0.375']]), ['9:00 AM']);
+assert.deepEqual(timeOf([
+  ['Morning session: 9:00 AM - 12:00 PM, Evening session: 2:00 PM - 5:00 PM'],
+  ['Subject', 'Date', 'Session'], ['Physics', '18/05/2026', 'Morning'], ['Maths', '19/05/2026', 'Evening']
+]), ['9:00 AM – 12:00 PM', '2:00 PM – 5:00 PM']);
+assert.deepEqual(timeOf([['All papers will be held from 9:00 AM to 12:00 PM'], ['Subject', 'Date'], ['Physics', '18/05/2026']]), ['9:00 AM – 12:00 PM']);
+assert.deepEqual(timeOf([['Course', 'Date', 'Time'], ['Physics', '18/05/2026', 'After Zuhr']]), ['After Zuhr'], 'unreadable times are shown as written');
+assert.deepEqual(timeOf([['Morning: 9:00-12:00 | Evening: 2:00-5:00'], ['Date', 'Morning', 'Evening'], ['18/05/2026', 'Physics', 'Maths']]), ['9:00 AM – 12:00 PM', '2:00 PM – 5:00 PM']);
+console.log('✓ exam times in loose formats');
+
+// Classes picked with the previous version of the app carry over.
+const demoMapping = { courseName: 'courseName', section: 'section', day: 'day', startTime: 'startTime', endTime: 'endTime', instructor: 'instructor', room: 'room' };
+const { DEMO_TIMETABLE_DATA } = await import('../src/utils/demoData.js');
+const { coursesForSection, legacySelectionToClasses } = await import('../src/utils/timetableSource.js');
+const sectionCourses = coursesForSection(DEMO_TIMETABLE_DATA, demoMapping, 'BSCS-3A');
+const carried = legacySelectionToClasses(DEMO_TIMETABLE_DATA, demoMapping, { section: 'BSCS-3A', selectedIds: [sectionCourses[0].id] });
+assert.ok(carried.length >= 1 && carried.every((cls) => cls.name === sectionCourses[0].name));
+console.log('✓ classes and older saved timetables');

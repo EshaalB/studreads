@@ -1,11 +1,11 @@
-import MainLayout from './components/MainLayout/MainLayout'
+import AppShell from './components/layout/AppShell'
 import { TimetableProvider } from './context/TimetableContext'
 import './styles/index.css'
 
 function App() {
   return (
     <TimetableProvider>
-      <MainLayout />
+      <AppShell />
     </TimetableProvider>
   )
 }

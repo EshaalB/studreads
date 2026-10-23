@@ -5,20 +5,19 @@ StudReads is a privacy-first timetable and exam planner for university students.
 ## Features
 
 **Timetable**
-- Parses grid-style and column-based `.xlsx`, `.xls`, `.ods` and `.csv` timetables, checking every worksheet
-- Lets students confirm detected columns before importing
-- Supports a primary section plus courses taken in other sections
-- Builds a timetable by hand when no file is available, or turns an imported one into an editable list
-- List and week views, a phone agenda, clash detection and inline corrections
-- Custom name, five colour palettes plus per-course colours, choice of visible details, 12 or 24-hour clock
-- Exports to PNG, print/PDF, calendar (`.ics`, weekly for 16 weeks), CSV and a restorable `.json` backup
-- Share links that open as an editable copy for the recipient
-- Remembers the imported timetable and settings after a refresh; light and dark appearance
+- One centred editor, modelled on a paper planner: a week grid with labelled actions beside it
+- Import grid-style or column-based `.xlsx`, `.xls`, `.ods` and `.csv` timetables, confirm the columns, then tick your courses (including courses taken with another section)
+- Or start from scratch: click an empty time slot or "Add class"; click any class to edit it, change its colour or delete it
+- Week and list views, clash detection, palettes plus any custom colour per course, 12 or 24-hour clock
+- Save as an image, print, or export a calendar (`.ics`), spreadsheet (`.csv`) or backup (`.json`) that can be imported again
+- Share links that open as an editable copy; light and dark mode; Back works with the browser and phone gestures
 
 **Exam finder**
 - Reads date sheets from PDF (text or scanned), Excel, OpenDocument, CSV, Word `.docx`, photos and screenshots, or pasted text
 - Handles header tables, grids with dates or time slots across the top, and free-text lists with dates on their own lines
 - Copes with merged date cells, two-row headers, wrapped titles, multi-page PDFs, landscape pages and dates without a year
+- Finds course titles printed elsewhere (a legend or another sheet) when the schedule lists only codes
+- Reads times written as `0900-1200`, separate hour columns, Excel fractions, "hrs", session names such as "Morning" defined in a note, or one time printed above the table
 - Uses printed weekdays to tell day/month from month/day
 - Search and programme filter, a personal exam list with clash warnings, and exams added or edited by hand
 - Exports to calendar (`.ics`), CSV and print, and shares the list as a link
@@ -49,6 +48,20 @@ The importer handles two broad structures:
 University spreadsheets vary widely. If a workbook contains several plausible timetable sheets, StudReads evaluates them and reports which sheet it selected. Unsupported or incomplete files receive an actionable error instead of being silently accepted.
 
 For exam date sheets, every source is reduced to rows of cells (PDF text and OCR keep each word's position). Three readings run over the same rows: a header-driven table, a date or time-slot grid, and a line-by-line text reading. A table with a recognised header wins unless another reading finds clearly more exams. Scanned PDFs and images go through Tesseract OCR, so results should be checked against the original.
+
+## Project structure
+
+```
+src/
+  components/
+    layout/     app shell, header, footer, about and privacy dialogs
+    timetable/  start screen, import review, editor, week grid, list, class and course dialogs
+    exams/      exam finder and exam dialog
+    ui/         shared controls: Dialog, Menu, Segmented, Dropzone, ColorField, ThemeToggle
+  context/      timetable state (one list of classes, the imported file, colours, settings)
+  utils/        parsers, exporters, share links and other plain functions
+  styles/       tokens, base, components, layout, timetable, exams, print
+```
 
 ## Privacy
 

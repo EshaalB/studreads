@@ -41,8 +41,3 @@ export const validateSection = (section) => {
   return sanitized.length > 0 && sanitized.length <= 50;
 };
 
-export const validateCourseData = (data) => {
-  if (!Array.isArray(data)) return { valid: false, error: 'Invalid data format' };
-  if (data.length === 0) return { valid: false, error: 'No data found in file' };
-  return { valid: true };
-};
