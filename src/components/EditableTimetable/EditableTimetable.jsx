@@ -54,7 +54,7 @@ const EditableTimetable = () => {
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(exportRef.current, {
         scale: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f9f3e2',
         logging: false,
         windowWidth: 1200,
         onclone: (clonedDocument) => {

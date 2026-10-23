@@ -40,8 +40,8 @@ const MainLayout = () => {
       <header className="app-header">
         <div className="app-header-inner">
           <a className="wordmark" href="./" aria-label="StudReads, start page">
-            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="1" y="1" width="16" height="16" rx="4" fill="currentColor" /><path d="M5 6.5h8M5 9.5h5M5 12.5h6.5" stroke="var(--surface)" strokeWidth="1.6" strokeLinecap="round" /></svg>
-            StudReads
+            <img src="/brand-mark.png" alt="" width="34" height="32" />
+            <span>Stud<span className="wordmark-accent">Reads</span></span>
           </a>
 
           <div className="segmented tool-tabs" role="tablist" aria-label="Planner">

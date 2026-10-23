@@ -1,5 +1,10 @@
 export const COLOR_THEMES = [
   {
+    id: 'brand',
+    name: 'eshaaldev',
+    colors: ['#FFA1BD', '#2F5E9E', '#F1E2B8', '#FFCCDB', '#3E6EAD', '#E3CB8F', '#FF7FA6', '#A9C1E2', '#C99C5E', '#5C86C0']
+  },
+  {
     id: 'pastel',
     name: 'Soft',
     colors: ['#BFDBFE', '#FECACA', '#BBF7D0', '#FEF08A', '#DDD6FE', '#FBCFE8', '#CFFAFE', '#FED7AA', '#99F6E4', '#E2E8F0']

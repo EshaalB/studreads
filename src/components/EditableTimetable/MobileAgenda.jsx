@@ -1,4 +1,5 @@
 import { DAY_ORDER } from '../../utils/constants';
+import { readableText } from '../../utils/themes';
 import { displayTimeRange } from '../../utils/timeUtils';
 
 const MobileAgenda = ({ classes, getOrAssignColor, displayOptions, conflicts }) => {
@@ -12,9 +13,12 @@ const MobileAgenda = ({ classes, getOrAssignColor, displayOptions, conflicts }) 
           <h3>{day}</h3>
           <ul>
             {classes.filter((item) => item.day === day).map((item, index) => (
-              <li className="agenda-item" key={`${item.id}-${index}`}>
+              <li
+                className="agenda-item"
+                key={`${item.id}-${index}`}
+                style={{ background: getOrAssignColor(item.name), color: readableText(getOrAssignColor(item.name)) }}
+              >
                 <span className="agenda-time">{displayTimeRange(item.startTime, item.endTime, displayOptions.timeFormat)}</span>
-                <span className="agenda-bar" style={{ background: getOrAssignColor(item.name) }} aria-hidden="true" />
                 <span className="agenda-text">
                   <strong>{item.name}</strong>
                   <span>{[

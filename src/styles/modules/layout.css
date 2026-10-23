@@ -10,10 +10,8 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(10px);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  background: var(--header-bg);
+  color: var(--header-text);
 }
 
 .app-header-inner {
@@ -22,7 +20,7 @@
   align-items: center;
   gap: 16px;
   max-width: 1240px;
-  height: 56px;
+  height: 60px;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -30,13 +28,41 @@
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   justify-self: start;
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   text-decoration: none;
+}
+
+.wordmark img { display: block; height: 32px; width: auto; }
+.wordmark-accent { color: var(--pink); }
+
+/* Controls sitting on the navy header */
+.app-header .segmented {
+  background: rgba(249, 243, 226, 0.1);
+  box-shadow: none;
+}
+
+.app-header .segmented > button { color: rgba(249, 243, 226, 0.78); }
+.app-header .segmented > button:hover { color: var(--cream); }
+
+.app-header .segmented > button[aria-selected="true"] {
+  background: var(--pink);
+  color: var(--navy);
+  box-shadow: none;
+}
+
+.app-header .icon-btn,
+.app-header .btn-ghost { color: rgba(249, 243, 226, 0.82); }
+
+.app-header .icon-btn:hover:not(:disabled),
+.app-header .btn-ghost:hover:not(:disabled) {
+  background: rgba(249, 243, 226, 0.12);
+  color: var(--cream);
 }
 
 .header-actions {
@@ -57,8 +83,9 @@
 .page-head { margin-bottom: 24px; }
 
 .page-head h1 {
-  font-size: 24px;
-  letter-spacing: -0.02em;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 .page-head p {

@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { readableText } from '../../utils/themes';
 import { displayTimeRange } from '../../utils/timeUtils';
 
 // A value that turns into a text field when clicked.
@@ -58,7 +59,11 @@ const TimetableTable = ({ classes, getOrAssignColor, displayOptions, conflicts, 
               displayOptions.showSection && cls.section
             ].filter(Boolean);
             return (
-              <tr key={`${cls.id}-${index}`} className={isFirstOfDay ? 'is-day-start' : ''}>
+              <tr
+                key={`${cls.id}-${index}`}
+                className={`course-row ${isFirstOfDay ? 'is-day-start' : ''}`}
+                style={{ '--row-bg': getOrAssignColor(cls.name), '--row-text': readableText(getOrAssignColor(cls.name)) }}
+              >
                 {isFirstOfDay && <th scope="rowgroup" rowSpan={dayCount} className="col-day">{cls.day}</th>}
                 <td className="col-time">
                   <EditableText
@@ -70,7 +75,6 @@ const TimetableTable = ({ classes, getOrAssignColor, displayOptions, conflicts, 
                 </td>
                 <td>
                   <div className="course-cell">
-                    <span className="swatch" style={{ background: getOrAssignColor(cls.name) }} aria-hidden="true" />
                     <div className="course-text">
                       <EditableText {...field(cls, 'name')} label="Course name" value={cls.name} />
                       {(meta.length > 0 || (editable && displayOptions.showTeacher)) && (

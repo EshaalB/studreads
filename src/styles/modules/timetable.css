@@ -73,8 +73,22 @@
 }
 
 .col-day { width: 120px; }
-.col-time { width: 172px; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-2); }
-.col-room { width: 140px; color: var(--text-2); }
+
+/* Each class row is filled with its course colour; the day column stays neutral. */
+.course-row > td {
+  background: var(--row-bg);
+  color: var(--row-text);
+  border-top: 2px solid var(--surface);
+}
+
+.list-table tr.course-row.is-day-start > td { border-top: 2px solid var(--surface); }
+.list-table tbody tr.course-row:first-child > td { border-top: 0; }
+.course-row .course-meta,
+.course-row .muted { color: inherit; opacity: 0.72; }
+.course-row .cell-edit:hover { background: rgba(0, 0, 0, 0.08); }
+.course-row .badge-warn { background: rgba(255, 255, 255, 0.85); color: #8a5300; }
+.col-time { width: 172px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.col-room { width: 140px; }
 
 .course-cell {
   display: flex;
@@ -156,17 +170,17 @@
 
 .agenda-item {
   display: grid;
-  grid-template-columns: 74px 3px minmax(0, 1fr) auto;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
   padding: 12px 14px;
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--surface);
 }
 
 .agenda-item:first-child { border-top: 0; }
 
 .agenda-time {
-  color: var(--text-2);
+  opacity: 0.75;
   font-size: 12.5px;
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
@@ -184,7 +198,7 @@
 }
 
 .agenda-text strong { font-size: 14px; font-weight: 500; line-height: 1.35; }
-.agenda-text span { color: var(--text-3); font-size: 12.5px; }
+.agenda-text span { opacity: 0.72; font-size: 12.5px; }
 .agenda-text span:empty { display: none; }
 
 /* Week view ------------------------------------------------------------- */
@@ -278,22 +292,22 @@
 /* Export sheet: off-screen copy used for images and printing ------------ */
 
 .export-sheet {
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f4f4f2;
-  --text: #1b1b19;
-  --text-2: #5d5d58;
-  --text-3: #8a8a84;
-  --border: #e3e3de;
-  --border-strong: #cfcfc9;
+  --bg: #f9f3e2;
+  --surface: #fffcf3;
+  --surface-2: #f3ead0;
+  --text: #0a356a;
+  --text-2: #43597c;
+  --text-3: #7a879c;
+  --border: #e6d9b8;
+  --border-strong: #d2c197;
   --warn-line: #d9a23a;
   position: fixed;
   top: 0;
   left: -10000px;
   width: 1040px;
   padding: 32px;
-  background: #ffffff;
-  color: #1b1b19;
+  background: #f9f3e2;
+  color: #0a356a;
   color-scheme: light;
   pointer-events: none;
 }
@@ -306,7 +320,7 @@
   margin-bottom: 16px;
 }
 
-.export-head strong { font-size: 20px; letter-spacing: -0.02em; }
+.export-head strong { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -0.03em; }
 .export-head span { color: var(--text-3); font-size: 13px; }
 .export-sheet .week-scroll { overflow: visible; }
 /* html2canvas draws inset shadows too heavily; a hairline border matches the screen. */

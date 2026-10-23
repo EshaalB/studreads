@@ -40,7 +40,7 @@
 
 .result-date {
   position: sticky;
-  top: 56px;
+  top: 60px;
   z-index: 1;
   padding: 8px 0;
   background: var(--bg);
