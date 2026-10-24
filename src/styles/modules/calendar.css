@@ -17,6 +17,7 @@
 /* The image renderer draws inset shadows too heavily; borders give the same look. */
 .capture.is-capturing .grid-block { box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.08); }
 .capture.is-capturing .grid-block.has-clash { border: 2px solid var(--warn-line); }
+.capture.is-capturing .grid-block.is-exam { border: 1.5px solid currentColor; }
 .capture.is-capturing .is-tinted .grid-block,
 .capture.is-capturing .is-tinted .agenda-row { box-shadow: none; border: 1px solid color-mix(in srgb, var(--block) 70%, transparent); }
 
@@ -125,6 +126,14 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
+.grid-block-badge,
+.agenda-row-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.01em; opacity: 0.9; }
+
+/* Exams share the grid with classes; an outline and a date badge set them apart. */
+.grid-block.is-exam { box-shadow: inset 0 0 0 1.5px currentColor; }
+.grid-block.is-exam.has-clash { box-shadow: inset 0 0 0 2px var(--warn-line); }
+.grid-block.is-short .grid-block-badge { display: none; }
 
 .grid-block-details { flex: none; overflow: hidden; opacity: 0.8; text-overflow: ellipsis; white-space: nowrap; }
 

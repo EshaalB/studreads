@@ -3,9 +3,12 @@ import { useTimetable } from '../../context/useTimetable';
 import { isDuplicateClass, validateClass } from '../../utils/classes';
 import { DAYS } from '../../utils/constants';
 import { showSuccess } from '../../utils/errorHandler';
-import { toInputTime } from '../../utils/timeUtils';
+import { parseTime, toInputTime } from '../../utils/timeUtils';
 import ColorField from '../ui/ColorField';
+import { ExamForm } from '../exams/ExamDialog';
 import Dialog from '../ui/Dialog';
+import PushButton from '../ui/PushButton';
+import Segmented from '../ui/Segmented';
 
 const toDraft = (item) => ({
   name: item?.name || '',
@@ -95,15 +98,45 @@ const ClassForm = ({ item, onClose }) => {
         {isEditing && <button type="button" className="btn btn-danger" onClick={remove}>Delete</button>}
         <span className="spacer" />
         <button type="button" className="btn" onClick={onClose}>Cancel</button>
-        <button type="submit" className="btn btn-primary">{isEditing ? 'Save' : 'Add class'}</button>
+        <PushButton type="submit">{isEditing ? 'Save' : 'Add class'}</PushButton>
       </div>
     </form>
   );
 };
 
-const ClassDialog = ({ item, onClose }) => (
-  <Dialog isOpen={Boolean(item)} onClose={onClose} title={item?.id ? 'Edit class' : 'Add a class'} width={460}>
-    {item && <ClassForm key={item.id || `${item.day}-${item.startTime}`} item={item} onClose={onClose} />}
+const DAY_INDEX = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+
+// The next date (today or later) that falls on the given weekday, as YYYY-MM-DD.
+const nextDateFor = (day) => {
+  const date = new Date();
+  date.setDate(date.getDate() + ((DAY_INDEX[day] ?? date.getDay()) - date.getDay() + 7) % 7);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+// Adding asks whether it is a weekly class or a one-off exam; editing goes straight to the form.
+const AddOrEdit = ({ item, exams, onClose }) => {
+  const [mode, setMode] = useState('class');
+  if (item.id) return <ClassForm item={item} onClose={onClose} />;
+  const start = parseTime(item.startTime);
+  return (
+    <div className="form">
+      <Segmented
+        full
+        label="What are you adding?"
+        value={mode}
+        onChange={setMode}
+        options={[{ value: 'class', label: 'Weekly class' }, { value: 'exam', label: 'Exam' }]}
+      />
+      {mode === 'class'
+        ? <ClassForm item={item} onClose={onClose} />
+        : <ExamForm exam={{ subject: '', date: nextDateFor(item.day), start, end: start === null ? null : Math.min(start + 180, 23 * 60 + 59) }} onSave={(values) => exams.saveExam(values, {})} onDelete={() => {}} onClose={onClose} />}
+    </div>
+  );
+};
+
+const ClassDialog = ({ item, exams, onClose }) => (
+  <Dialog isOpen={Boolean(item)} onClose={onClose} title={item?.id ? 'Edit class' : 'Add to your timetable'} width={460}>
+    {item && <AddOrEdit key={item.id || `${item.day}-${item.startTime}`} item={item} exams={exams} onClose={onClose} />}
   </Dialog>
 );
 

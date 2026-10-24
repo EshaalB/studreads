@@ -129,8 +129,6 @@
 .push:focus-visible { outline: none; }
 .push:focus-visible .push-front { outline: 2px solid var(--focus); outline-offset: 3px; }
 .push:disabled { cursor: not-allowed; opacity: 0.55; }
-.push-full { width: 100%; }
-.push-full .push-front { justify-content: flex-start; }
 
 /* Forms */
 .form { display: grid; gap: var(--space-4); }

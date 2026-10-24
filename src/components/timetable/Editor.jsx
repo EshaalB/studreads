@@ -1,7 +1,7 @@
-import { CalendarPlus, ChevronDown, Download, FileJson, FilePlus2, Image, Link2, ListChecks, Plus, Printer, Settings, Upload } from 'lucide-react';
+import { CalendarPlus, ChevronDown, ClipboardList, Download, FileJson, FilePlus2, Image, Link2, ListChecks, Plus, Printer, Search, Settings, Upload } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
-import { classToItem, groupByColumn, weekColumns } from '../../utils/calendarItems';
+import { classToItem, examToItem, groupByColumn, weekColumns } from '../../utils/calendarItems';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { classesToIcs, downloadFile, examsToIcs, fileSlug } from '../../utils/exportUtils';
 import { saveElementAsImage } from '../../utils/imageExport';
@@ -11,7 +11,6 @@ import AgendaList from '../calendar/AgendaList';
 import TimeGrid from '../calendar/TimeGrid';
 import ExamDialog from '../exams/ExamDialog';
 import ExamPicker from '../exams/ExamPicker';
-import ExamSection from '../exams/ExamSection';
 import Menu from '../ui/Menu';
 import PushButton from '../ui/PushButton';
 import Segmented from '../ui/Segmented';
@@ -36,20 +35,33 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
   const view = displayOptions.view === 'list' ? 'list' : 'grid';
   const title = displayOptions.title.trim();
   const slug = fileSlug(title, 'timetable');
-  const empty = classes.length === 0;
-  const nothing = empty && exams.mine.length === 0;
+  const nothing = classes.length === 0 && exams.mine.length === 0;
   const courseNames = useMemo(() => [...new Set(classes.map((cls) => cls.name))], [classes]);
-  const clashCount = Math.ceil(conflicts.size / 2);
+  const clashCount = Math.ceil(conflicts.size / 2) + Math.ceil(exams.clashes.size / 2);
+  const relativeDay = (isoDate) => {
+    const now = new Date();
+    const days = Math.round((Date.parse(`${isoDate}T00:00:00Z`) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+    return days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+  };
   const summary = [
-    courseNames.length ? `${courseNames.length} ${courseNames.length === 1 ? 'course' : 'courses'}` : 'No classes yet',
+    courseNames.length ? `${courseNames.length} ${courseNames.length === 1 ? 'course' : 'courses'}` : '',
     exams.mine.length ? `${exams.mine.length} ${exams.mine.length === 1 ? 'exam' : 'exams'}` : ''
-  ].filter(Boolean).join(', ');
+  ].filter(Boolean).join(', ') || 'Nothing added yet';
+  const nextExamNote = exams.nextExam ? `Next exam: ${exams.nextExam.subject}, ${relativeDay(exams.nextExam.date)}` : '';
 
-  const columns = useMemo(() => weekColumns(classes, displayOptions.days), [classes, displayOptions.days]);
-  const items = useMemo(() => classes.map((cls) => classToItem(cls, { getColor: getOrAssignColor, displayOptions, conflicts })), [classes, getOrAssignColor, displayOptions, conflicts]);
-  const selectClass = (id) => setEditing(classes.find((cls) => cls.id === id));
+  // Classes and exams share the grid and the list; exams sit on their weekday, marked with their date.
+  const items = useMemo(() => [
+    ...classes.map((cls) => classToItem(cls, { getColor: getOrAssignColor, displayOptions, conflicts })),
+    ...exams.mine.map((exam) => examToItem(exam, { getColor: getOrAssignColor, clashes: exams.clashes }))
+  ], [classes, exams.mine, exams.clashes, getOrAssignColor, displayOptions, conflicts]);
+  const columns = useMemo(() => weekColumns(items, displayOptions.days), [items, displayOptions.days]);
+  const kindOf = (id) => items.find((item) => item.id === id)?.kind;
+  const openItem = (id) => (kindOf(id) === 'exam'
+    ? setEditingExam(exams.records.find((exam) => exam.id === id))
+    : setEditing(classes.find((cls) => cls.id === id)));
 
-  const deleteClass = (id) => {
+  const removeItem = (id) => {
+    if (kindOf(id) === 'exam') { exams.removeExam(id); return; }
     const removed = classes.find((cls) => cls.id === id);
     if (!removed) return;
     removeClass(id);
@@ -88,7 +100,8 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
   const uploadItems = [
     { label: 'Class timetable', hint: 'Excel or CSV from your university', icon: <Upload size={15} />, onSelect: upload.timetable },
     { label: 'Exam date sheet', hint: 'PDF, Excel, Word or a photo', icon: <CalendarPlus size={15} />, onSelect: upload.exams },
-    { label: 'Paste exam dates', hint: 'Text copied from a website or email', icon: <ListChecks size={15} />, onSelect: upload.paste },
+    { label: 'Paste exam dates', hint: 'Text copied from a website or email', icon: <ClipboardList size={15} />, onSelect: upload.paste },
+    ...(exams.records.some((record) => record.source !== 'Added by you') ? [{ label: 'Find my exams again', hint: 'In the date sheet you uploaded', icon: <Search size={15} />, onSelect: examPicker.open }] : []),
     ...(hasSource ? [{ separator: true }, { label: 'Pick my courses again', hint: 'From the timetable you uploaded', icon: <ListChecks size={15} />, onSelect: coursePicker.open }] : []),
     { separator: true },
     { label: 'Open a backup', hint: '.json saved from StudReads', icon: <FileJson size={15} />, onSelect: upload.backup }
@@ -131,7 +144,7 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
 
       <div className="schedule-body">
         <nav className="schedule-actions" aria-label="Planner actions">
-          <PushButton className="push-full" onClick={() => setEditing({ day: 'Monday', startTime: '09:00', endTime: '10:00' })}><Plus size={16} /> Add class</PushButton>
+          <PushButton onClick={() => setEditing({ day: 'Monday', startTime: '09:00', endTime: '10:00' })}><Plus size={16} /> Add</PushButton>
           <Menu triggerClassName="action" trigger={<><Upload size={16} /> {busy || 'Upload'} <ChevronDown size={14} className="action-chevron" /></>} items={uploadItems} />
           <Menu triggerClassName="action" trigger={<><Download size={16} /> Export <ChevronDown size={14} className="action-chevron" /></>} items={exportItems} />
           <button type="button" className="action" onClick={share} disabled={nothing}><Link2 size={16} /> Share</button>
@@ -142,6 +155,7 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
           <div className="canvas-head">
             <p className="canvas-summary">
               {busy || summary}
+              {!busy && nextExamNote && <span> · {nextExamNote}</span>}
               {clashCount > 0 && <span className="text-warn"> · {clashCount} {clashCount === 1 ? 'clash' : 'clashes'}</span>}
             </p>
             <Segmented
@@ -172,35 +186,26 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
               <strong>{title || 'My timetable'}</strong>
               <span>{summary}</span>
             </div>
-            {view === 'grid' || empty ? (
+            {view === 'grid' || nothing ? (
               <TimeGrid
                 columns={columns}
                 items={items}
                 timeFormat={displayOptions.timeFormat}
                 rowHeight={displayOptions.rowHeight}
                 blockStyle={displayOptions.blockStyle}
-                onSelect={selectClass}
+                onSelect={openItem}
                 onAddAt={(day, minutes) => setEditing({ day, startTime: toClock(minutes), endTime: toClock(Math.min(minutes + 60, 23 * 60 + 59)) })}
               />
             ) : (
-              <AgendaList groups={groupByColumn(columns, items)} onSelect={selectClass} onRemove={deleteClass} removeLabel="Delete" blockStyle={displayOptions.blockStyle} />
+              <AgendaList groups={groupByColumn(columns, items)} onSelect={openItem} onRemove={removeItem} removeLabel="Remove" blockStyle={displayOptions.blockStyle} />
             )}
-
-            <ExamSection
-              exams={exams}
-              getColor={getOrAssignColor}
-              blockStyle={displayOptions.blockStyle}
-              onOpen={(id) => setEditingExam(exams.records.find((exam) => exam.id === id))}
-              onAdd={() => setEditingExam({ subject: '', date: '' })}
-              onFind={examPicker.open}
-            />
           </div>
 
-          {!nothing && <p className="canvas-hint">Click a class or exam to edit it. Drop another file here to add it.</p>}
+          {!nothing && <p className="canvas-hint">Click an empty slot to add a class or exam, or click one to edit it.</p>}
         </section>
       </div>
 
-      <ClassDialog item={editing} onClose={() => setEditing(null)} />
+      <ClassDialog item={editing} exams={exams} onClose={() => setEditing(null)} />
       <ExamDialog exam={editingExam} onSave={(values) => exams.saveExam(values, editingExam)} onDelete={exams.removeExam} onClose={() => setEditingExam(null)} />
       {hasSource && <CoursePicker isOpen={coursePicker.isOpen} onClose={coursePicker.close} />}
       <ExamPicker isOpen={examPicker.isOpen} onClose={examPicker.close} exams={exams} courseNames={courseNames} />

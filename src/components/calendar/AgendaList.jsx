@@ -13,10 +13,11 @@ const AgendaList = ({ groups, onSelect, onRemove, removeLabel = 'Delete', blockS
         <h3>{group.label}</h3>
         <ul>
           {group.items.map((item) => (
-            <li key={item.id} className="agenda-row" style={{ '--block': item.color, '--block-text': readableText(item.color) }}>
+            <li key={item.id} className={`agenda-row ${item.kind === 'exam' ? 'is-exam' : ''}`} style={{ '--block': item.color, '--block-text': readableText(item.color) }}>
               <button type="button" className="agenda-row-main" onClick={() => onSelect(item.id)}>
                 <span className="agenda-row-time">{item.time || 'Time not listed'}</span>
                 <span className="agenda-row-text">
+                  {item.badge && <span className="agenda-row-badge">{item.badge}</span>}
                   <strong>{item.title}</strong>
                   {item.details.length > 0 && <span>{item.details.join(' · ')}</span>}
                 </span>

@@ -70,12 +70,13 @@ const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHo
     <button
       type="button"
       key={item.id}
-      className={`grid-block ${item.clash ? 'has-clash' : ''} ${className}`}
+      className={`grid-block ${item.kind === 'exam' ? 'is-exam' : ''} ${item.clash ? 'has-clash' : ''} ${className}`}
       style={{ ...style, '--block': item.color, '--block-text': readableText(item.color) }}
       onClick={() => onSelect?.(item.id)}
       tabIndex={onSelect ? 0 : -1}
-      aria-label={[item.title, item.time, ...item.details].filter(Boolean).join(', ')}
+      aria-label={[item.badge, item.title, item.time, ...item.details].filter(Boolean).join(', ')}
     >
+      {item.badge && <span className="grid-block-badge">{item.badge}</span>}
       {item.time && <span className="grid-block-time">{item.time}</span>}
       <strong>{item.title}</strong>
       {item.details.length > 0 && <span className="grid-block-details">{item.details.join(' · ')}</span>}

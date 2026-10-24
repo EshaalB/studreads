@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { parseTime } from '../../utils/timeUtils';
 import Dialog from '../ui/Dialog';
+import PushButton from '../ui/PushButton';
 
 const toInput = (minutes) => (minutes === null || minutes === undefined ? '' : `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
 
-const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
+export const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
   const [form, setForm] = useState({
     subject: exam.subject || '',
     code: exam.code || '',
@@ -66,7 +67,7 @@ const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
         )}
         <span className="spacer" />
         <button type="button" className="btn" onClick={onClose}>Cancel</button>
-        <button type="submit" className="btn btn-primary">Save</button>
+        <PushButton type="submit">{exam.id ? 'Save' : 'Add exam'}</PushButton>
       </div>
     </form>
   );
