@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { SITE } from '../../content/site';
 import { isAddedByHand } from '../../hooks/useExams';
+import { shortDate } from '../../utils/dates';
+import { compact } from '../../utils/validation';
 import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
 
-const compact = (text) => String(text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const words = (text) => new Set(String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 2));
 
 // Does this exam belong to one of the student's courses? Matches codes, exact names,
@@ -27,14 +28,12 @@ const matchesCourse = (exam, courseNames) => {
 
 const REPORT_URL = `${SITE.issues}?title=${encodeURIComponent('Date sheet read wrong')}&body=${encodeURIComponent('University:\nFile type (PDF, Excel, photo…):\nWhat was missing or wrong:\n\nPlease do not attach files with personal details.')}`;
 
-const dateLabel = (isoDate) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
-
 const Row = ({ exam, checked, onToggle }) => (
   <label className={`check-row ${checked ? 'is-checked' : ''}`}>
     <input type="checkbox" checked={checked} onChange={onToggle} />
     <span className="check-row-text">
       <span>{exam.subject}</span>
-      <small>{[exam.code !== exam.subject && exam.code, dateLabel(exam.date), exam.time].filter(Boolean).join(' · ')}</small>
+      <small>{[exam.code !== exam.subject && exam.code, shortDate(exam.date), exam.time].filter(Boolean).join(' · ')}</small>
     </span>
   </label>
 );

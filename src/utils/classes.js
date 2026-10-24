@@ -1,6 +1,7 @@
 // A class is one weekly meeting: { id, name, day, startTime, endTime, room, teacher, credits, section }.
 import { DAYS } from './constants.js';
 import { parseTime } from './timeUtils.js';
+import { cleanText } from './validation.js';
 
 let counter = 0;
 export const newClassId = () => globalThis.crypto?.randomUUID?.() || `class-${Date.now()}-${counter++}`;
@@ -11,18 +12,16 @@ const canonicalDay = (value) => {
   return (text && DAYS.find((day) => day.toLowerCase().startsWith(text.slice(0, 3)))) || '';
 };
 
-const clip = (value, length) => String(value ?? '').replace(/[<>]/g, '').trim().slice(0, length);
-
 export const normalizeClass = (item = {}) => ({
   id: String(item.id || ''),
-  name: clip(item.name ?? item.courseName, 80),
+  name: cleanText(item.name ?? item.courseName, 80),
   day: canonicalDay(item.day),
-  startTime: clip(item.startTime, 20),
-  endTime: clip(item.endTime, 20),
-  room: clip(item.room, 50),
-  teacher: clip(item.teacher ?? item.instructor, 80),
-  credits: clip(item.credits, 10),
-  section: clip(item.section, 40)
+  startTime: cleanText(item.startTime, 20),
+  endTime: cleanText(item.endTime, 20),
+  room: cleanText(item.room, 50),
+  teacher: cleanText(item.teacher ?? item.instructor, 80),
+  credits: cleanText(item.credits, 10),
+  section: cleanText(item.section, 40)
 });
 
 export const validateClass = (item) => {

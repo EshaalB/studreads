@@ -2,7 +2,9 @@ import { CalendarPlus, ChevronDown, ClipboardList, Download, FileJson, FilePlus2
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { SITE } from '../../content/site';
 import { useTimetable } from '../../context/useTimetable';
-import { classToItem, dateFromColumn, examToItem, groupByColumn, plannerColumns, weekdayOf } from '../../utils/calendarItems';
+import { classToItem, dateFromColumn, examToItem, groupByColumn, plannerColumns } from '../../utils/calendarItems';
+import { relativeDay, weekdayOf } from '../../utils/dates';
+import { minutesToInput } from '../../utils/timeUtils';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { classesToIcs, downloadFile, examsToIcs, fileSlug } from '../../export/exportUtils';
 import { saveElementAsImage } from '../../export/imageExport';
@@ -19,8 +21,6 @@ import Segmented from '../ui/Segmented';
 import ClassDialog from './ClassDialog';
 import CoursePicker from './CoursePicker';
 import SettingsPanel from './SettingsPanel';
-
-const toClock = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
 // The whole planner on one screen: exams and classes together in a week grid or a list.
 const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicker, exams }) => {
@@ -41,11 +41,6 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
   const hasSheet = exams.records.some((record) => !isAddedByHand(record));
   const courseNames = useMemo(() => [...new Set(classes.map((cls) => cls.name))], [classes]);
   const clashCount = Math.ceil(conflicts.size / 2) + Math.ceil(exams.clashes.size / 2);
-  const relativeDay = (isoDate) => {
-    const now = new Date();
-    const days = Math.round((Date.parse(`${isoDate}T00:00:00Z`) - Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
-    return days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
-  };
   const summary = [
     courseNames.length ? `${courseNames.length} ${courseNames.length === 1 ? 'course' : 'courses'}` : '',
     exams.mine.length ? `${exams.mine.length} ${exams.mine.length === 1 ? 'exam' : 'exams'}` : ''
@@ -219,7 +214,7 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
                 onSelect={openItem}
                 onAddAt={(column, minutes) => {
                   const date = dateFromColumn(column);
-                  setEditing({ day: date ? weekdayOf(date) : column, date, startTime: toClock(minutes), endTime: toClock(Math.min(minutes + 60, 23 * 60 + 59)) });
+                  setEditing({ day: date ? weekdayOf(date) : column, date, startTime: minutesToInput(minutes), endTime: minutesToInput(Math.min(minutes + 60, 23 * 60 + 59)) });
                 }}
               />
             ) : (

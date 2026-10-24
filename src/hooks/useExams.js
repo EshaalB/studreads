@@ -1,18 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { showSuccess } from '../utils/errorHandler.js';
 import { findExamChanges } from '../utils/examChanges.js';
-import { formatClock } from '../parsers/examParser.js';
+import { todayIso, weekdayOf } from '../utils/dates.js';
 import { readStored, writeStored } from '../utils/storage.js';
+import { formatMinutes } from '../utils/timeUtils.js';
 
 const STORAGE_KEY = 'studreads_exams_v1';
 
 export const isAddedByHand = (record) => record.source === 'Added by you';
 const byDateAndTime = (a, b) => a.date.localeCompare(b.date) || (a.start ?? 0) - (b.start ?? 0);
-
-const todayIso = () => {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-};
 
 // Exams on the same day whose times overlap (or whose time is unknown).
 const findClashes = (records) => {
@@ -62,14 +58,14 @@ export const useExams = () => {
   }), [records]);
 
   const saveExam = useCallback((values, editing) => {
-    const time = values.start !== null ? (values.end !== null ? `${formatClock(values.start)} – ${formatClock(values.end)}` : formatClock(values.start)) : '';
+    const time = values.start !== null ? (values.end !== null ? `${formatMinutes(values.start)} – ${formatMinutes(values.end)}` : formatMinutes(values.start)) : '';
     const record = {
       ...editing,
       id: editing.id || `manual-${Date.now()}`,
       subject: values.subject.trim() || values.code.trim(),
       code: values.code.trim(),
       date: values.date,
-      day: new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${values.date}T00:00:00Z`)),
+      day: weekdayOf(values.date, 'short'),
       time,
       start: values.start,
       end: values.end,

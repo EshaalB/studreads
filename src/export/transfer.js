@@ -1,8 +1,11 @@
 // Formats for share links and backup files. Share links use compact arrays; backups use
 // readable objects so the file still makes sense if opened in a text editor.
+import { isIsoDate, weekdayOf } from '../utils/dates.js';
 import { COLOR_THEMES, isHexColor } from '../utils/themes.js';
+import { TIMETABLE_FIELDS } from '../utils/timetableSource.js';
+import { cleanText } from '../utils/validation.js';
 
-const text = (value, max = 120) => String(value ?? '').replace(/[<>]/g, '').trim().slice(0, max);
+const text = (value, max = 120) => cleanText(value, max);
 const usedColors = (classes, colorMap = {}) => Object.fromEntries(
   [...new Set(classes.map((item) => item.name))].filter((name) => isHexColor(colorMap[name])).map((name) => [name, colorMap[name]])
 );
@@ -79,15 +82,13 @@ export const buildClassmateShare = ({ title, source, exams = [], examFile }) => 
   x: exams.length ? examFile : undefined
 });
 
-const MAPPING_KEYS = ['courseName', 'section', 'day', 'startTime', 'endTime', 'instructor', 'room', 'credits'];
-
 export const readClassmatePayload = (data) => {
   if (!data || typeof data !== 'object') return null;
   let source = null;
   const table = data.t;
   if (table && Array.isArray(table.h) && Array.isArray(table.r) && table.m && typeof table.m === 'object') {
     const columns = table.h.map((column) => text(column, 80));
-    const mapping = Object.fromEntries(MAPPING_KEYS.filter((key) => columns.includes(table.m[key])).map((key) => [key, table.m[key]]));
+    const mapping = Object.fromEntries(TIMETABLE_FIELDS.filter((key) => columns.includes(table.m[key])).map((key) => [key, table.m[key]]));
     if (table.m._combinedTime) mapping._combinedTime = text(table.m._combinedTime, 80);
     const rows = table.r.filter(Array.isArray).map((row) => Object.fromEntries(columns.map((column, index) => [column, text(row[index], 120)])));
     if (mapping.courseName && mapping.day && rows.length) source = { name: text(table.f, 120) || 'Shared timetable', mapping, rows };
@@ -103,8 +104,8 @@ export const readExamPayload = (data) => {
     id: `shared-${index}-${text(date, 10)}`,
     subject: text(subject),
     code: text(code, 20),
-    date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : '',
-    day: /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`)) : '',
+    date: isIsoDate(date) ? date : '',
+    day: isIsoDate(date) ? weekdayOf(date, 'short') : '',
     time: text(time, 40),
     room: text(room, 50),
     program: text(program, 80),

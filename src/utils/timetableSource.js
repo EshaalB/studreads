@@ -1,6 +1,11 @@
 // Reading classes out of an imported timetable file (rows plus a column mapping).
 import { EXCLUDED_COURSES } from './constants.js';
-import { sanitizeString, validateSection } from './validation.js';
+import { sanitizeString } from './validation.js';
+
+// The details a timetable row can have. Parsed grids and the sample already use these
+// names as their column names, so their mapping is each field to itself.
+export const TIMETABLE_FIELDS = ['courseName', 'section', 'day', 'startTime', 'endTime', 'instructor', 'room', 'credits'];
+export const STANDARD_MAPPING = Object.fromEntries(TIMETABLE_FIELDS.map((field) => [field, field]));
 
 export const findSections = (data, mapping) => {
   const sectionCol = mapping.section;
@@ -8,7 +13,7 @@ export const findSections = (data, mapping) => {
   const sections = new Set();
   data.forEach((item) => {
     const value = item[sectionCol]?.toString().trim();
-    if (value && validateSection(value)) sections.add(sanitizeString(value));
+    if (value && value.length <= 50) sections.add(sanitizeString(value));
   });
   return [...sections].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 };

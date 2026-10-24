@@ -1,121 +1,146 @@
 # StudReads
 
-StudReads is a privacy-first timetable and exam planner for university students. It turns timetable spreadsheets and exam date sheets in almost any format into personal weekly schedules and searchable exam plans, entirely in the browser.
+A university timetable and exam planner that runs entirely in the browser.
 
-## Features
+Universities publish timetables and exam date sheets as huge spreadsheets, PDFs and scans. StudReads reads those files, lets a student tick their own courses and exams, and puts everything on one week grid. Nothing is uploaded: files are read on the device.
 
-**Timetable**
-- Opens straight to the week grid, modelled on a paper planner, with labelled actions beside it; upload or drop a file onto it at any time
-- Import grid-style or column-based `.xlsx`, `.xls`, `.ods` and `.csv` timetables, confirm the columns, then tick your courses (including courses taken with another section)
-- Or start from scratch: click an empty time slot or "Add" for a weekly class or an exam; click any class or exam to edit it, change its colour or delete it
-- Week and list views, clash detection, and a Customise panel: palettes or any colour per course, filled or tinted classes, row height, which details to show (only those your classes have), 12 or 24-hour clock
-- Save an image or print exactly what is on screen, or export a calendar (`.ics`) or backup (`.json`) that can be imported again
-- Share a link to your planner (opens as an editable copy), or a link for classmates that carries the uploaded files so each person picks their own courses and exams
-- Saved images and prints carry a small "Made with StudReads" line
-- Installs as an app and works offline after the first visit; light and dark mode
+![StudReads](public/og-image.png)
 
-**Exams (on the same screen)**
-- Reads date sheets from PDF (text or scanned), Excel, OpenDocument, CSV, Word `.docx`, photos and screenshots, or pasted text
-- Handles header tables, grids with dates or time slots across the top, and free-text lists with dates on their own lines
-- Copes with merged date cells, two-row headers, wrapped titles, multi-page PDFs, landscape pages and dates without a year
-- Finds course titles printed elsewhere (a legend or another sheet) when the schedule lists only codes
-- Reads times written as `0900-1200`, separate hour columns, Excel fractions, "hrs", session names such as "Morning" defined in a note, or one time printed above the table
-- Uses printed weekdays to tell day/month from month/day
-- Upload a date sheet from the Upload menu or drop it on the planner; spreadsheets with real dates are recognised as date sheets automatically
-- Exams matching the courses on your timetable are suggested and pre-ticked; search adds any others
-- Exams sit on the same grid and list as your classes: one column per exam date in date order, then weekly classes by day, with clash warnings, editing, remove and Undo
-- Edit courses and Edit exams change your picks at any time without uploading again
-- Upload a revised date sheet and StudReads finds your exams in it and shows what moved (date, time or room) and what is missing
-- Calendar export includes reminders the day before and two hours before each exam
-- One Export menu saves an image or PDF, a single calendar file with classes and exams, or a backup; share links carry both
-- Copes with scanner misreads (O for 0, l for 1), letter-spaced PDF text, full-width digits, ligatures and rows printed before their merged date cell
+## What it does
 
-## Run locally
+### Classes
+- Reads timetable files in `.xlsx`, `.xls`, `.ods` or `.csv`, as a table (Course, Day, Start, End…) or as a grid (days down the side, time slots across the top).
+- After an upload, the student picks a section and ticks courses. Courses from another section can be found with search.
+- "Edit courses" reopens the picker at any time without uploading again.
+- Classes can also be added by hand: click an empty slot, or use Add.
+
+### Exams
+- Reads date sheets in PDF (typed or scanned), Excel, CSV, Word `.docx`, photos and screenshots, or pasted text.
+- Suggests the exams that match the student's courses. Search finds any others, and "Edit exams" changes the picks later.
+- When a revised date sheet is uploaded, it shows which picked exams moved (date, time or room) and which are missing.
+
+### One planner
+- Exams and classes share one grid. Exam dates come first in date order, then weekly classes by day. The List view groups the same way.
+- Clashes are marked, and deleting a class or exam can be undone.
+- Click any class or exam to edit it, including its colour.
+- Customise: colour palettes, filled or tinted blocks, row height, which details to show, 12 or 24-hour clock.
+- Light and dark mode in the eshaaldev brand colours.
+
+### Getting it out
+- Save as an image or print/PDF, exactly as shown, with a small "Made with StudReads" line.
+- A calendar file (`.ics`) with weekly classes and exams, including exam reminders the day before and two hours before.
+- A backup file (`.json`) that can be opened again later.
+- Two kinds of share link:
+  - **My planner** opens an editable copy of your classes and exams.
+  - **For classmates** carries the uploaded files, so each person picks their own courses and exams.
+- Installable as an app, and works offline after the first visit.
+
+## How the file reading works
+
+Every file, whatever its format, is first turned into rows of cells. PDF text and OCR results keep each word's position so columns can be rebuilt.
+
+**Timetables** (`src/parsers/spreadsheetParser.js`): if time ranges appear across a row, the sheet is read as a grid (`heuristicParser.js`). Otherwise it is read as a table, and `columnDetector.js` matches the headers. If the course, day or start column can't be found, the student is asked to point at them.
+
+**Exam date sheets** (`src/parsers/examParser.js`) are read in three ways, and the best result wins:
+
+| Reading | For sheets like |
+| --- | --- |
+| Table | A header row names the columns: Code, Subject, Date, Time, Venue |
+| Grid | Dates or time slots run across the top, and course names fill the cells |
+| Loose text | Notices and emails where each line mentions a course near a date |
+
+On top of that, it handles:
+- merged date cells and two-row headers
+- course titles printed in a separate legend
+- times written as `0900 hrs` or as session names ("Morning: 9–12")
+- scanner mistakes such as O for 0 and l for 1
+- letter-spaced PDF text
+- printed weekdays, which settle whether 03/04 means March or April
+
+`src/parsers/examLoaders.js` turns each file type into rows. PDF.js reads PDFs and Tesseract.js handles OCR. They load only when a file needs them.
+
+## Accuracy
+
+```bash
+npm run benchmark
+```
+
+The benchmark reads every sheet in `fixtures/datesheets` and checks each exam's course, date and start time against `expected.json`. It covers six layouts:
+- a header table with merged dates and notes
+- time-slot columns
+- dates across the top
+- a notice-board text
+- scanner noise
+- codes with a separate legend
+
+The current result is **49 of 49 exams read correctly, with no extras**.
+
+To check sheets you can't publish, put them in a folder with their own `expected.json` and run:
+
+```bash
+npm run benchmark -- path/to/folder
+```
+
+Layouts that read wrong can be reported from the exam picker.
+
+## Run it locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the local URL shown by Vite. A sample timetable is available in the upload screen, so no spreadsheet is required for a quick review.
+The empty planner has a "Try the sample" link if you don't have a timetable file.
 
-## Quality checks
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Development server |
+| `npm test` | Parser, storage, sharing and FAQ checks |
+| `npm run benchmark` | Date sheet accuracy |
+| `npm run lint` | ESLint, including the React Compiler rules |
+| `npm run build` | Production build in `dist/` |
+| `npm run set-domain -- example.com` | Moves every public address to a new domain |
 
-```bash
-npm run lint
-npm test
-npm run benchmark
-npm run build
-```
-
-## Accuracy
-
-`npm run benchmark` reads every date sheet in `fixtures/datesheets` and checks each exam's course, date and start time against `expected.json`. The fixtures cover a header table with merged dates and notes, time-slot columns, dates across the top, a notice-board text, scanner noise (O for 0, letter spacing, "0900 hrs") and codes with a separate legend.
-
-Current result: 49 of 49 exams read correctly, no extras. To check sheets you cannot publish, put them in a folder with their own `expected.json` and run `npm run benchmark -- path/to/folder`. Layouts that read wrong can be reported from the exam picker.
-
-## Supported file shapes
-
-The importer handles two broad structures:
-
-1. A flat table with recognizable headers such as Course, Section, Day, Start Time, End Time, Instructor, and Room.
-2. A weekly grid with day labels and time ranges across the columns.
-
-University spreadsheets vary widely. If a workbook contains several plausible timetable sheets, StudReads evaluates them and reports which sheet it selected. Unsupported or incomplete files receive an actionable error instead of being silently accepted.
-
-For exam date sheets, every source is reduced to rows of cells (PDF text and OCR keep each word's position). Three readings run over the same rows: a header-driven table, a date or time-slot grid, and a line-by-line text reading. A table with a recognised header wins unless another reading finds clearly more exams. Scanned PDFs and images go through Tesseract OCR, so results should be checked against the original.
-
-## Project structure
+## Where things live
 
 ```
 src/
   components/
-    layout/     app shell, header, footer, about dialog, FAQ
-    timetable/  planner screen, file handling, class and course dialogs, customise panel
+    timetable/  the planner screen (Editor), file handling (TimetableTool), class and course dialogs, Customise
     exams/      exam picker, exam form, revised-sheet summary
     calendar/   TimeGrid and AgendaList, shared by classes and exams
-    ui/         shared controls: Dialog, Menu, Segmented, PushButton, ColorField, ThemeToggle
-  context/      timetable state (classes, the imported file, colours, settings)
-  hooks/        exams state, light/dark appearance, dialog focus handling
-  parsers/      reading timetables and exam date sheets from any file
-  export/       images, calendar files, backups and share links
-  content/      FAQ text and the site's public addresses
-  utils/        small shared helpers: times, classes, colours, storage, calendar items
-  styles/       tokens, base, components, layout, calendar, timetable, print
-fixtures/       sample timetables and date sheets used by the tests and the benchmark
-scripts/        tests, the accuracy benchmark and the domain switcher
-public/         icons, offline service worker, app manifest, SEO and privacy files
+    layout/     header, footer, about dialog, FAQ
+    ui/         Dialog, Menu, Segmented, PushButton, ColorField, SearchableSelect, ThemeToggle
+  context/      timetable state: classes, the uploaded file, colours, settings
+  hooks/        exam state, light/dark mode, dialog focus
+  parsers/      reading timetables and date sheets
+  export/       images, calendar files, backups, share links
+  utils/        small helpers: dates, times, text clean-up, classes, colours, storage
+  content/      FAQ text and the site's addresses
+  styles/       tokens (brand colours and type), then one file per area
+fixtures/       real timetables and sample date sheets for tests and the benchmark
+scripts/        tests, benchmark, domain switcher
+public/         icons, service worker, app manifest, SEO and privacy pages
 ```
-
-## Search and AI discoverability
-
-- `public/llms.txt`: plain summary of the site and its key pages for AI assistants
-- `public/robots.txt` and `public/sitemap.xml`: crawling rules (AI crawlers explicitly allowed) and page list
-- `public/privacy.html`: a static privacy page that crawlers can follow
-- `index.html`: meta and link-preview tags, a PNG share image, JSON-LD (WebSite, WebApplication, Person, FAQPage), and a no-JavaScript copy of the heading and FAQ
-- `src/content/faq.js`: the FAQ shown in the app; `npm test` checks it matches the structured data
-
-To move to a new domain, run `npm run set-domain -- example.com`. It rewrites the address in `src/content/site.js`, `index.html` and the files in `public/`.
 
 ## Privacy
 
-Files are parsed locally in the browser. The application has no backend and never uploads timetable or exam files. Reading an image or scanned PDF downloads the OCR engine and English language data from a public CDN on first use; the image itself stays on the device. Timetables, exam lists and preferences are stored in browser `localStorage`. Share links carry their data inside the URL.
+- Files are read in the browser. There is no backend.
+- Reading a photo or scanned PDF downloads the OCR engine (about 4 MB) from a public CDN the first time. The image itself stays on the device.
+- Classes, exams and settings are saved in the browser's `localStorage`.
+- Share links carry their data inside the URL.
 
-## Tech stack
+## Search and AI assistants
 
-- React 19
-- Vite 7
-- SheetJS (`xlsx`), PDF.js and Tesseract.js, loaded only during import
-- html2canvas, loaded only during PNG export
-- Vanilla modular CSS
+- `index.html` holds the page title, description, link previews and structured data (WebApplication, FAQPage), plus a copy of the FAQ for crawlers that don't run JavaScript.
+- `public/llms.txt` is a plain summary for AI assistants.
+- `public/robots.txt` and `public/sitemap.xml` list the pages. `robots.txt` allows AI crawlers.
+- `npm test` checks that the FAQ in the app and the FAQ in `index.html` match.
 
-## Engineering highlights
+## Built with
 
-- Normalizes inconsistent dates, times, headers, and worksheet layouts into stable data models
-- Keeps large parsing libraries out of the initial application bundle through dynamic imports
-- Provides responsive desktop and mobile views from the same selected-course data
-- Covers both real university workbook fixtures and focused parser cases with automated tests
+- React 19 and Vite 7
+- SheetJS, PDF.js, Tesseract.js and html2canvas, each loaded only when needed
+- Plain CSS with design tokens, and Lucide icons
 
-## Author
-
-Built by [Eshaal B](https://github.com/EshaalB).
+Built by [Eshaal](https://github.com/EshaalB).

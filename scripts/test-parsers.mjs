@@ -58,7 +58,6 @@ const examWorkbook = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(examWorkbook, XLSX.utils.aoa_to_sheet(examMatrix), 'Final exams');
 const workbookExams = parseExamWorkbook(XLSX, examWorkbook);
 assert.equal(workbookExams.records.length, 2);
-assert.equal(workbookExams.source, 'Final exams');
 
 const manualClass = normalizeClass({
   id: 'one', name: '  Data Structures  ', day: 'mon',

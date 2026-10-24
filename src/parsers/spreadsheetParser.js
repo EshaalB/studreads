@@ -1,6 +1,9 @@
-import { TIME_REGEX } from '../utils/constants.js';
 import { autoDetectColumnMapping } from './columnDetector.js';
 import { parseHeuristicExcel } from './heuristicParser.js';
+import { STANDARD_MAPPING } from '../utils/timetableSource.js';
+
+// A cell like "8:30 - 9:50" marks a grid timetable with time slots across the top.
+const TIME_RANGE = /\d{1,2}:\d{2}\s*(?:AM|PM|A\.M|P\.M)?\s*(?:-|TO)\s*\d{1,2}:\d{2}/i;
 
 const REQUIRED_FIELDS = ['courseName', 'day', 'startTime'];
 
@@ -30,7 +33,7 @@ const parseWorksheet = (XLSX, worksheet, sheetName) => {
   expandMergedCells(XLSX, worksheet);
   const matrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
   const hasGridTimes = matrix.slice(0, 40).some((row) =>
-    Array.isArray(row) && row.some((cell) => TIME_REGEX.test(String(cell).trim()))
+    Array.isArray(row) && row.some((cell) => TIME_RANGE.test(String(cell).trim()))
   );
 
   if (hasGridTimes) {
@@ -40,11 +43,7 @@ const parseWorksheet = (XLSX, worksheet, sheetName) => {
         sheetName,
         kind: 'grid',
         rows,
-        mapping: {
-          courseName: 'courseName', section: 'section', day: 'day',
-          startTime: 'startTime', endTime: 'endTime', instructor: 'instructor',
-          room: 'room', credits: 'credits'
-        },
+        mapping: STANDARD_MAPPING,
         warnings: []
       };
     }
@@ -81,7 +80,6 @@ export const parseWorkbook = (XLSX, workbook) => {
   const selected = candidates[0];
   return {
     ...selected,
-    availableSheets: candidates.map((candidate) => candidate.sheetName),
     warnings: [
       ...selected.warnings,
       ...(candidates.length > 1

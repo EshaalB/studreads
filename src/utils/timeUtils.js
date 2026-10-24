@@ -1,76 +1,46 @@
-export const parseTime = (timeStr) => {
-  if (!timeStr) return null;
+// Times are handled as minutes after midnight; classes keep the text from the file
+// ("8:30 AM", "08:30") and are converted when drawn or compared.
 
-  // Normalize the time string - remove extra characters
-  const normalized = timeStr
-    .toString()
-    .trim()
-    .replace(/\.+$/, '')  // Remove trailing periods
-    .replace(/\s+/g, ' ') // Normalize spaces
-    .toUpperCase();
+const pad = (value) => String(value).padStart(2, '0');
 
-  // Try to match HH:mm AM/PM or HH:mm A.M./P.M.
-  const ampmMatch = normalized.match(/(\d{1,2}):(\d{2})\s*(AM|PM|A\.M\.?|P\.M\.?)/i);
-  const militaryMatch = normalized.match(/^(\d{1,2}):(\d{2})$/);
-
-  let hours, minutes;
-
-  if (ampmMatch) {
-    hours = parseInt(ampmMatch[1], 10);
-    minutes = parseInt(ampmMatch[2], 10);
-    const period = ampmMatch[3].replace(/\./g, '').toUpperCase();
-
-    if (hours < 1 || hours > 12 || minutes > 59) return null;
-    if (period === 'PM' && hours < 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-  } else if (militaryMatch) {
-    hours = parseInt(militaryMatch[1], 10);
-    minutes = parseInt(militaryMatch[2], 10);
-
-    if (hours > 23 || minutes > 59) return null;
-  } else {
-    return null;
-  }
-
-  return hours * 60 + minutes;
+// "8:30 AM", "2:05 p.m.", "14:05" -> minutes after midnight, or null.
+export const parseTime = (value) => {
+  const text = String(value ?? '').trim().toUpperCase().replace(/\./g, '');
+  const twelveHour = text.match(/(\d{1,2}):(\d{2})\s*([AP])M/);
+  const twentyFourHour = text.match(/^(\d{1,2}):(\d{2})$/);
+  const match = twelveHour || twentyFourHour;
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (minutes > 59) return null;
+  if (twelveHour) return hours < 1 || hours > 12 ? null : ((hours % 12) + (match[3] === 'P' ? 12 : 0)) * 60 + minutes;
+  return hours > 23 ? null : hours * 60 + minutes;
 };
 
-const formatTime = (totalMinutes) => {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  const period = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+// 540 -> "9:00 AM" (or "09:00" with format '24h')
+export const formatMinutes = (minutes, format = '12h') => {
+  if (minutes === null || minutes === undefined) return '';
+  const hours = Math.floor(minutes / 60) % 24;
+  if (format === '24h') return `${pad(hours)}:${pad(minutes % 60)}`;
+  return `${hours % 12 || 12}:${pad(minutes % 60)} ${hours >= 12 ? 'PM' : 'AM'}`;
 };
 
-// Displays a stored time string ("08:30", "8:30 AM") in the chosen clock format.
-export const displayTime = (timeStr, format = '12h') => {
-  const minutes = parseTime(timeStr);
-  if (minutes === null) return timeStr || '';
-  if (format === '24h') return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-  return formatTime(minutes);
+// 540 -> "09:00", the value an <input type="time"> expects.
+export const minutesToInput = (minutes) => (minutes === null || minutes === undefined ? '' : formatMinutes(minutes, '24h'));
+
+// A stored time string shown in the chosen clock format.
+export const displayTime = (value, format = '12h') => {
+  const minutes = parseTime(value);
+  return minutes === null ? value || '' : formatMinutes(minutes, format);
 };
 
 export const displayTimeRange = (start, end, format = '12h') => [displayTime(start, format), displayTime(end, format)].filter(Boolean).join(' – ');
 
-// "08:30" style value for <input type="time">.
-export const toInputTime = (timeStr) => {
-  const minutes = parseTime(timeStr);
-  if (minutes === null) return '';
-  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+export const toInputTime = (value) => minutesToInput(parseTime(value));
+
+// Two classes on the same day whose times overlap.
+export const checkOverlap = (a, b) => {
+  if (a.day !== b.day) return false;
+  const [startA, endA, startB, endB] = [a.startTime, a.endTime, b.startTime, b.endTime].map(parseTime);
+  return [startA, endA, startB, endB].every((value) => value !== null) && startA < endB && endA > startB;
 };
-
-export const checkOverlap = (slot1, slot2) => {
-  if (slot1.day !== slot2.day) return false;
-
-  const start1 = parseTime(slot1.startTime);
-  const end1 = parseTime(slot1.endTime);
-  const start2 = parseTime(slot2.startTime);
-  const end2 = parseTime(slot2.endTime);
-
-  if (start1 === null || end1 === null || start2 === null || end2 === null) return false;
-
-  return (start1 < end2) && (end1 > start2);
-};
-
-export { DAYS } from './constants.js';

@@ -1,8 +1,8 @@
+import { shortDate } from '../../utils/dates';
 import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
 
-const dateLabel = (isoDate) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
-const show = (field, value) => (field === 'Date' ? dateLabel(value) : value);
+const show = (field, value) => (field === 'Date' ? shortDate(value) : value);
 const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
 
 // After a revised date sheet is loaded: which of your exams moved, and which are gone.

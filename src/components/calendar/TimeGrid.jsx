@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { readableText } from '../../utils/themes';
-import { displayTime } from '../../utils/timeUtils';
+import { formatMinutes } from '../../utils/timeUtils';
 
 const ROW_HEIGHTS = { compact: 48, regular: 64, large: 84 };
 const DEFAULT_HOURS = [8, 15];
@@ -35,7 +35,8 @@ const layoutColumn = (items) => {
   return blocks;
 };
 
-const hourLabel = (hour, format) => (format === '24h' ? `${String(hour).padStart(2, '0')}:00` : displayTime(`${hour}:00`).replace(':00', ''));
+// "9 AM" on a 12-hour clock, "09:00" on a 24-hour one.
+const hourLabel = (hour, format) => (format === '24h' ? formatMinutes(hour * 60, '24h') : formatMinutes(hour * 60).replace(':00', ''));
 
 /**
  * A time-of-day grid with one column per day: a date for exams, a weekday for classes.

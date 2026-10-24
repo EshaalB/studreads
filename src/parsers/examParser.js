@@ -7,6 +7,8 @@
 //   table - a header row names the columns (Subject, Date, Time, Venue...)
 //   grid  - dates or time slots run across a row and course names fill the cells
 //   loose - free text where each line mentions a course and a date nearby
+import { weekdayOf } from '../utils/dates.js';
+import { formatMinutes } from '../utils/timeUtils.js';
 
 const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
 const MONTH = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?';
@@ -145,13 +147,6 @@ const toMinutes = (hours, minutes, meridiem) => {
   return h * 60 + m;
 };
 
-export const formatClock = (minutes, format = '12h') => {
-  if (minutes === null || minutes === undefined) return '';
-  const h = Math.floor(minutes / 60) % 24;
-  const m = minutes % 60;
-  if (format === '24h') return `${pad(h)}:${pad(m)}`;
-  return `${h % 12 || 12}:${pad(m)} ${h >= 12 ? 'PM' : 'AM'}`;
-};
 
 // Exams are not held overnight, so "2:00 - 5:00" means the afternoon.
 const assumeDaytime = (minutes, hadMeridiem) => (minutes !== null && !hadMeridiem && minutes < 7 * 60 ? minutes + 12 * 60 : minutes);
@@ -227,7 +222,7 @@ const findTimeLoose = (text, sessions) => {
 
 const timeLabel = (time) => {
   if (!time) return '';
-  return time.end !== null ? `${formatClock(time.start)} – ${formatClock(time.end)}` : formatClock(time.start);
+  return time.end !== null ? `${formatMinutes(time.start)} – ${formatMinutes(time.end)}` : formatMinutes(time.start);
 };
 
 // ---------------------------------------------------------------------------
@@ -237,10 +232,10 @@ function cellText(cell) {
   if (cell && typeof cell === 'object' && !(cell instanceof Date)) return cell.text ?? '';
   if (cell instanceof Date) {
     if (Number.isNaN(cell.getTime())) return '';
-    if (cell.getFullYear() < 1902) return formatClock(cell.getHours() * 60 + cell.getMinutes());
+    if (cell.getFullYear() < 1902) return formatMinutes(cell.getHours() * 60 + cell.getMinutes());
     const date = toIsoDate(cell.getFullYear(), cell.getMonth() + 1, cell.getDate());
     const minutes = cell.getHours() * 60 + cell.getMinutes();
-    return minutes ? `${date} ${formatClock(minutes)}` : date;
+    return minutes ? `${date} ${formatMinutes(minutes)}` : date;
   }
   return cell ?? '';
 }
@@ -313,8 +308,6 @@ const isUsefulSubject = (text) => {
   return stripped.length >= 2;
 };
 
-const weekdayOf = (isoDate) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
-
 const makeRecord = (values, source, index) => {
   let subject = tidySubject(values.subject);
   let code = flat(values.code);
@@ -337,7 +330,7 @@ const makeRecord = (values, source, index) => {
     subject,
     code,
     date: values.date,
-    day: weekdayOf(values.date),
+    day: weekdayOf(values.date, 'short'),
     time: timeLabel(values.time) || flat(values.timeText),
     start: values.time?.start ?? null,
     end: values.time?.end ?? null,
@@ -400,8 +393,8 @@ const analyseDates = (rows) => {
         const yearValue = numeric[3].length === 2 ? 2000 + Number(numeric[3]) : Number(numeric[3]);
         const asDayFirst = toIsoDate(yearValue, second, first);
         const asMonthFirst = toIsoDate(yearValue, first, second);
-        if (asDayFirst && weekdayOf(asDayFirst).toLowerCase() === weekday) dayFirstVotes += 1;
-        if (asMonthFirst && weekdayOf(asMonthFirst).toLowerCase() === weekday) monthFirstVotes += 1;
+        if (asDayFirst && weekdayOf(asDayFirst, 'short').toLowerCase() === weekday) dayFirstVotes += 1;
+        if (asMonthFirst && weekdayOf(asMonthFirst, 'short').toLowerCase() === weekday) monthFirstVotes += 1;
       }
     }
   }));
@@ -873,9 +866,9 @@ const readCell = (XLSX, cell) => {
     const parts = XLSX.SSF.parse_date_code(cell.v);
     if (parts) {
       const minutes = parts.H * 60 + parts.M;
-      if (cell.v < 1) return formatClock(minutes);
+      if (cell.v < 1) return formatMinutes(minutes);
       const date = toIsoDate(parts.y, parts.m, parts.d);
-      return minutes ? `${date} ${formatClock(minutes)}` : date;
+      return minutes ? `${date} ${formatMinutes(minutes)}` : date;
     }
   }
   if (cell.t === 'd' && cell.v instanceof Date) return cellText(cell.v);
@@ -899,9 +892,7 @@ export const parseExamWorkbook = (XLSX, workbook) => {
   const chosen = combined ? candidates : [candidates[0]];
   return {
     records: dedupeAndSort(fillCourseTitles(chosen.flatMap((candidate) => candidate.records), titles)),
-    hasAmbiguousDates: chosen.some((candidate) => candidate.ambiguousDates),
-    source: combined ? `${chosen.length} sheets` : candidates[0].sheetName,
-    warnings: []
+    hasAmbiguousDates: chosen.some((candidate) => candidate.ambiguousDates)
   };
 };
 

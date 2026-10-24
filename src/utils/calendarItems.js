@@ -1,12 +1,9 @@
 // Turns classes and exams into the shape used by TimeGrid and AgendaList.
 import { DAYS } from './constants.js';
+import { formatDate } from './dates.js';
 import { displayTimeRange, parseTime } from './timeUtils.js';
 
 const DATE_KEY = 'date:';
-
-const formatDate = (isoDate, options) => new Intl.DateTimeFormat('en-GB', { ...options, timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
-
-export const weekdayOf = (isoDate) => formatDate(isoDate, { weekday: 'long' });
 
 // Column keys are a weekday ("Monday") or a date ("date:2026-11-02").
 export const dateFromColumn = (key) => (key.startsWith(DATE_KEY) ? key.slice(DATE_KEY.length) : '');

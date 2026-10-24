@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { importClasses } from '../../utils/classes';
 import { DEMO_TIMETABLE_DATA } from '../../utils/demoData';
+import { STANDARD_MAPPING } from '../../utils/timetableSource';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { EXAM_FILE_ACCEPT, readExamFile, readExamText } from '../../parsers/examLoaders';
 import { parseExamWorkbook } from '../../parsers/examParser';
@@ -16,11 +17,6 @@ import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
 import Editor from './Editor';
 import ImportReview from './ImportReview';
-
-const DEMO_MAPPING = {
-  courseName: 'courseName', section: 'section', day: 'day', startTime: 'startTime',
-  endTime: 'endTime', instructor: 'instructor', room: 'room', credits: 'credits'
-};
 
 const EXAM_ONLY = /\.(pdf|docx|txt|png|jpe?g|webp|bmp|gif)$/i;
 const SPREADSHEET = /\.(xlsx|xls|xlsm|ods|csv|tsv)$/i;
@@ -138,7 +134,8 @@ const TimetableTool = ({ launch }) => {
   const loadExams = async (file) => {
     const result = await readExamFile(file, (message) => setBusy(`${message}…`));
     applyDateSheet(result.records, { name: file.name });
-    if (result.hasAmbiguousDates) showSuccess('Dates like 03/04 were read as day/month. Check them if your exams look a month off.');
+    const notes = [result.note, result.hasAmbiguousDates && 'Dates like 03/04 were read as day/month, so check them if an exam looks a month off.'];
+    if (notes.some(Boolean)) showSuccess(notes.filter(Boolean).join(' '));
   };
 
   const loadBackup = async (file) => {
@@ -185,7 +182,7 @@ const TimetableTool = ({ launch }) => {
     }
   };
 
-  const loadSample = () => applyTimetable({ rows: DEMO_TIMETABLE_DATA, mapping: DEMO_MAPPING, name: 'Sample timetable', sheetName: 'Sample' });
+  const loadSample = () => applyTimetable({ rows: DEMO_TIMETABLE_DATA, mapping: STANDARD_MAPPING, name: 'Sample timetable', sheetName: 'Sample' });
 
   const startNew = () => {
     if (!window.confirm('Start over? Your classes and exams will be removed.')) return;

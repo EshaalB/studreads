@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
-import { parseTime } from '../../utils/timeUtils';
+import { minutesToInput, parseTime } from '../../utils/timeUtils';
 import ColorField from '../ui/ColorField';
 import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
 import { isAddedByHand } from '../../hooks/useExams';
-
-const toInput = (minutes) => (minutes === null || minutes === undefined ? '' : `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`);
 
 export const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
   const [form, setForm] = useState({
     subject: exam.subject || '',
     code: exam.code || '',
     date: exam.date || '',
-    start: toInput(exam.start),
-    end: toInput(exam.end),
+    start: minutesToInput(exam.start),
+    end: minutesToInput(exam.end),
     room: exam.room || ''
   });
   const { palette, getOrAssignColor, setColorMap } = useTimetable();

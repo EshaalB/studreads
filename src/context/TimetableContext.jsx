@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { importClasses, newClassId, normalizeClass, validateClass } from '../utils/classes';
-import { DAY_ORDER } from '../utils/constants';
+import { DAYS } from '../utils/constants';
 import { COLOR_THEMES, getThemeColors } from '../utils/themes';
 import { coursesForSection, findSections, legacySelectionToClasses } from '../utils/timetableSource';
 import { readStored, writeStored } from '../utils/storage';
@@ -104,7 +104,7 @@ export const TimetableProvider = ({ children }) => {
   // The timetable ----------------------------------------------------------
 
   const sortedClasses = useMemo(() => [...classes].sort((a, b) =>
-    (DAY_ORDER[a.day] || 9) - (DAY_ORDER[b.day] || 9) || (parseTime(a.startTime) ?? 0) - (parseTime(b.startTime) ?? 0)
+    (DAYS.indexOf(a.day) >>> 0) - (DAYS.indexOf(b.day) >>> 0) || (parseTime(a.startTime) ?? 0) - (parseTime(b.startTime) ?? 0)
   ), [classes]);
 
   const conflicts = useMemo(() => {

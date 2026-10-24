@@ -1,7 +1,7 @@
 // When a revised date sheet arrives, finds each exam the student had picked in the new
 // sheet and lists what moved: date, time or room. Pure functions, so they are tested.
 
-const compact = (text) => String(text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+import { compact } from './validation.js';
 
 const score = (before, candidate) => {
   const sameCode = compact(before.code) && compact(before.code) === compact(candidate.code);

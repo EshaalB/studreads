@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import { isDuplicateClass, validateClass } from '../../utils/classes';
 import { DAYS } from '../../utils/constants';
+import { nextDateFor } from '../../utils/dates';
 import { showSuccess } from '../../utils/errorHandler';
 import { parseTime, toInputTime } from '../../utils/timeUtils';
 import ColorField from '../ui/ColorField';
@@ -102,15 +103,6 @@ const ClassForm = ({ item, onClose }) => {
       </div>
     </form>
   );
-};
-
-const DAY_INDEX = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
-
-// The next date (today or later) that falls on the given weekday, as YYYY-MM-DD.
-const nextDateFor = (day) => {
-  const date = new Date();
-  date.setDate(date.getDate() + ((DAY_INDEX[day] ?? date.getDay()) - date.getDay() + 7) % 7);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
 // Adding asks whether it is a weekly class or a one-off exam; editing goes straight to the form.
