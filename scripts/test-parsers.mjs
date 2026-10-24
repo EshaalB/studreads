@@ -281,3 +281,14 @@ assert.equal(readStored('missing', null), null);
 writeStored('list', null);
 assert.equal(readStored('list', 'x'), 'x');
 console.log('✓ saved data reads back');
+
+// The FAQ in the app, the structured data and the no-JavaScript page say the same thing.
+const indexHtml = readFileSync('./index.html', 'utf8');
+const { FAQ } = await import('../src/content/faq.js');
+const graph = JSON.parse(indexHtml.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1])['@graph'];
+const faqSchema = graph.find((node) => node['@type'] === 'FAQPage').mainEntity;
+assert.deepEqual(faqSchema.map((q) => [q.name, q.acceptedAnswer.text]), FAQ.map((item) => [item.question, item.answer]));
+FAQ.forEach((item) => assert.ok(indexHtml.includes(`<h3>${item.question}</h3>`) && indexHtml.includes(item.answer), `fallback page includes "${item.question}"`));
+assert.equal((indexHtml.match(/<h1[\s>]/g) || []).length, 1);
+['llms.txt', 'robots.txt', 'sitemap.xml', 'privacy.html', 'og-image.png'].forEach((file) => assert.ok(readFileSync(`./public/${file}`).length > 0, file));
+console.log('✓ SEO files and FAQ in step');

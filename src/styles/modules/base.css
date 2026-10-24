@@ -67,6 +67,16 @@ a:hover { text-decoration-color: currentColor; }
 .text-warn { color: var(--warn); }
 .spacer { flex: 1; }
 
+/* Read by screen readers and search engines, not shown on screen */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .skip-link {
   position: fixed;
   top: var(--space-2);

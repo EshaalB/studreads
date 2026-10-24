@@ -1,0 +1,18 @@
+# StudReads
+
+> StudReads is a free, open-source web app for university students. It turns the timetable spreadsheet a university publishes into a personal weekly timetable, and finds a student's own exams in an exam date sheet. Files are read in the browser and are not uploaded to a server.
+
+StudReads has two tools:
+
+- Timetable: reads Excel (.xlsx, .xls), OpenDocument (.ods) and CSV timetables, in both column-based and grid layouts. The student picks their section and courses, including courses taken with another section. Classes can also be added by hand. The timetable shows as a week grid or a list, highlights clashes, and can be saved as an image, printed, exported as a calendar file (.ics) or backup (.json), or shared as a link.
+- Exam finder: reads exam date sheets from PDF (text or scanned), Excel, CSV, Word (.docx), photos and screenshots, or pasted text. It handles header tables, grids with dates or time slots across the top, and plain-text lists. The student ticks their exams to build a personal list with clash warnings, which can be saved as an image, printed, exported to a calendar or shared.
+
+## Pages
+
+- [StudReads app](https://university-timetable-gen.vercel.app/): the timetable maker and exam finder
+- [Privacy](https://university-timetable-gen.vercel.app/privacy.html): what happens to files and saved data
+- [Source code](https://github.com/EshaalB/University-timetable-gen): GitHub repository, including the README
+
+## Contact
+
+- Built by Eshaal: [GitHub profile](https://github.com/EshaalB), email eshaalrehamat@gmail.com

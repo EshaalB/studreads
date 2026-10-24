@@ -65,6 +65,16 @@ src/
   styles/       tokens, base, components, layout, timetable, exams, print
 ```
 
+## Search and AI discoverability
+
+- `public/llms.txt`: plain summary of the site and its key pages for AI assistants
+- `public/robots.txt` and `public/sitemap.xml`: crawling rules (AI crawlers explicitly allowed) and page list
+- `public/privacy.html`: a static privacy page that crawlers can follow
+- `index.html`: meta and link-preview tags, a PNG share image, JSON-LD (WebSite, WebApplication, Person, FAQPage), and a no-JavaScript copy of the heading and FAQ
+- `src/content/faq.js`: the FAQ shown in the app; `npm test` checks it matches the structured data
+
+The site address `university-timetable-gen.vercel.app` appears in `index.html`, `llms.txt`, `robots.txt`, `sitemap.xml` and `privacy.html`. Update all of them if the domain changes.
+
 ## Privacy
 
 Files are parsed locally in the browser. The application has no backend and never uploads timetable or exam files. Reading an image or scanned PDF downloads the OCR engine and English language data from a public CDN on first use; the image itself stays on the device. Timetables, exam lists and preferences are stored in browser `localStorage`. Share links carry their data inside the URL.

@@ -3,33 +3,39 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/favicon.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <!-- Primary Meta Tags -->
-  <title>StudReads | Timetable & Exam Planner</title>
-  <meta name="title" content="StudReads | Timetable & Exam Planner" />
-  <meta name="description" content="A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules." />
+
+  <!-- The site address appears in several tags below; change them all together. -->
+  <title>StudReads: University Timetable Maker and Exam Date Sheet Finder</title>
+  <meta name="description" content="Free timetable maker for university students. Turn your university's timetable spreadsheet into your own week, and find your exams in the date sheet. PDF, Excel, Word or photos; files stay on your device." />
+  <meta name="author" content="Eshaal" />
+  <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://university-timetable-gen.vercel.app/" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+  <link rel="alternate" type="text/plain" title="LLM summary" href="/llms.txt" />
 
-  <!-- Open Graph / Facebook / WhatsApp -->
+  <!-- Link previews (WhatsApp, Facebook, LinkedIn, X) -->
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="StudReads" />
   <meta property="og:url" content="https://university-timetable-gen.vercel.app/" />
-  <meta property="og:title" content="StudReads | Timetable & Exam Planner" />
-  <meta property="og:description" content="A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules." />
-  <meta property="og:image" content="https://university-timetable-gen.vercel.app/og-image.svg" />
-
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://university-timetable-gen.vercel.app/" />
-  <meta property="twitter:title" content="StudReads | Timetable & Exam Planner" />
-  <meta property="twitter:description" content="A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules." />
-  <meta property="twitter:image" content="https://university-timetable-gen.vercel.app/og-image.svg" />
+  <meta property="og:title" content="StudReads: your timetable and exams, from your university's files" />
+  <meta property="og:description" content="Pick your courses from the university timetable and find your exams in the date sheet. Free, and your files never leave your device." />
+  <meta property="og:image" content="https://university-timetable-gen.vercel.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="StudReads logo beside a colourful weekly timetable grid" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="StudReads: your timetable and exams, from your university's files" />
+  <meta name="twitter:description" content="Pick your courses from the university timetable and find your exams in the date sheet. Free, and your files never leave your device." />
+  <meta name="twitter:image" content="https://university-timetable-gen.vercel.app/og-image.png" />
 
   <meta name="theme-color" content="#0a356a" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#041d3b" media="(prefers-color-scheme: dark)" />
+  <style>.has-js .prerender { display: none; }</style>
   <script>
+    document.documentElement.className += ' has-js';
     try {
       var appearance = localStorage.getItem('studreads_appearance');
       if (appearance === 'light' || appearance === 'dark') document.documentElement.dataset.theme = appearance;
@@ -40,32 +46,86 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <!-- JSON-LD Structured Data -->
+  <!-- Structured data for search engines and AI answers. The FAQ matches src/content/faq.js. -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "StudReads",
-    "url": "https://university-timetable-gen.vercel.app/",
-    "description": "A privacy-first planner that turns university timetable spreadsheets and exam date sheets (PDF, Excel, Word or photos) into personal schedules.",
-    "applicationCategory": "EducationalApplication",
-    "operatingSystem": "All",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "author": {
-      "@type": "Organization",
-      "name": "StudReads",
-      "url": "https://github.com/EshaalB/University-timetable-gen"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://university-timetable-gen.vercel.app/#website",
+        "url": "https://university-timetable-gen.vercel.app/",
+        "name": "StudReads",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "Person",
+        "@id": "https://university-timetable-gen.vercel.app/#author",
+        "name": "Eshaal",
+        "url": "https://github.com/EshaalB",
+        "email": "mailto:eshaalrehamat@gmail.com"
+      },
+      {
+        "@type": "WebApplication",
+        "name": "StudReads",
+        "url": "https://university-timetable-gen.vercel.app/",
+        "description": "A free timetable maker and exam date sheet finder for university students. It reads timetable spreadsheets and exam date sheets (PDF, Excel, CSV, Word, photos) in the browser and turns them into a personal weekly timetable and exam list.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any (web browser)",
+        "browserRequirements": "Requires JavaScript",
+        "isAccessibleForFree": true,
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "featureList": [
+          "Import Excel, OpenDocument and CSV university timetables",
+          "Choose your section and courses, including courses from other sections",
+          "Add, edit and colour classes by hand",
+          "Week grid and list views with clash detection",
+          "Read exam date sheets from PDF, scanned PDF, Excel, CSV, Word, photos or pasted text",
+          "Save as image, print, export to calendar (.ics) and share links",
+          "Files are processed on the device and never uploaded"
+        ],
+        "screenshot": "https://university-timetable-gen.vercel.app/og-image.png",
+        "author": { "@id": "https://university-timetable-gen.vercel.app/#author" },
+        "isPartOf": { "@id": "https://university-timetable-gen.vercel.app/#website" },
+        "codeRepository": "https://github.com/EshaalB/University-timetable-gen"
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          { "@type": "Question", "name": "What is StudReads?", "acceptedAnswer": { "@type": "Answer", "text": "A free planner for university students. It turns the timetable spreadsheet your university shares into your own weekly timetable, and finds your exams in the exam date sheet." } },
+          { "@type": "Question", "name": "Which files can it read?", "acceptedAnswer": { "@type": "Answer", "text": "Timetables in Excel (.xlsx, .xls), OpenDocument (.ods) or CSV. Exam date sheets in PDF (including scanned ones), Excel, CSV, Word (.docx), photos and screenshots, or text you paste." } },
+          { "@type": "Question", "name": "Are my files uploaded anywhere?", "acceptedAnswer": { "@type": "Answer", "text": "No. Files are read in your browser and StudReads has no server. Your timetable and exam list are saved only in this browser." } },
+          { "@type": "Question", "name": "Can I make a timetable without a file?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Click any time slot on the week grid, or “Add class”, and fill in the course, day and time." } },
+          { "@type": "Question", "name": "How do I save or share my timetable?", "acceptedAnswer": { "@type": "Answer", "text": "Save it as an image, print it, add it to Google, Apple or Outlook calendar with the .ics export, keep a backup file, or send a share link that opens as an editable copy." } }
+        ]
+      }
+    ]
   }
   </script>
 </head>
 
 <body>
-  <div id="root"></div>
+  <!-- The app replaces this when it starts. It is here for crawlers and for anyone
+       with JavaScript turned off, and mirrors the app's own heading and FAQ. -->
+  <div id="root">
+    <main class="prerender" style="max-width: 760px; margin: 0 auto; padding: 40px 16px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6;">
+      <h1>StudReads: university timetable maker and exam date sheet finder</h1>
+      <p>StudReads turns the timetable spreadsheet your university shares into your own weekly timetable, and finds your exams in the exam date sheet. It is free, and your files are read in your browser and never uploaded.</p>
+      <p><strong>StudReads needs JavaScript to read your files and draw your timetable.</strong></p>
+      <h2>Questions</h2>
+      <h3>What is StudReads?</h3>
+      <p>A free planner for university students. It turns the timetable spreadsheet your university shares into your own weekly timetable, and finds your exams in the exam date sheet.</p>
+      <h3>Which files can it read?</h3>
+      <p>Timetables in Excel (.xlsx, .xls), OpenDocument (.ods) or CSV. Exam date sheets in PDF (including scanned ones), Excel, CSV, Word (.docx), photos and screenshots, or text you paste.</p>
+      <h3>Are my files uploaded anywhere?</h3>
+      <p>No. Files are read in your browser and StudReads has no server. Your timetable and exam list are saved only in this browser.</p>
+      <h3>Can I make a timetable without a file?</h3>
+      <p>Yes. Click any time slot on the week grid, or “Add class”, and fill in the course, day and time.</p>
+      <h3>How do I save or share my timetable?</h3>
+      <p>Save it as an image, print it, add it to Google, Apple or Outlook calendar with the .ics export, keep a backup file, or send a share link that opens as an editable copy.</p>
+      <p><a href="/privacy.html">Privacy</a> · <a href="https://github.com/EshaalB/University-timetable-gen">Source code</a> · <a href="mailto:eshaalrehamat@gmail.com">Contact</a></p>
+    </main>
+  </div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
 

@@ -90,6 +90,31 @@
 .screen { animation: screen-in 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
 @keyframes screen-in { from { opacity: 0; transform: translateY(6px); } }
 
+/* Questions under the tools */
+.faq {
+  max-width: 760px;
+  margin: var(--space-7) auto 0;
+}
+
+.faq h2 { margin-bottom: var(--space-2); font-size: var(--text-lg); }
+.faq details { border-bottom: 1px solid var(--border); }
+
+.faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: '+'; flex: none; color: var(--text-3); font-size: var(--text-xl); font-weight: 400; line-height: 1; }
+.faq details[open] summary::after { content: '–'; }
+.faq details p { padding-bottom: var(--space-3); color: var(--text-2); }
+
 /* Ways to start, shown inside the exam frame until a date sheet is loaded */
 .start-links {
   display: flex;

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy | StudReads</title>
+  <meta name="description" content="How StudReads handles your timetable and exam files: they are read in your browser and never uploaded." />
+  <link rel="canonical" href="https://university-timetable-gen.vercel.app/privacy.html" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <meta name="theme-color" content="#0a356a" />
+  <style>
+    :root { color-scheme: light dark; --bg: #f9f3e2; --surface: #fffcf3; --text: #0a356a; --muted: #43597c; --border: #e6d9b8; --pink: #ffa1bd; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #06264d; --surface: #0a356a; --text: #f9f3e2; --muted: #cbd0d8; --border: #1a4a85; } }
+    * { box-sizing: border-box; margin: 0; }
+    body { background: var(--bg); color: var(--text); font: 16px/1.6 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+    header { background: #0a356a; }
+    header div { max-width: 760px; margin: 0 auto; padding: 14px 16px; }
+    header a { display: inline-flex; align-items: center; gap: 10px; color: #f9f3e2; font: 800 20px/1 Arial, sans-serif; letter-spacing: -0.03em; text-decoration: none; }
+    header img { height: 32px; width: auto; }
+    header span span { color: var(--pink); }
+    main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
+    h1 { margin-bottom: 8px; font-size: 30px; line-height: 1.2; letter-spacing: -0.02em; }
+    h2 { margin: 32px 0 8px; font-size: 18px; }
+    p, li { color: var(--muted); }
+    p + p { margin-top: 12px; }
+    ul { padding-left: 20px; }
+    li + li { margin-top: 6px; }
+    a { color: inherit; text-underline-offset: 3px; }
+    .updated { font-size: 14px; }
+    .back { display: inline-block; margin-top: 40px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <div><a href="/" aria-label="StudReads home"><img src="/brand-mark.png" alt="" width="34" height="32" /><span>Stud<span>Reads</span></span></a></div>
+  </header>
+  <main>
+    <h1>Privacy</h1>
+    <p class="updated">Last updated 24 October 2026</p>
+
+    <h2>Your files stay on your device</h2>
+    <p>Timetables, exam date sheets, photos and pasted text are read inside your web browser. StudReads has no server and does not upload, store or see your files.</p>
+
+    <h2>Photos and scanned PDFs</h2>
+    <p>Reading a photo or a scanned PDF uses text recognition (Tesseract). The first time you do this, your browser downloads the recognition engine and English language data, about 4 MB, from a public content delivery network. Only the engine is downloaded; your image is not sent anywhere.</p>
+
+    <h2>What is saved in your browser</h2>
+    <p>So your work is still there when you come back, your browser's local storage keeps:</p>
+    <ul>
+      <li>your timetable, its name and your display settings</li>
+      <li>the timetable file you uploaded, so you can choose different courses later</li>
+      <li>your exam list and the exams found in your date sheet</li>
+      <li>course colours and whether you chose light or dark mode</li>
+    </ul>
+    <p>This data never leaves your browser. “New timetable” and “Start over” remove it, as does clearing your browser's site data.</p>
+
+    <h2>Share links</h2>
+    <p>A share link contains the classes or exams themselves, compressed into the link. Anyone you send it to can read what it contains. Nothing is stored on a server, so a link cannot be withdrawn once shared.</p>
+
+    <h2>Fonts and hosting</h2>
+    <p>Headings use the Archivo font from Google Fonts, so your browser requests it from Google. The site is hosted on Vercel, which keeps standard server logs of page requests. StudReads has no analytics, advertising or tracking.</p>
+
+    <h2>Questions</h2>
+    <p>Email <a href="mailto:eshaalrehamat@gmail.com">eshaalrehamat@gmail.com</a>. The source code is public on <a href="https://github.com/EshaalB/University-timetable-gen">GitHub</a>.</p>
+
+    <a class="back" href="/">Back to StudReads</a>
+  </main>
+</body>
+</html>

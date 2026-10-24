@@ -7,7 +7,7 @@ import Segmented from '../ui/Segmented';
 import ThemeToggle from '../ui/ThemeToggle';
 import AboutDialog from './AboutDialog';
 import Footer from './Footer';
-import PrivacyDialog from './PrivacyDialog';
+import Faq from './Faq';
 
 // Read once at start-up; the URL is cleaned after the shared data is applied.
 const launchParams = new URLSearchParams(window.location.search);
@@ -19,7 +19,6 @@ const LAUNCH = {
 
 const AppShell = () => {
   const [activeTool, setActiveTool] = useState(LAUNCH.exams && !LAUNCH.timetable ? 'exams' : 'timetable');
-  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [theme, toggleTheme] = useAppearance();
 
@@ -62,6 +61,7 @@ const AppShell = () => {
       </header>
 
       <main className="page" id="main-content">
+        <h1 className="visually-hidden">StudReads: university timetable maker and exam date sheet finder</h1>
         {/* Both tools stay mounted so switching tabs keeps unsaved work. */}
         <div hidden={activeTool !== 'timetable'}>
           <TimetableTool sharedTimetable={LAUNCH.timetable} legacyTimetable={LAUNCH.legacyTimetable} />
@@ -69,10 +69,10 @@ const AppShell = () => {
         <div hidden={activeTool !== 'exams'}>
           <ExamTool sharedExams={LAUNCH.exams} />
         </div>
+        <Faq />
       </main>
 
-      <Footer onOpenPrivacy={() => setIsPrivacyOpen(true)} onOpenAbout={() => setIsAboutOpen(true)} />
-      <PrivacyDialog isOpen={isPrivacyOpen} onClose={() => setIsPrivacyOpen(false)} />
+      <Footer onOpenAbout={() => setIsAboutOpen(true)} />
       <AboutDialog isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </div>
   );
