@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useTimetable } from '../../context/useTimetable';
 import { parseTime } from '../../utils/timeUtils';
+import ColorField from '../ui/ColorField';
 import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
 import { isAddedByHand } from '../../hooks/useExams';
@@ -15,8 +17,11 @@ export const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
     end: toInput(exam.end),
     room: exam.room || ''
   });
+  const { palette, getOrAssignColor, setColorMap } = useTimetable();
+  const [color, setColor] = useState('');
   const [error, setError] = useState('');
   const update = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
+  const name = form.subject.trim() || form.code.trim();
 
   const submit = (event) => {
     event.preventDefault();
@@ -26,6 +31,8 @@ export const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
     const end = form.end ? parseTime(form.end) : null;
     if (start !== null && end !== null && end <= start) return setError('The end time must be after the start time.');
     onSave({ ...form, start, end });
+    // Like classes, the colour belongs to the subject, so an exam and its course match.
+    if (color) setColorMap((current) => ({ ...current, [name]: color }));
     onClose();
   };
 
@@ -59,6 +66,10 @@ export const ExamForm = ({ exam, onSave, onDelete, onClose }) => {
         <span className="field-label">Room</span>
         <input className="input" value={form.room} onChange={update('room')} maxLength={50} placeholder="Optional" />
       </label>
+      <div className="field">
+        <span className="field-label">Colour</span>
+        <ColorField value={color || (name ? getOrAssignColor(name) : palette[0])} palette={palette} onChange={setColor} />
+      </div>
       {error && <p className="field-error" role="alert">{error}</p>}
       <div className="form-actions">
         {exam.id && (

@@ -162,7 +162,7 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
 
       <div className="schedule-body">
         <nav className="schedule-actions" aria-label="Planner actions">
-          <PushButton onClick={() => setEditing({ day: 'Monday', startTime: '09:00', endTime: '10:00' })}><Plus size={16} /> Add</PushButton>
+          <PushButton className="push-quiet" onClick={() => setEditing({ day: 'Monday', startTime: '09:00', endTime: '10:00' })}><Plus size={16} /> Add</PushButton>
           <Menu triggerClassName="action" trigger={<><Upload size={16} /> {busy || 'Upload'} <ChevronDown size={14} className="action-chevron" /></>} items={uploadItems} />
           <Menu triggerClassName="action" trigger={<><Download size={16} /> Export <ChevronDown size={14} className="action-chevron" /></>} items={exportItems} />
           <Menu triggerClassName="action" trigger={<><Link2 size={16} /> Share <ChevronDown size={14} className="action-chevron" /></>} items={shareItems} />

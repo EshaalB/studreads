@@ -95,7 +95,7 @@
 .action .action-chevron { margin-left: auto; opacity: 0.6; }
 
 /* The raised button's face sits 4px above its box; the margin keeps the spacing even. */
-.schedule-actions .push { width: 100%; margin: 4px 0 var(--space-1); }
+.schedule-actions .push { width: 100%; }
 
 .schedule-canvas { min-width: 0; padding: var(--space-4); }
 

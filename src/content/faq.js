@@ -15,7 +15,7 @@ export const FAQ = [
   },
   {
     question: 'Can I make a timetable without a file?',
-    answer: 'Yes. Click any time slot on the week grid, or “Add class”, and fill in the course, day and time.'
+    answer: 'Yes. Click any time slot on the week grid, or “Add”, and fill in a weekly class or an exam.'
   },
   {
     question: 'How do I save or share my timetable?',
