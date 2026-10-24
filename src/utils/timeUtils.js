@@ -29,7 +29,7 @@ export const formatMinutes = (minutes, format = '12h') => {
 export const minutesToInput = (minutes) => (minutes === null || minutes === undefined ? '' : formatMinutes(minutes, '24h'));
 
 // A stored time string shown in the chosen clock format.
-export const displayTime = (value, format = '12h') => {
+const displayTime = (value, format = '12h') => {
   const minutes = parseTime(value);
   return minutes === null ? value || '' : formatMinutes(minutes, format);
 };

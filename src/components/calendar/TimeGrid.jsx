@@ -3,7 +3,8 @@ import { readableText } from '../../utils/themes';
 import { formatMinutes } from '../../utils/timeUtils';
 
 const ROW_HEIGHTS = { compact: 48, regular: 64, large: 84 };
-const DEFAULT_HOURS = [8, 15];
+// The grid always shows at least 8 AM to 3 PM, more when classes run earlier or later.
+const MIN_HOURS = [8, 15];
 
 // Items that overlap in one column sit side by side.
 const layoutColumn = (items) => {
@@ -44,19 +45,19 @@ const hourLabel = (hour, format) => (format === '24h' ? formatMinutes(hour * 60,
  * items:   [{ id, column, start, end, title, time, details, color, clash }] with start/end
  *          in minutes; items without a start are shown in an "untimed" row under the header.
  */
-const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHours = DEFAULT_HOURS, rowHeight = 'regular', blockStyle = 'filled' }) => {
+const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, rowHeight = 'regular', blockStyle = 'filled' }) => {
   const HOUR_HEIGHT = ROW_HEIGHTS[rowHeight] || ROW_HEIGHTS.regular;
   const { startHour, endHour, timed, untimed } = useMemo(() => {
     const placed = items.filter((item) => item.start !== null && item.start !== undefined);
     const min = Math.min(...placed.map((item) => item.start));
     const max = Math.max(...placed.map((item) => item.end ?? item.start + 60));
     return {
-      startHour: Number.isFinite(min) ? Math.min(Math.floor(min / 60), minHours[0]) : minHours[0],
-      endHour: Number.isFinite(max) ? Math.max(Math.ceil(max / 60), minHours[1]) : minHours[1] + 2,
+      startHour: Number.isFinite(min) ? Math.min(Math.floor(min / 60), MIN_HOURS[0]) : MIN_HOURS[0],
+      endHour: Number.isFinite(max) ? Math.max(Math.ceil(max / 60), MIN_HOURS[1]) : MIN_HOURS[1] + 2,
       timed: Object.fromEntries(columns.map((column) => [column.key, layoutColumn(placed.filter((item) => item.column === column.key))])),
       untimed: items.filter((item) => item.start === null || item.start === undefined)
     };
-  }, [columns, items, minHours]);
+  }, [columns, items]);
 
   const hours = Array.from({ length: endHour - startHour }, (_, index) => startHour + index);
   const top = (minutes) => ((minutes - startHour * 60) / 60) * HOUR_HEIGHT;

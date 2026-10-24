@@ -58,17 +58,3 @@ export const coursesForSection = (data, mapping, section) => {
       };
     });
 };
-
-// Rebuilds the classes picked with the previous version of the app (a section, ticked
-// course ids, extra courses from other sections and inline edits).
-export const legacySelectionToClasses = (data, mapping, { section, selectedIds = [], extras = [], edits = {} }) => {
-  const picked = [];
-  const pick = (sectionName, id) => {
-    const courses = coursesForSection(data, mapping, sectionName);
-    const match = courses.find((course) => course.id === id);
-    if (match) picked.push(...courses.filter((course) => course.name === match.name));
-  };
-  if (section) selectedIds.forEach((id) => pick(section, id));
-  extras.forEach((extra) => extra.section && extra.courseId && pick(extra.section, extra.courseId));
-  return picked.map((cls) => ({ ...cls, ...(edits[`${cls.day}-${cls.startTime}-${cls.name}`] || {}) }));
-};

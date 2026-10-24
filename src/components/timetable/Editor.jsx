@@ -218,7 +218,7 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
                 }}
               />
             ) : (
-              <AgendaList groups={groupByColumn(columns, items)} onSelect={openItem} onRemove={removeItem} removeLabel="Remove" blockStyle={displayOptions.blockStyle} />
+              <AgendaList groups={groupByColumn(columns, items)} onSelect={openItem} onRemove={removeItem} blockStyle={displayOptions.blockStyle} />
             )}
             <p className="capture-foot">Made with StudReads · {SITE.host}</p>
           </div>

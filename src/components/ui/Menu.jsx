@@ -6,7 +6,7 @@ const MENU_WIDTH = 250;
 // A small dropdown of actions. Items: { label, hint?, icon?, onSelect, disabled? } or { separator: true }.
 // The list is rendered at the end of <body> and positioned against the button, so scrolling
 // rows and clipped containers (like the action bar on phones) never cut it off.
-const Menu = ({ trigger, triggerClassName = 'btn', triggerLabel, items }) => {
+const Menu = ({ trigger, triggerClassName = 'btn', items }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState(null);
   const triggerRef = useRef(null);
@@ -59,7 +59,6 @@ const Menu = ({ trigger, triggerClassName = 'btn', triggerLabel, items }) => {
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-controls={isOpen ? menuId : undefined}
-        aria-label={triggerLabel}
         onClick={() => setIsOpen((open) => !open)}
       >
         {trigger}

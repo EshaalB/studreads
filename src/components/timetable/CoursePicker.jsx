@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
-import SearchableSelect from '../ui/SearchableSelect';
 
 const CheckRow = ({ checked, onChange, label, detail }) => (
   <label className={`check-row ${checked ? 'is-checked' : ''}`}>
@@ -44,13 +43,10 @@ const CoursePicker = ({ isOpen, onClose }) => {
   return (
     <Dialog isOpen={isOpen} onClose={onClose} title="Choose your courses" width={520} footer={<PushButton onClick={onClose}>Done</PushButton>}>
       <div className="form">
-        <SearchableSelect
-          options={rootSections.map((section) => ({ value: section, label: section }))}
-          value={activeSection}
-          onChange={setActiveSection}
-          placeholder="Choose your section"
-          ariaLabel="Your section"
-        />
+        <select className="input" value={activeSection} onChange={(event) => setActiveSection(event.target.value)} aria-label="Your section">
+          <option value="" disabled>Choose your section</option>
+          {rootSections.map((section) => <option key={section}>{section}</option>)}
+        </select>
 
         {activeSection && (
           <div className="field">

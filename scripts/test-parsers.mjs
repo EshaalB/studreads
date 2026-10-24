@@ -227,14 +227,12 @@ assert.deepEqual(timeOf([['Course', 'Date', 'Time'], ['Physics', '18/05/2026', '
 assert.deepEqual(timeOf([['Morning: 9:00-12:00 | Evening: 2:00-5:00'], ['Date', 'Morning', 'Evening'], ['18/05/2026', 'Physics', 'Maths']]), ['9:00 AM – 12:00 PM', '2:00 PM – 5:00 PM']);
 console.log('✓ exam times in loose formats');
 
-// Classes picked with the previous version of the app carry over.
-const demoMapping = { courseName: 'courseName', section: 'section', day: 'day', startTime: 'startTime', endTime: 'endTime', instructor: 'instructor', room: 'room' };
+// Picking a section returns its classes, plus rows marked for every section.
 const { DEMO_TIMETABLE_DATA } = await import('../src/utils/demoData.js');
-const { coursesForSection, legacySelectionToClasses } = await import('../src/utils/timetableSource.js');
-const sectionCourses = coursesForSection(DEMO_TIMETABLE_DATA, demoMapping, 'BSCS-3A');
-const carried = legacySelectionToClasses(DEMO_TIMETABLE_DATA, demoMapping, { section: 'BSCS-3A', selectedIds: [sectionCourses[0].id] });
-assert.ok(carried.length >= 1 && carried.every((cls) => cls.name === sectionCourses[0].name));
-console.log('✓ classes and older saved timetables');
+const { coursesForSection, STANDARD_MAPPING } = await import('../src/utils/timetableSource.js');
+const sectionCourses = coursesForSection(DEMO_TIMETABLE_DATA, STANDARD_MAPPING, 'BSCS-3A');
+assert.ok(sectionCourses.length > 0 && sectionCourses.every((cls) => ['BSCS-3A', 'All'].includes(cls.section)));
+console.log('✓ classes for a section');
 
 // Slot columns: headers that are themselves times, each paired with a "Code" column
 // (the layout of a real university mid-term date sheet).

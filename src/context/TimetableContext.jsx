@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { importClasses, newClassId, normalizeClass, validateClass } from '../utils/classes';
+import { newClassId, normalizeClass, validateClass } from '../utils/classes';
 import { DAYS } from '../utils/constants';
 import { COLOR_THEMES, getThemeColors } from '../utils/themes';
-import { coursesForSection, findSections, legacySelectionToClasses } from '../utils/timetableSource';
+import { coursesForSection, findSections } from '../utils/timetableSource';
 import { readStored, writeStored } from '../utils/storage';
 import { checkOverlap, parseTime } from '../utils/timeUtils';
 import { sanitizeObject, sanitizeString } from '../utils/validation';
@@ -14,12 +14,7 @@ const KEYS = {
   section: 'timetable_section_v6',
   display: 'timetable_display_v6',
   colors: 'timetable_colors_v6',
-  theme: 'timetable_theme_v6',
-  // Older versions, read once to carry existing timetables over.
-  legacyManual: 'timetable_manual_v1',
-  legacySelected: 'timetable_selected_v6',
-  legacyExtra: 'timetable_extra_v6',
-  legacyEdits: 'timetable_edited_classes_v6'
+  theme: 'timetable_theme_v6'
 };
 
 const DEFAULT_DISPLAY = {
@@ -34,20 +29,9 @@ const DEFAULT_DISPLAY = {
   blockStyle: 'filled'
 };
 
-const initialClasses = (source) => {
-  const saved = readStored(KEYS.classes, null);
-  if (Array.isArray(saved)) return saved.map(normalizeClass).filter((item) => item.id && validateClass(item).valid);
-  const manual = readStored(KEYS.legacyManual, []);
-  if (manual.length) return importClasses(manual);
-  if (source?.data?.length) {
-    return importClasses(legacySelectionToClasses(source.data, source.mapping || {}, {
-      section: readStored(KEYS.section, ''),
-      selectedIds: readStored(KEYS.legacySelected, []),
-      extras: readStored(KEYS.legacyExtra, []),
-      edits: readStored(KEYS.legacyEdits, {})
-    }));
-  }
-  return [];
+const initialClasses = () => {
+  const saved = readStored(KEYS.classes, []);
+  return saved.map(normalizeClass).filter((item) => item.id && validateClass(item).valid);
 };
 
 export const TimetableProvider = ({ children }) => {
@@ -55,7 +39,7 @@ export const TimetableProvider = ({ children }) => {
     const saved = readStored(KEYS.source, null);
     return saved && Array.isArray(saved.data) ? saved : null;
   });
-  const [classes, setClasses] = useState(() => initialClasses(source));
+  const [classes, setClasses] = useState(initialClasses);
   const [activeSection, setActiveSection] = useState(() => readStored(KEYS.section, ''));
   const [displayOptions, setDisplayOptions] = useState(() => ({ ...DEFAULT_DISPLAY, ...readStored(KEYS.display, {}) }));
   const [colorMap, setColorMap] = useState(() => readStored(KEYS.colors, {}));
@@ -69,9 +53,6 @@ export const TimetableProvider = ({ children }) => {
   useEffect(() => writeStored(KEYS.display, displayOptions), [displayOptions]);
   useEffect(() => writeStored(KEYS.colors, colorMap), [colorMap]);
   useEffect(() => writeStored(KEYS.theme, selectedTheme), [selectedTheme]);
-  useEffect(() => {
-    [KEYS.legacyManual, KEYS.legacySelected, KEYS.legacyExtra, KEYS.legacyEdits].forEach((key) => writeStored(key, null));
-  }, []);
 
   // Imported timetable file -------------------------------------------------
 

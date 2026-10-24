@@ -8,7 +8,7 @@ const REVIEW_FIELDS = [
 // Shown after uploading a column-based sheet, so the detected columns can be corrected
 // before courses are chosen. Grid-style timetables skip it.
 const ImportReview = ({ pendingImport, error, onConfirm, onCancel, onUpdateMapping }) => {
-  const { rows = [], mapping = {}, rowCount, sheetName, name, warnings = [] } = pendingImport || {};
+  const { rows = [], mapping = {}, rowCount, sheetName, name } = pendingImport || {};
   const columns = Object.keys(rows[0] || {});
 
   return (
@@ -54,7 +54,6 @@ const ImportReview = ({ pendingImport, error, onConfirm, onCancel, onUpdateMappi
           </table>
         </div>
 
-        {warnings.map((warning) => <p className="notice" key={warning}>{warning}</p>)}
         {error && <p className="notice notice-error" role="alert">{error}</p>}
       </div>
     </Dialog>

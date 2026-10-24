@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-// Segmented control with a sliding indicator. kind: 'tabs' (role tablist) or 'radio'.
+// Segmented control (a radio group) with a sliding indicator.
 // The indicator spans the whole control and is clipped to the active option, so moving it
 // animates a clip rather than its width and never triggers layout.
-const Segmented = ({ options, value, onChange, label, kind = 'radio', full = false, className = '' }) => {
+const Segmented = ({ options, value, onChange, label, full = false }) => {
   const containerRef = useRef(null);
   const [indicator, setIndicator] = useState(null);
 
@@ -20,13 +20,11 @@ const Segmented = ({ options, value, onChange, label, kind = 'radio', full = fal
     return () => observer?.disconnect();
   }, [value, options.length]);
 
-  const isTabs = kind === 'tabs';
-
   return (
     <div
       ref={containerRef}
-      className={`segmented ${full ? 'segmented-full' : ''} ${className}`}
-      role={isTabs ? 'tablist' : 'radiogroup'}
+      className={`segmented ${full ? 'segmented-full' : ''}`}
+      role="radiogroup"
       aria-label={label}
     >
       {indicator && <span className="segmented-indicator" style={{ clipPath: `inset(0 ${indicator.right}px -3px ${indicator.left}px round var(--radius))` }} aria-hidden="true" />}
@@ -36,9 +34,8 @@ const Segmented = ({ options, value, onChange, label, kind = 'radio', full = fal
           <button
             key={option.value}
             type="button"
-            role={isTabs ? 'tab' : 'radio'}
-            aria-selected={isTabs ? active : undefined}
-            aria-checked={isTabs ? undefined : active}
+            role="radio"
+            aria-checked={active}
             data-active={active}
             onClick={() => onChange(option.value)}
           >

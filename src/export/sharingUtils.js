@@ -17,24 +17,13 @@ const pipe = async (bytes, stream) => new Uint8Array(await new Response(new Blob
 
 export const encodeShare = async (payload) => {
   const json = new TextEncoder().encode(JSON.stringify(payload));
-  if (typeof CompressionStream === 'undefined') return `j${toBase64Url(json)}`;
   return `z${toBase64Url(await pipe(json, new CompressionStream('deflate-raw')))}`;
 };
 
 export const decodeShare = async (value) => {
   try {
     const bytes = fromBase64Url(value.slice(1));
-    const json = value[0] === 'z' ? await pipe(bytes, new DecompressionStream('deflate-raw')) : bytes;
-    return JSON.parse(new TextDecoder().decode(json));
-  } catch {
-    return null;
-  }
-};
-
-// Links created before compression was added (?s=...).
-export const decodeLegacyState = (base64) => {
-  try {
-    return JSON.parse(decodeURIComponent(atob(base64)));
+    return JSON.parse(new TextDecoder().decode(await pipe(bytes, new DecompressionStream('deflate-raw'))));
   } catch {
     return null;
   }

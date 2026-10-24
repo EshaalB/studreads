@@ -39,13 +39,7 @@ const parseWorksheet = (XLSX, worksheet, sheetName) => {
   if (hasGridTimes) {
     const rows = parseHeuristicExcel(matrix);
     if (rows.length > 0) {
-      return {
-        sheetName,
-        kind: 'grid',
-        rows,
-        mapping: STANDARD_MAPPING,
-        warnings: []
-      };
+      return { sheetName, kind: 'grid', rows, mapping: STANDARD_MAPPING };
     }
   }
 
@@ -55,16 +49,7 @@ const parseWorksheet = (XLSX, worksheet, sheetName) => {
   const mapping = autoDetectColumnMapping(Object.keys(rows[0]));
   if (!mapping.courseName) return null;
 
-  const missing = REQUIRED_FIELDS.filter((field) => !mapping[field]);
-  return {
-    sheetName,
-    kind: 'table',
-    rows,
-    mapping,
-    warnings: missing.length
-      ? [`Missing ${missing.join(', ')} column${missing.length > 1 ? 's' : ''}; some schedule details may be unavailable.`]
-      : []
-  };
+  return { sheetName, kind: 'table', rows, mapping };
 };
 
 export const parseWorkbook = (XLSX, workbook) => {
@@ -77,14 +62,5 @@ export const parseWorkbook = (XLSX, workbook) => {
     throw new Error('No timetable data was detected. Use a sheet with course, day and time information.');
   }
 
-  const selected = candidates[0];
-  return {
-    ...selected,
-    warnings: [
-      ...selected.warnings,
-      ...(candidates.length > 1
-        ? [`Detected ${candidates.length} possible timetable sheets and selected “${selected.sheetName}”.`]
-        : [])
-    ]
-  };
+  return candidates[0];
 };

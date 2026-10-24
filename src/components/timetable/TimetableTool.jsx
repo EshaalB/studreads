@@ -6,7 +6,7 @@ import { STANDARD_MAPPING } from '../../utils/timetableSource';
 import { showError, showSuccess } from '../../utils/errorHandler';
 import { EXAM_FILE_ACCEPT, readExamFile, readExamText } from '../../parsers/examLoaders';
 import { parseExamWorkbook } from '../../parsers/examParser';
-import { decodeLegacyState, decodeShare } from '../../export/sharingUtils';
+import { decodeShare } from '../../export/sharingUtils';
 import { parseWorkbook } from '../../parsers/spreadsheetParser';
 import { readClassmatePayload, readExamPayload, readTimetablePayload } from '../../export/transfer';
 import { useExams } from '../../hooks/useExams';
@@ -46,8 +46,7 @@ const useToggle = (onClose) => {
   return { isOpen, open: () => setIsOpen(true), close: () => { setIsOpen(false); onClose?.(); } };
 };
 
-// launch: codes from the opening URL — ?t= a planner, ?c= files shared with classmates,
-// and ?s= / ?x= from older versions.
+// launch: codes from the opening URL — ?t= a planner, ?c= files shared with classmates.
 const TimetableTool = ({ launch }) => {
   const { classes, loadSource, replaceTimetable, setDisplayOptions, setColorMap, setSelectedTheme } = useTimetable();
   const exams = useExams();
@@ -111,8 +110,7 @@ const TimetableTool = ({ launch }) => {
     sharedAppliedRef.current = true;
     (async () => {
       if (launch.classmates) { openClassmates(await decodeShare(launch.classmates)); return; }
-      const code = launch.timetable || launch.exams;
-      openShared(code ? await decodeShare(code) : decodeLegacyState(launch.legacyTimetable), 'shared link');
+      openShared(await decodeShare(launch.timetable), 'shared link');
     })();
   }, [launch, openShared, openClassmates]);
 

@@ -69,7 +69,7 @@ export const readTimetablePayload = (data) => {
   const display = Object.fromEntries(Object.entries(data.display || {})
     .filter(([key, value]) => DISPLAY_KEYS[key] && typeof value === DISPLAY_KEYS[key]));
 
-  return { title: text(data.n ?? data.title ?? (data.userName ? `${data.userName}'s timetable` : ''), 60), classes, colors, theme, display };
+  return { title: text(data.n ?? data.title, 60), classes, colors, theme, display };
 };
 
 // A link for classmates carries the uploaded files rather than one person's picks: the

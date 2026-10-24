@@ -12,8 +12,6 @@ import Faq from './Faq';
 const launchParams = new URLSearchParams(window.location.search);
 const LAUNCH = {
   timetable: launchParams.get('t'),
-  legacyTimetable: launchParams.get('s'),
-  exams: launchParams.get('x'),
   classmates: launchParams.get('c')
 };
 
