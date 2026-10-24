@@ -1,31 +1,33 @@
-/* Design tokens: eshaaldev brand (regal navy, blush pink, cream).
-   Light theme by default; dark when the device asks for it or the user picks it. */
+/* Design tokens: the eshaaldev brand kit (Regal Navy, Blush Pink, Soft Linen, Deep Navy Ink,
+   Raspberry Rose). Light theme by default; dark when the device asks for it or the user picks it. */
 
 :root {
   color-scheme: light;
 
-  /* Brand */
-  --navy: #0a356a;
-  --pink: #ffa1bd;
-  --cream: #f9f3e2;
+  /* Brand kit */
+  --navy: #234071;       /* Regal Navy */
+  --pink: #f1a5bc;       /* Blush Pink */
+  --linen: #f8f3e4;      /* Soft Linen */
+  --ink: #131f33;        /* Deep Navy Ink */
+  --raspberry: #bf5b86;  /* Raspberry Rose */
 
-  /* Surfaces and text */
-  --bg: #f9f3e2;
-  --surface: #fffcf3;
-  --surface-2: #f3ead0;
-  --surface-3: #e9dcb9;
-  --text: #0a356a;
-  --text-2: #43597c;
-  --text-3: #6f7d94;
-  --border: #e6d9b8;
-  --border-strong: #cdbd94;
+  /* Surfaces and text: linen paper, ink text, navy actions */
+  --bg: var(--linen);
+  --surface: #fdfaf2;
+  --surface-2: #f0e9d6;
+  --surface-3: #e5dcc3;
+  --text: var(--ink);
+  --text-2: #3d4b63;
+  --text-3: #5f697c;
+  --border: #e4dcc6;
+  --border-strong: #c9bea2;
 
   /* Interaction */
-  --accent: #0a356a;
-  --accent-hover: #0f4582;
-  --accent-text: #f9f3e2;
-  --focus: #d9537d;
-  --header-bg: #0a356a;
+  --accent: var(--navy);
+  --accent-hover: #2c4f88;
+  --accent-text: var(--linen);
+  --focus: var(--raspberry);
+  --header-bg: var(--navy);
 
   /* States */
   --danger: #b4332b;
@@ -34,12 +36,13 @@
   --warn-bg: #fbf0d6;
   --warn-line: #d9a23a;
 
-  --overlay: rgba(6, 30, 61, 0.42);
-  --shadow-pop: 0 1px 2px rgba(10, 53, 106, 0.06), 0 12px 28px rgba(10, 53, 106, 0.14);
+  --overlay: rgba(19, 31, 51, 0.42);
+  --shadow-pop: 0 1px 2px rgba(19, 31, 51, 0.06), 0 12px 28px rgba(19, 31, 51, 0.14);
 
-  /* Type */
-  --font: 'Helvetica Neue', Helvetica, Arial, ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* Type: Akzidenz-Grotesk for headings where it is installed, with Archivo (the closest
+     free face) standing in elsewhere; Helvetica for everything else. */
+  --font: Helvetica, 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Akzidenz-Grotesk Pro', 'Akzidenz-Grotesk', 'Akzidenz Grotesk', 'Archivo', Helvetica, Arial, sans-serif;
   --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --text-xs: 12px;
   --text-sm: 13px;
@@ -72,49 +75,49 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #06264d;
-    --surface: #0a356a;
-    --surface-2: #0f3f79;
-    --surface-3: #164a88;
-    --text: #f9f3e2;
-    --text-2: #cbd0d8;
-    --text-3: #9aa9c2;
-    --border: #1a4a85;
-    --border-strong: #2f629d;
-    --accent: #ffa1bd;
-    --accent-hover: #ffb8cd;
-    --accent-text: #0a356a;
-    --focus: #ffa1bd;
-    --header-bg: #041d3b;
+    --bg: var(--ink);
+    --surface: #1a2a45;
+    --surface-2: #223454;
+    --surface-3: #2b3f63;
+    --text: var(--linen);
+    --text-2: #c9cdd6;
+    --text-3: #9ba4b6;
+    --border: #2a3b5a;
+    --border-strong: #3b5079;
+    --accent: var(--pink);
+    --accent-hover: #f5bccd;
+    --accent-text: var(--ink);
+    --focus: var(--pink);
+    --header-bg: #0d1626;
     --danger: #ff9a90;
     --danger-bg: #3a1c2a;
     --warn: #f2c66d;
     --warn-bg: #2f2c25;
-    --overlay: rgba(2, 14, 30, 0.6);
+    --overlay: rgba(6, 10, 18, 0.6);
     --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.45);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #06264d;
-  --surface: #0a356a;
-  --surface-2: #0f3f79;
-  --surface-3: #164a88;
-  --text: #f9f3e2;
-  --text-2: #cbd0d8;
-  --text-3: #9aa9c2;
-  --border: #1a4a85;
-  --border-strong: #2f629d;
-  --accent: #ffa1bd;
-  --accent-hover: #ffb8cd;
-  --accent-text: #0a356a;
-  --focus: #ffa1bd;
-  --header-bg: #041d3b;
+  --bg: var(--ink);
+  --surface: #1a2a45;
+  --surface-2: #223454;
+  --surface-3: #2b3f63;
+  --text: var(--linen);
+  --text-2: #c9cdd6;
+  --text-3: #9ba4b6;
+  --border: #2a3b5a;
+  --border-strong: #3b5079;
+  --accent: var(--pink);
+  --accent-hover: #f5bccd;
+  --accent-text: var(--ink);
+  --focus: var(--pink);
+  --header-bg: #0d1626;
   --danger: #ff9a90;
   --danger-bg: #3a1c2a;
   --warn: #f2c66d;
   --warn-bg: #2f2c25;
-  --overlay: rgba(2, 14, 30, 0.6);
+  --overlay: rgba(6, 10, 18, 0.6);
   --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.45);
 }

@@ -2,7 +2,7 @@ export const COLOR_THEMES = [
   {
     id: 'brand',
     name: 'eshaaldev',
-    colors: ['#FFA1BD', '#2F5E9E', '#F1E2B8', '#FFCCDB', '#3E6EAD', '#E3CB8F', '#FF7FA6', '#A9C1E2', '#C99C5E', '#5C86C0']
+    colors: ['#F1A5BC', '#234071', '#EBDDB8', '#BF5B86', '#4B6CA3', '#F7CAD8', '#9FB3D6', '#D98AAB', '#D6C08F', '#131F33']
   },
   {
     id: 'pastel',

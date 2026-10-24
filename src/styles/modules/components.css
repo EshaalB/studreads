@@ -58,9 +58,9 @@
 /* Push button (components/ui/PushButton.jsx): the raised main call to action */
 .push {
   --push-front: var(--navy);
-  --push-text: var(--cream);
-  --push-edge-dark: #041d3b;
-  --push-edge: #123f78;
+  --push-text: var(--linen);
+  --push-edge-dark: var(--ink);
+  --push-edge: #1a3360;
   position: relative;
   flex: none;
   margin-top: 6px; /* room for the raised face */
@@ -72,17 +72,17 @@
 
 :root[data-theme="dark"] .push {
   --push-front: var(--pink);
-  --push-text: var(--navy);
-  --push-edge-dark: #a8476a;
-  --push-edge: #e07d9f;
+  --push-text: var(--ink);
+  --push-edge-dark: #8f3f62;
+  --push-edge: var(--raspberry);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .push {
     --push-front: var(--pink);
-    --push-text: var(--navy);
-    --push-edge-dark: #a8476a;
-    --push-edge: #e07d9f;
+    --push-text: var(--ink);
+    --push-edge-dark: #8f3f62;
+    --push-edge: var(--raspberry);
   }
 }
 
@@ -306,7 +306,7 @@ input[type="checkbox"] {
   z-index: -1;
   border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(10, 53, 106, 0.16);
+  box-shadow: 0 1px 2px rgba(19, 31, 51, 0.16);
   transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 

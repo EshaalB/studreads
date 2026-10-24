@@ -11,7 +11,7 @@
   top: 0;
   z-index: var(--z-sticky);
   background: var(--header-bg);
-  color: var(--cream);
+  color: var(--linen);
 }
 
 .app-header-inner {
@@ -30,7 +30,7 @@
   align-items: center;
   gap: 10px;
   justify-self: start;
-  color: var(--cream);
+  color: var(--linen);
   font-family: var(--font-display);
   font-size: var(--text-xl);
   font-weight: 800;
@@ -44,17 +44,17 @@
 .header-actions { display: flex; align-items: center; justify-self: end; gap: 2px; }
 
 /* Controls on the navy header */
-.app-header .icon-btn { color: rgba(249, 243, 226, 0.85); }
-.app-header .icon-btn:hover { background: rgba(249, 243, 226, 0.12); color: var(--cream); }
+.app-header .icon-btn { color: rgba(248, 243, 228, 0.85); }
+.app-header .icon-btn:hover { background: rgba(248, 243, 228, 0.12); color: var(--linen); }
 
 .header-link {
   padding: 6px 10px;
   border-radius: var(--radius);
-  color: rgba(249, 243, 226, 0.85);
+  color: rgba(248, 243, 228, 0.85);
   font-weight: 600;
 }
 
-.header-link:hover { background: rgba(249, 243, 226, 0.12); color: var(--cream); }
+.header-link:hover { background: rgba(248, 243, 228, 0.12); color: var(--linen); }
 
 .page {
   flex: 1;

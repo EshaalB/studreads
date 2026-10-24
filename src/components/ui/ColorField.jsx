@@ -20,7 +20,7 @@ const ColorField = ({ value, palette, onChange, label = 'Colour' }) => {
         />
       ))}
       <label className={`swatch swatch-any ${isCustom ? 'is-selected' : ''}`} style={isCustom && isHexColor(value) ? { background: value } : undefined} title="Any colour">
-        <input type="color" value={isHexColor(value) ? value : '#FFA1BD'} onChange={(event) => onChange(event.target.value.toUpperCase())} aria-label="Pick any colour" />
+        <input type="color" value={isHexColor(value) ? value : '#F1A5BC'} onChange={(event) => onChange(event.target.value.toUpperCase())} aria-label="Pick any colour" />
       </label>
     </div>
   );
