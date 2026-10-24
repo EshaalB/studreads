@@ -7,15 +7,18 @@ const usedColors = (classes, colorMap = {}) => Object.fromEntries(
   [...new Set(classes.map((item) => item.name))].filter((name) => isHexColor(colorMap[name])).map((name) => [name, colorMap[name]])
 );
 
-export const buildTimetableShare = ({ classes, title, colorMap, theme }) => ({
+const examRows = (records = []) => records.map((record) => [record.subject, record.code, record.date, record.time, record.room, record.program, record.start, record.end]);
+
+export const buildTimetableShare = ({ classes, title, colorMap, theme, exams = [] }) => ({
   v: 1,
+  e: exams.length ? examRows(exams) : undefined,
   n: title || undefined,
   p: theme,
   k: usedColors(classes, colorMap),
   c: classes.map((item) => [item.name, item.day, item.startTime, item.endTime, item.room || '', item.teacher || '', item.credits || ''])
 });
 
-export const buildTimetableBackup = ({ classes, title, colorMap, theme, display }) => ({
+export const buildTimetableBackup = ({ classes, title, colorMap, theme, display, exams = [] }) => ({
   app: 'studreads',
   kind: 'timetable',
   version: 1,
@@ -24,6 +27,7 @@ export const buildTimetableBackup = ({ classes, title, colorMap, theme, display 
   theme,
   display,
   colors: usedColors(classes, colorMap),
+  e: examRows(exams),
   classes: classes.map((item) => ({
     name: item.name, day: item.day, startTime: item.startTime, endTime: item.endTime,
     room: item.room || '', teacher: item.teacher || '', credits: item.credits || ''
@@ -64,11 +68,6 @@ export const readTimetablePayload = (data) => {
 
   return { title: text(data.n ?? data.title ?? (data.userName ? `${data.userName}'s timetable` : ''), 60), classes, colors, theme, display };
 };
-
-export const buildExamShare = (records) => ({
-  v: 1,
-  e: records.map((record) => [record.subject, record.code, record.date, record.time, record.room, record.program, record.start, record.end])
-});
 
 export const readExamPayload = (data) => {
   if (!data || !Array.isArray(data.e)) return [];

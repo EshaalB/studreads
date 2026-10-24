@@ -292,3 +292,17 @@ FAQ.forEach((item) => assert.ok(indexHtml.includes(`<h3>${item.question}</h3>`) 
 assert.equal((indexHtml.match(/<h1[\s>]/g) || []).length, 1);
 ['llms.txt', 'robots.txt', 'sitemap.xml', 'privacy.html', 'og-image.png'].forEach((file) => assert.ok(readFileSync(`./public/${file}`).length > 0, file));
 console.log('✓ SEO files and FAQ in step');
+
+// Messy input: scanner misreads, letter-spaced PDF text, full-width digits, ligatures,
+// "hrs" times in free text, and rows that come before their (merged) date cell.
+const messy = (matrix) => extractExams(matrix).records.map((r) => [r.date, r.time, r.code, r.subject]);
+assert.deepEqual(messy([['Course Code', 'Course Title', 'Date', 'Time'], ['CS2O4', 'Data Structures', '18/O5/2026', '9:OO AM - 12:OO PM'], ['MA-2Ol', 'Linear Algebra', '19/05/2O26', '2:00 PM - 5:00 PM']]), [
+  ['2026-05-18', '9:00 AM – 12:00 PM', 'CS204', 'Data Structures'],
+  ['2026-05-19', '2:00 PM – 5:00 PM', 'MA-201', 'Linear Algebra']
+]);
+assert.deepEqual(messy([['C o u r s e', 'D a t e', 'T i m e'], ['D a t a  S t r u c t u r e s', '1 8 / 0 5 / 2 0 2 6', '9:00 AM']]), [['2026-05-18', '9:00 AM', '', 'Data Structures']]);
+assert.deepEqual(messy([['Subject', 'Date', 'Time'], ['Physics', '１８/０５/２０２６', '０９：００ – １２：００']]), [['2026-05-18', '9:00 AM – 12:00 PM', '', 'Physics']]);
+assert.equal(messy([['Subject', 'Date', 'Time'], ['Deﬁnitions of Finance', '18/05/2026', '9:00 AM']])[0][3], 'Definitions of Finance');
+assert.deepEqual(messy(textToRows('18/05/2026  CS-204 Data Structures  0900 hrs - 1200 hrs  Hall B')), [['2026-05-18', '9:00 AM – 12:00 PM', 'CS-204', 'Data Structures']]);
+assert.deepEqual(messy([['Subject', 'Date', 'Time'], ['Physics', '', '9:00 AM'], ['Chemistry', '19/05/2026', '9:00 AM']]).map((r) => r[3]).sort(), ['Chemistry', 'Physics']);
+console.log('✓ messy date sheets');

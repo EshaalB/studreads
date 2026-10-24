@@ -12,7 +12,8 @@
 .capture.is-capturing { padding: var(--space-5); }
 .capture.is-capturing .capture-head { display: flex; }
 .capture.is-capturing .grid-scroll { overflow: visible; }
-.capture.is-capturing .agenda-row-remove { display: none; }
+.capture.is-capturing .agenda-row-remove,
+.capture.is-capturing .no-capture { display: none; }
 /* The image renderer draws inset shadows too heavily; borders give the same look. */
 .capture.is-capturing .grid-block { box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.08); }
 .capture.is-capturing .grid-block.has-clash { border: 2px solid var(--warn-line); }

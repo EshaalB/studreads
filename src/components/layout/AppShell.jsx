@@ -1,9 +1,7 @@
 import { Github } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAppearance } from '../../utils/useAppearance';
-import ExamTool from '../exams/ExamTool';
 import TimetableTool from '../timetable/TimetableTool';
-import Segmented from '../ui/Segmented';
 import ThemeToggle from '../ui/ThemeToggle';
 import AboutDialog from './AboutDialog';
 import Footer from './Footer';
@@ -18,12 +16,8 @@ const LAUNCH = {
 };
 
 const AppShell = () => {
-  const [activeTool, setActiveTool] = useState(LAUNCH.exams && !LAUNCH.timetable ? 'exams' : 'timetable');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [theme, toggleTheme] = useAppearance();
-
-  // The print stylesheet prints the active tool.
-  useEffect(() => { document.body.dataset.tool = activeTool; }, [activeTool]);
 
   useEffect(() => {
     if (LAUNCH.timetable || LAUNCH.legacyTimetable || LAUNCH.exams) {
@@ -41,15 +35,6 @@ const AppShell = () => {
             <span>Stud<span className="wordmark-accent">Reads</span></span>
           </a>
 
-          <Segmented
-            kind="tabs"
-            label="Planner"
-            className="tool-tabs"
-            value={activeTool}
-            onChange={setActiveTool}
-            options={[{ value: 'timetable', label: 'Timetable' }, { value: 'exams', label: 'Exams' }]}
-          />
-
           <div className="header-actions">
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <button type="button" className="header-link" onClick={() => setIsAboutOpen(true)}>About</button>
@@ -62,13 +47,7 @@ const AppShell = () => {
 
       <main className="page" id="main-content">
         <h1 className="visually-hidden">StudReads: university timetable maker and exam date sheet finder</h1>
-        {/* Both tools stay mounted so switching tabs keeps unsaved work. */}
-        <div hidden={activeTool !== 'timetable'}>
-          <TimetableTool sharedTimetable={LAUNCH.timetable} legacyTimetable={LAUNCH.legacyTimetable} />
-        </div>
-        <div hidden={activeTool !== 'exams'}>
-          <ExamTool sharedExams={LAUNCH.exams} />
-        </div>
+        <TimetableTool sharedTimetable={LAUNCH.timetable} legacyTimetable={LAUNCH.legacyTimetable} sharedExams={LAUNCH.exams} />
         <Faq />
       </main>
 

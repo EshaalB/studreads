@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import { useModalAccessibility } from '../../utils/useModalAccessibility';
 
 // Centred modal on wide screens, bottom sheet on phones. `side` turns it into a side panel.
-const Dialog = ({ isOpen, onClose, title, children, footer, side = false, width }) => {
+// `bare` lets the content supply its own .dialog-body and .dialog-footer.
+const Dialog = ({ isOpen, onClose, title, children, footer, side = false, width, bare = false }) => {
   const dialogRef = useModalAccessibility(isOpen, onClose);
   const titleId = useId();
   if (!isOpen) return null;
@@ -25,7 +26,7 @@ const Dialog = ({ isOpen, onClose, title, children, footer, side = false, width 
           <h2 id={titleId}>{title}</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
         </header>
-        <div className="dialog-body">{children}</div>
+        {bare ? children : <div className="dialog-body">{children}</div>}
         {footer && <footer className="dialog-footer">{footer}</footer>}
       </div>
     </div>,

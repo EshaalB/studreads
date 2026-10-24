@@ -1,4 +1,4 @@
-/* Printing shows the same capture area as "Save image" for the active tool,
+/* Printing shows the same capture area as "Save image",
    on a light background so it does not use a page of ink in dark mode. */
 
 @media print {
@@ -18,10 +18,8 @@
   html, body { background: #fff !important; }
   body * { visibility: hidden; }
 
-  body[data-tool="timetable"] [data-print-target="timetable"],
-  body[data-tool="timetable"] [data-print-target="timetable"] *,
-  body[data-tool="exams"] [data-print-target="exams"],
-  body[data-tool="exams"] [data-print-target="exams"] * { visibility: visible; }
+  [data-print-target],
+  [data-print-target] * { visibility: visible; }
 
   [data-print-target] {
     position: absolute;
@@ -33,6 +31,7 @@
   [data-print-target] .capture-head { display: flex; }
   [data-print-target] .grid-scroll { overflow: visible; }
   [data-print-target] .time-grid { min-width: 0; }
-  [data-print-target] .agenda-row-remove { display: none; }
+  [data-print-target] .agenda-row-remove,
+  [data-print-target] .no-capture { display: none; }
   .grid-block, .agenda-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
 }

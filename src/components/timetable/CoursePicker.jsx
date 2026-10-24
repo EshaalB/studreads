@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTimetable } from '../../context/useTimetable';
 import Dialog from '../ui/Dialog';
+import PushButton from '../ui/PushButton';
 import SearchableSelect from '../ui/SearchableSelect';
 
 const CheckRow = ({ checked, onChange, label, detail }) => (
@@ -13,10 +14,11 @@ const CheckRow = ({ checked, onChange, label, detail }) => (
   </label>
 );
 
-// Picks courses from an imported timetable file: a section's courses, plus any course
-// from another section found by search. Ticking adds every meeting of that course.
+// Pick courses from an uploaded timetable: choose a section, tick courses. Courses taken
+// with another section stay tucked away until asked for.
 const CoursePicker = ({ isOpen, onClose }) => {
-  const { rootSections, activeSection, setActiveSection, getCoursesForSection, allCourses, isCourseAdded, toggleCourse, classes, source } = useTimetable();
+  const { rootSections, activeSection, setActiveSection, getCoursesForSection, allCourses, isCourseAdded, toggleCourse } = useTimetable();
+  const [isSearching, setIsSearching] = useState(false);
   const [query, setQuery] = useState('');
 
   const sectionCourses = useMemo(() => {
@@ -38,33 +40,22 @@ const CoursePicker = ({ isOpen, onClose }) => {
   const toggleAll = () => sectionCourses
     .filter((course) => isCourseAdded(activeSection, course.name) === allTicked)
     .forEach((course) => toggleCourse(activeSection, course.name));
-  const courseCount = new Set(classes.map((item) => item.name)).size;
 
   return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Choose your courses"
-      width={520}
-      footer={<><span className="muted">{courseCount} {courseCount === 1 ? 'course' : 'courses'} on your timetable</span><button type="button" className="btn btn-primary" onClick={onClose}>Done</button></>}
-    >
+    <Dialog isOpen={isOpen} onClose={onClose} title="Choose your courses" width={520} footer={<PushButton onClick={onClose}>Done</PushButton>}>
       <div className="form">
-        {source?.name && <p className="muted small">From {source.name}</p>}
-        <div className="field">
-          <span className="field-label">Your section</span>
-          <SearchableSelect
-            options={rootSections.map((section) => ({ value: section, label: section }))}
-            value={activeSection}
-            onChange={setActiveSection}
-            placeholder="Choose a section"
-            ariaLabel="Your section"
-          />
-        </div>
+        <SearchableSelect
+          options={rootSections.map((section) => ({ value: section, label: section }))}
+          value={activeSection}
+          onChange={setActiveSection}
+          placeholder="Choose your section"
+          ariaLabel="Your section"
+        />
 
         {activeSection && (
           <div className="field">
             <div className="field-head">
-              <span className="field-label">Courses in {activeSection}</span>
+              <span className="field-label">Courses</span>
               <button type="button" className="link-btn" onClick={toggleAll}>{allTicked ? 'Clear all' : 'Select all'}</button>
             </div>
             <div className="check-list">
@@ -80,10 +71,9 @@ const CoursePicker = ({ isOpen, onClose }) => {
           </div>
         )}
 
-        {rootSections.length > 1 && (
+        {rootSections.length > 1 && (isSearching ? (
           <div className="field">
-            <span className="field-label">Taking a course with another section?</span>
-            <input className="input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search course or section" />
+            <input className="input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Course or section name" aria-label="Find a course in another section" autoFocus />
             {searchResults.length > 0 && (
               <div className="check-list">
                 {searchResults.map((course) => (
@@ -99,7 +89,9 @@ const CoursePicker = ({ isOpen, onClose }) => {
             )}
             {query.trim() && searchResults.length === 0 && <p className="muted small">No courses match “{query}”.</p>}
           </div>
-        )}
+        ) : (
+          <button type="button" className="link-btn" onClick={() => setIsSearching(true)}>Taking a course with another section?</button>
+        ))}
       </div>
     </Dialog>
   );

@@ -43,7 +43,34 @@ const HEADER_RULES = [
   ['subject', /\b(subject|subjects|course|courses|paper|papers|module|modules|title|description|exam|examination|unit)\b/]
 ];
 
-const clean = (value) => String(value ?? '').replace(/[\u00a0\u2007\u202f]/g, ' ').replace(/[ \t]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
+// Messy input, fixed before anything else looks at it:
+// - full-width characters, ligatures (ﬁ) and odd spaces or dashes from PDFs
+// - letter-spaced text ("D a t a  S t r u c t u r e s") from some PDF exports
+// - scanner misreads inside numbers: O for 0 and I or l for 1 ("CS2O4", "18/O5/2026", "9:OO")
+const OCR_DIGITS = { O: '0', o: '0', I: '1', l: '1', '|': '1' };
+const fixOcrDigits = (text) => text
+  .replace(/\b([A-Z]{2,5})([\s-]?)([0-9OIl|]{3,4})(?![A-Za-z0-9])/g, (match, letters, separator, digits) => (
+    /^\d/.test(digits) || (digits.match(/\d/g) || []).length >= 2 ? letters + separator + digits.replace(/[OoIl|]/g, (c) => OCR_DIGITS[c]) : match
+  ))
+  .replace(/(?<![A-Za-z])[0-9OIl]{1,4}(?:[:./-][0-9OIl]{1,4}){1,2}(?![A-Za-z])/g, (match) => {
+    const digits = (match.match(/\d/g) || []).length;
+    return /[OIl]/.test(match) && digits >= (match.includes(':') ? 1 : 2) ? match.replace(/[OIl]/g, (c) => OCR_DIGITS[c]) : match;
+  });
+
+const joinSpacedLetters = (text) => text
+  .split(/( {2,}|\t|\n)/)
+  .map((part) => (/^(?:\S ){3,}\S$/.test(part) ? part.replace(/ /g, '').replace(/([a-z])([A-Z])/g, '$1 $2') : part))
+  .join('');
+
+const clean = (value) => fixOcrDigits(joinSpacedLetters(
+  String(value ?? '')
+    .normalize('NFKC')
+    .replace(/[\u00a0\u2007\u202f]/g, ' ')
+    .replace(/[\u2010-\u2012\u2212\uFE63\uFF0D]/g, '-')
+))
+  .replace(/[ \t]+/g, ' ')
+  .replace(/\s*\n\s*/g, '\n')
+  .trim();
 const flat = (value) => clean(value).replace(/\n/g, ' ');
 const headerKey = (value) => flat(value).toLowerCase().replace(/[^a-z0-9#]+/g, ' ').trim();
 const pad = (value) => String(value).padStart(2, '0');
@@ -141,8 +168,8 @@ export const formatClock = (minutes, format = '12h') => {
 const assumeDaytime = (minutes, hadMeridiem) => (minutes !== null && !hadMeridiem && minutes < 7 * 60 ? minutes + 12 * 60 : minutes);
 
 const findTime = (text, { strict = true } = {}) => {
-  const value = flat(text);
-  if (!value) return null;
+  const value = flat(text).replace(/\b([01]\d|2[0-3])([0-5]\d)(\s*)(hrs?|h)\b/gi, (match, hours, minutes) => `${hours}:${minutes}`.padEnd(match.length, ' '));
+  if (!value.trim()) return null;
   const range = value.match(TIME_RANGE);
   if (range) {
     const [, h1, m1, p1, h2, m2, p2] = range;
@@ -443,6 +470,7 @@ const parseTable = (rows, source, dateOptions) => {
   let anchors = null;
   let pendingLabel = '';
   let defaultTime = null;
+  const undated = [];
   const context = { date: '', time: null, program: '' };
 
   rows.forEach((row, rowIndex) => {
@@ -504,6 +532,12 @@ const parseTable = (rows, source, dateOptions) => {
     // A time carried down from earlier rows never crosses into a new date.
     if (date && date.iso !== context.date) context.time = null;
     if (date) context.date = date.iso;
+    if (date && undated.length) {
+      undated.splice(0).forEach((values) => {
+        const record = makeRecord({ ...values, date: context.date }, source, records.length);
+        if (record) records.push({ ...record, rowIndex: values.rowIndex });
+      });
+    }
 
     let time = null;
     const startText = values.startTime || (values.endTime ? values.time : '');
@@ -562,7 +596,7 @@ const parseTable = (rows, source, dateOptions) => {
       ? codes.map((code) => ({ code, subject: '', room: '', program: '' }))
       : (subjectText ? parseCellCourses(subjectText) : [{ subject: '', room: '', program: '' }]).map((course) => ({ ...course, code: codes[0] || '' }));
     courses.forEach((course) => {
-      const record = makeRecord({
+      const recordValues = {
         subject: course.subject,
         code: course.code,
         date: context.date,
@@ -571,7 +605,10 @@ const parseTable = (rows, source, dateOptions) => {
         room: values.room || course.room,
         program: values.program || course.program || context.program,
         teacher: values.teacher
-      }, source, records.length);
+      };
+      // A merged date cell printed lower down still belongs to these rows.
+      if (!context.date) { undated.push({ ...recordValues, rowIndex }); return; }
+      const record = makeRecord(recordValues, source, records.length);
       if (record) records.push({ ...record, rowIndex });
     });
   });

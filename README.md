@@ -12,16 +12,18 @@ StudReads is a privacy-first timetable and exam planner for university students.
 - Save an image or print exactly what is on screen, or export a calendar (`.ics`) or backup (`.json`) that can be imported again
 - Share links that open as an editable copy; light and dark mode
 
-**Exam finder**
+**Exams (on the same screen)**
 - Reads date sheets from PDF (text or scanned), Excel, OpenDocument, CSV, Word `.docx`, photos and screenshots, or pasted text
 - Handles header tables, grids with dates or time slots across the top, and free-text lists with dates on their own lines
 - Copes with merged date cells, two-row headers, wrapped titles, multi-page PDFs, landscape pages and dates without a year
 - Finds course titles printed elsewhere (a legend or another sheet) when the schedule lists only codes
 - Reads times written as `0900-1200`, separate hour columns, Excel fractions, "hrs", session names such as "Morning" defined in a note, or one time printed above the table
 - Uses printed weekdays to tell day/month from month/day
-- Search and programme filter, a personal exam list with clash warnings, and exams added or edited by hand
-- "My exams" in list or calendar view (the same components as the timetable), with remove, delete and Undo
-- Saves as an image, prints, exports to calendar (`.ics`) and shares the list as a link
+- Upload a date sheet from the Upload menu or drop it on the planner; spreadsheets with real dates are recognised as date sheets automatically
+- Exams matching the courses on your timetable are suggested and pre-ticked; search adds any others
+- Your exams appear under the timetable in both Week and List views, with clash warnings, editing, remove and Undo
+- One Export menu saves an image or PDF, a single calendar file with classes and exams, or a backup; share links carry both
+- Copes with scanner misreads (O for 0, l for 1), letter-spaced PDF text, full-width digits, ligatures and rows printed before their merged date cell
 
 ## Run locally
 
@@ -57,8 +59,8 @@ src/
   components/
     layout/     app shell, header, footer, about and privacy dialogs
     timetable/  editor, column-check, class and course dialogs, customise panel
-    exams/      exam finder and exam dialog
-    calendar/   TimeGrid and AgendaList, shared by the timetable and "My exams"
+    exams/      exam picker, exam section and exam dialog
+    calendar/   TimeGrid and AgendaList, shared by classes and exams
     ui/         shared controls: Dialog, Menu, Segmented, Dropzone, ColorField, ThemeToggle
   context/      timetable state (one list of classes, the imported file, colours, settings)
   utils/        parsers, exporters, share links and other plain functions
