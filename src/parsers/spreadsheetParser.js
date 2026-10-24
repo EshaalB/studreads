@@ -1,4 +1,4 @@
-import { TIME_REGEX } from './constants.js';
+import { TIME_REGEX } from '../utils/constants.js';
 import { autoDetectColumnMapping } from './columnDetector.js';
 import { parseHeuristicExcel } from './heuristicParser.js';
 

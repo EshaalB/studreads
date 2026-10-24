@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { SITE } from '../../content/site';
+import { isAddedByHand } from '../../hooks/useExams';
 import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
 
@@ -23,6 +25,8 @@ const matchesCourse = (exam, courseNames) => {
   });
 };
 
+const REPORT_URL = `${SITE.issues}?title=${encodeURIComponent('Date sheet read wrong')}&body=${encodeURIComponent('University:\nFile type (PDF, Excel, photo…):\nWhat was missing or wrong:\n\nPlease do not attach files with personal details.')}`;
+
 const dateLabel = (isoDate) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
 
 const Row = ({ exam, checked, onToggle }) => (
@@ -37,7 +41,7 @@ const Row = ({ exam, checked, onToggle }) => (
 
 // Pick your exams from a date sheet: suggestions from your timetable first, then search.
 const PickerBody = ({ exams, courseNames, onClose }) => {
-  const sheetExams = useMemo(() => exams.records.filter((record) => record.source !== 'Added by you'), [exams.records]);
+  const sheetExams = useMemo(() => exams.records.filter((record) => !isAddedByHand(record)), [exams.records]);
   const suggestions = useMemo(() => sheetExams.filter((exam) => matchesCourse(exam, courseNames)), [sheetExams, courseNames]);
   const [picked, setPicked] = useState(() => {
     const current = sheetExams.filter((exam) => exams.selectedIds.includes(exam.id)).map((exam) => exam.id);
@@ -89,6 +93,9 @@ const PickerBody = ({ exams, courseNames, onClose }) => {
             </div>
           )}
           {query.trim() && results.length === 0 && <p className="muted small">Nothing matches “{query}”. Try the course code or one word of the name.</p>}
+          <p className="muted small">
+            Exam missing or wrong? <a href={REPORT_URL} target="_blank" rel="noopener noreferrer">Tell us how your sheet is laid out</a> so the reader can learn it.
+          </p>
         </div>
       </div>
       <footer className="dialog-footer">

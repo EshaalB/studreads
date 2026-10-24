@@ -35,7 +35,7 @@ export const parseTime = (timeStr) => {
   return hours * 60 + minutes;
 };
 
-export const formatTime = (totalMinutes) => {
+const formatTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   const period = hours >= 12 ? 'PM' : 'AM';

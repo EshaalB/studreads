@@ -1,6 +1,6 @@
-import { EXCLUDED_COURSES } from './constants.js';
-import { parseTime } from './timeUtils.js';
-import { sanitizeString } from './validation.js';
+import { EXCLUDED_COURSES } from '../utils/constants.js';
+import { parseTime } from '../utils/timeUtils.js';
+import { sanitizeString } from '../utils/validation.js';
 
 const DAY_VARIANTS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 

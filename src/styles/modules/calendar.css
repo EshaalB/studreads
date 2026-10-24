@@ -11,9 +11,13 @@
 
 .capture.is-capturing { padding: var(--space-5); }
 .capture.is-capturing .capture-head { display: flex; }
+/* Saved images and prints carry a small credit line, so a shared picture leads back here. */
+.capture-foot { display: none; margin-top: var(--space-3); color: var(--text-3); font-size: var(--text-xs); text-align: right; }
+.capture.is-capturing .capture-foot { display: block; }
 .capture.is-capturing .grid-scroll { overflow: visible; }
-.capture.is-capturing .agenda-row-remove,
-.capture.is-capturing .no-capture { display: none; }
+.capture.is-capturing .grid-block::after,
+.capture.is-capturing .agenda-row::after,
+.capture.is-capturing .agenda-row-remove { display: none; }
 /* The image renderer draws inset shadows too heavily; borders give the same look. */
 .capture.is-capturing .grid-block { box-shadow: none; border: 1px solid rgba(0, 0, 0, 0.08); }
 .capture.is-capturing .grid-block.has-clash { border: 2px solid var(--warn-line); }
@@ -80,6 +84,9 @@
 }
 
 .grid-col:last-child { border-right: 1.5px solid var(--text); }
+/* Weekly classes start after the exam dates, behind a double rule. */
+.grid-col.is-divided,
+.grid-untimed-cell.is-divided { border-left: 4px double var(--text); }
 .grid-col.is-addable { cursor: cell; }
 .grid-col.is-addable:hover { background-color: color-mix(in srgb, var(--pink) 8%, transparent); }
 
@@ -99,11 +106,32 @@
   line-height: 16px;
   text-align: left;
   overflow: hidden;
-  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.grid-block:hover { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(10, 53, 106, 0.15); transform: translateY(-1px); }
-.grid-block.is-untimed { position: static; }
+.grid-block.is-untimed { position: relative; }
+
+/* On hover an outline traces the edge from the left side to the right. */
+.grid-block::after,
+.agenda-row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid currentColor;
+  border-radius: inherit;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.grid-block:hover::after,
+.grid-block:focus-visible::after,
+.agenda-row:hover::after,
+.agenda-row:focus-within::after { clip-path: inset(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-block::after,
+  .agenda-row::after { transition: none; }
+}
 
 .grid-block-time {
   flex: none;
@@ -130,7 +158,7 @@
 .grid-block-badge,
 .agenda-row-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.01em; opacity: 0.9; }
 
-/* Exams share the grid with classes; an outline and a date badge set them apart. */
+/* Exams share the grid with classes; an outline and an "Exam" badge set them apart. */
 .grid-block.is-exam { box-shadow: inset 0 0 0 1.5px currentColor; }
 .grid-block.is-exam.has-clash { box-shadow: inset 0 0 0 2px var(--warn-line); }
 .grid-block.is-short .grid-block-badge { display: none; }
@@ -163,6 +191,7 @@
 .agenda-group ul { display: grid; gap: 4px; }
 
 .agenda-row {
+  position: relative;
   display: flex;
   align-items: stretch;
   border-radius: var(--radius);
@@ -183,7 +212,6 @@
   text-align: left;
 }
 
-.agenda-row-main:hover,
 .agenda-row-remove:hover { background: rgba(0, 0, 0, 0.06); }
 
 .agenda-row-time { font-size: var(--text-sm); font-variant-numeric: tabular-nums; opacity: 0.85; }

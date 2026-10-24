@@ -1,12 +1,14 @@
-import { CalendarPlus, ChevronDown, ClipboardList, Download, FileJson, FilePlus2, Image, Link2, ListChecks, Plus, Printer, Search, Settings, Upload } from 'lucide-react';
+import { CalendarPlus, ChevronDown, ClipboardList, Download, FileJson, FilePlus2, Image, Link2, ListChecks, Plus, Printer, Search, Settings, Upload, Users } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { SITE } from '../../content/site';
 import { useTimetable } from '../../context/useTimetable';
-import { classToItem, examToItem, groupByColumn, weekColumns } from '../../utils/calendarItems';
+import { classToItem, dateFromColumn, examToItem, groupByColumn, plannerColumns, weekdayOf } from '../../utils/calendarItems';
 import { showError, showSuccess } from '../../utils/errorHandler';
-import { classesToIcs, downloadFile, examsToIcs, fileSlug } from '../../utils/exportUtils';
-import { saveElementAsImage } from '../../utils/imageExport';
-import { encodeShare, shareOrCopy } from '../../utils/sharingUtils';
-import { buildTimetableBackup, buildTimetableShare } from '../../utils/transfer';
+import { classesToIcs, downloadFile, examsToIcs, fileSlug } from '../../export/exportUtils';
+import { saveElementAsImage } from '../../export/imageExport';
+import { encodeShare, shareOrCopy } from '../../export/sharingUtils';
+import { buildClassmateShare, buildTimetableBackup, buildTimetableShare } from '../../export/transfer';
+import { isAddedByHand } from '../../hooks/useExams';
 import AgendaList from '../calendar/AgendaList';
 import TimeGrid from '../calendar/TimeGrid';
 import ExamDialog from '../exams/ExamDialog';
@@ -20,11 +22,11 @@ import SettingsPanel from './SettingsPanel';
 
 const toClock = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 
-// The whole planner on one screen: classes in a week grid or list, exams underneath.
+// The whole planner on one screen: exams and classes together in a week grid or a list.
 const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicker, exams }) => {
   const {
     classes, conflicts, getOrAssignColor, displayOptions, setDisplayOptions, colorMap, selectedTheme,
-    hasSource, removeClass, addClasses
+    hasSource, shareableSource, removeClass, addClasses
   } = useTimetable();
   const captureRef = useRef(null);
   const [editing, setEditing] = useState(null);
@@ -36,6 +38,7 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
   const title = displayOptions.title.trim();
   const slug = fileSlug(title, 'timetable');
   const nothing = classes.length === 0 && exams.mine.length === 0;
+  const hasSheet = exams.records.some((record) => !isAddedByHand(record));
   const courseNames = useMemo(() => [...new Set(classes.map((cls) => cls.name))], [classes]);
   const clashCount = Math.ceil(conflicts.size / 2) + Math.ceil(exams.clashes.size / 2);
   const relativeDay = (isoDate) => {
@@ -49,12 +52,12 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
   ].filter(Boolean).join(', ') || 'Nothing added yet';
   const nextExamNote = exams.nextExam ? `Next exam: ${exams.nextExam.subject}, ${relativeDay(exams.nextExam.date)}` : '';
 
-  // Classes and exams share the grid and the list; exams sit on their weekday, marked with their date.
+  // Classes and exams share the grid and the list: exams by date, then weekly classes by day.
   const items = useMemo(() => [
     ...classes.map((cls) => classToItem(cls, { getColor: getOrAssignColor, displayOptions, conflicts })),
     ...exams.mine.map((exam) => examToItem(exam, { getColor: getOrAssignColor, clashes: exams.clashes }))
   ], [classes, exams.mine, exams.clashes, getOrAssignColor, displayOptions, conflicts]);
-  const columns = useMemo(() => weekColumns(items, displayOptions.days), [items, displayOptions.days]);
+  const columns = useMemo(() => plannerColumns(items), [items]);
   const kindOf = (id) => items.find((item) => item.id === id)?.kind;
   const openItem = (id) => (kindOf(id) === 'exam'
     ? setEditingExam(exams.records.find((exam) => exam.id === id))
@@ -77,11 +80,11 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
     }
   }, [slug]);
 
-  const share = async () => {
+  const shareLink = async (key, payload, copiedMessage) => {
     try {
-      const code = await encodeShare(buildTimetableShare({ classes, title, colorMap, theme: selectedTheme, exams: exams.mine }));
-      const result = await shareOrCopy({ url: `${window.location.origin}${window.location.pathname}?t=${code}`, title: title || 'My timetable' });
-      if (result === 'copied') showSuccess('Link copied. Whoever opens it gets their own copy to edit.');
+      const code = await encodeShare(payload);
+      const result = await shareOrCopy({ url: `${window.location.origin}${window.location.pathname}?${key}=${code}`, title: title || 'My timetable' });
+      if (result === 'copied') showSuccess(copiedMessage);
     } catch {
       showError('The link could not be copied.');
     }
@@ -101,8 +104,6 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
     { label: 'Class timetable', hint: 'Excel or CSV from your university', icon: <Upload size={15} />, onSelect: upload.timetable },
     { label: 'Exam date sheet', hint: 'PDF, Excel, Word or a photo', icon: <CalendarPlus size={15} />, onSelect: upload.exams },
     { label: 'Paste exam dates', hint: 'Text copied from a website or email', icon: <ClipboardList size={15} />, onSelect: upload.paste },
-    ...(exams.records.some((record) => record.source !== 'Added by you') ? [{ label: 'Find my exams again', hint: 'In the date sheet you uploaded', icon: <Search size={15} />, onSelect: examPicker.open }] : []),
-    ...(hasSource ? [{ separator: true }, { label: 'Pick my courses again', hint: 'From the timetable you uploaded', icon: <ListChecks size={15} />, onSelect: coursePicker.open }] : []),
     { separator: true },
     { label: 'Open a backup', hint: '.json saved from StudReads', icon: <FileJson size={15} />, onSelect: upload.backup }
   ];
@@ -110,13 +111,30 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
   const exportItems = [
     { label: 'Save as image', hint: 'PNG, exactly as shown', icon: <Image size={15} />, onSelect: saveImage, disabled: nothing },
     { label: 'Print or PDF', hint: 'Choose “Save as PDF” to keep a file', icon: <Printer size={15} />, onSelect: () => window.print(), disabled: nothing },
-    { label: 'Add to calendar', hint: '.ics for Google, Apple or Outlook', icon: <CalendarPlus size={15} />, onSelect: exportCalendar, disabled: nothing },
+    { label: 'Add to calendar', hint: 'With exam reminders, for any calendar app', icon: <CalendarPlus size={15} />, onSelect: exportCalendar, disabled: nothing },
     {
       label: 'Backup',
       hint: '.json you can open later',
       icon: <FileJson size={15} />,
       disabled: nothing,
       onSelect: () => downloadFile(`${slug}.json`, JSON.stringify(buildTimetableBackup({ classes, title, colorMap, theme: selectedTheme, display: displayOptions, exams: exams.mine }), null, 2), 'application/json')
+    }
+  ];
+
+  const shareItems = [
+    {
+      label: 'My planner',
+      hint: 'A copy of your classes and exams',
+      icon: <Link2 size={15} />,
+      disabled: nothing,
+      onSelect: () => shareLink('t', buildTimetableShare({ classes, title, colorMap, theme: selectedTheme, exams: exams.mine }), 'Link copied. Whoever opens it gets their own copy to edit.')
+    },
+    {
+      label: 'For classmates',
+      hint: 'Your uploaded files, so each picks their own',
+      icon: <Users size={15} />,
+      disabled: !hasSource && !hasSheet,
+      onSelect: () => shareLink('c', buildClassmateShare({ title, source: shareableSource(), exams: exams.records.filter((record) => !isAddedByHand(record)), examFile: exams.fileInfo?.name }), 'Link copied. Classmates who open it pick their own courses and exams.')
     }
   ];
 
@@ -147,7 +165,7 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
           <PushButton onClick={() => setEditing({ day: 'Monday', startTime: '09:00', endTime: '10:00' })}><Plus size={16} /> Add</PushButton>
           <Menu triggerClassName="action" trigger={<><Upload size={16} /> {busy || 'Upload'} <ChevronDown size={14} className="action-chevron" /></>} items={uploadItems} />
           <Menu triggerClassName="action" trigger={<><Download size={16} /> Export <ChevronDown size={14} className="action-chevron" /></>} items={exportItems} />
-          <button type="button" className="action" onClick={share} disabled={nothing}><Link2 size={16} /> Share</button>
+          <Menu triggerClassName="action" trigger={<><Link2 size={16} /> Share <ChevronDown size={14} className="action-chevron" /></>} items={shareItems} />
           <button type="button" className="action" onClick={onNew} disabled={nothing}><FilePlus2 size={16} /> New</button>
         </nav>
 
@@ -158,12 +176,17 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
               {!busy && nextExamNote && <span> · {nextExamNote}</span>}
               {clashCount > 0 && <span className="text-warn"> · {clashCount} {clashCount === 1 ? 'clash' : 'clashes'}</span>}
             </p>
-            <Segmented
-              label="Layout"
-              value={view}
-              onChange={(next) => setDisplayOptions((current) => ({ ...current, view: next }))}
-              options={[{ value: 'grid', label: 'Week' }, { value: 'list', label: 'List' }]}
-            />
+            <div className="canvas-tools">
+              {/* The uploaded files stay loaded, so picks can be changed at any time. */}
+              {hasSource && <button type="button" className="chip-btn" onClick={coursePicker.open}><ListChecks size={14} /> Edit courses</button>}
+              {hasSheet && <button type="button" className="chip-btn" onClick={examPicker.open}><Search size={14} /> Edit exams</button>}
+              <Segmented
+                label="Layout"
+                value={view}
+                onChange={(next) => setDisplayOptions((current) => ({ ...current, view: next }))}
+                options={[{ value: 'grid', label: 'Week' }, { value: 'list', label: 'List' }]}
+              />
+            </div>
           </div>
 
           {nothing && !busy && (
@@ -194,11 +217,15 @@ const Editor = ({ busy, upload, onFile, onSample, onNew, coursePicker, examPicke
                 rowHeight={displayOptions.rowHeight}
                 blockStyle={displayOptions.blockStyle}
                 onSelect={openItem}
-                onAddAt={(day, minutes) => setEditing({ day, startTime: toClock(minutes), endTime: toClock(Math.min(minutes + 60, 23 * 60 + 59)) })}
+                onAddAt={(column, minutes) => {
+                  const date = dateFromColumn(column);
+                  setEditing({ day: date ? weekdayOf(date) : column, date, startTime: toClock(minutes), endTime: toClock(Math.min(minutes + 60, 23 * 60 + 59)) });
+                }}
               />
             ) : (
               <AgendaList groups={groupByColumn(columns, items)} onSelect={openItem} onRemove={removeItem} removeLabel="Remove" blockStyle={displayOptions.blockStyle} />
             )}
+            <p className="capture-foot">Made with StudReads · {SITE.host}</p>
           </div>
 
           {!nothing && <p className="canvas-hint">Click an empty slot to add a class or exam, or click one to edit it.</p>}

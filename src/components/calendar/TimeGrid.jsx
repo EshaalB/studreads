@@ -38,8 +38,8 @@ const layoutColumn = (items) => {
 const hourLabel = (hour, format) => (format === '24h' ? `${String(hour).padStart(2, '0')}:00` : displayTime(`${hour}:00`).replace(':00', ''));
 
 /**
- * A time-of-day grid with one column per day (weekdays for a timetable, dates for exams).
- * columns: [{ key, label, short }]
+ * A time-of-day grid with one column per day: a date for exams, a weekday for classes.
+ * columns: [{ key, label, short, divided }]
  * items:   [{ id, column, start, end, title, time, details, color, clash }] with start/end
  *          in minutes; items without a start are shown in an "untimed" row under the header.
  */
@@ -97,7 +97,7 @@ const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHo
           <div className="grid-untimed">
             <span className="grid-untimed-label">No time</span>
             {columns.map((column) => (
-              <div key={column.key} className="grid-untimed-cell">
+              <div key={column.key} className={`grid-untimed-cell ${column.divided ? 'is-divided' : ''}`}>
                 {untimed.filter((item) => item.column === column.key).map((item) => block(item, {}, 'is-untimed'))}
               </div>
             ))}
@@ -111,7 +111,7 @@ const TimeGrid = ({ columns, items, timeFormat = '12h', onSelect, onAddAt, minHo
           {columns.map((column) => (
             <div
               key={column.key}
-              className={`grid-col ${onAddAt ? 'is-addable' : ''}`}
+              className={`grid-col ${onAddAt ? 'is-addable' : ''} ${column.divided ? 'is-divided' : ''}`}
               role="list"
               aria-label={column.label}
               onClick={(event) => addAt(column.key, event)}

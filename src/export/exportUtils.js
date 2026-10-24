@@ -1,5 +1,5 @@
-import { DAYS } from './constants.js';
-import { parseTime } from './timeUtils.js';
+import { DAYS } from '../utils/constants.js';
+import { parseTime } from '../utils/timeUtils.js';
 
 export const fileSlug = (name, fallback) => (String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || fallback);
 
@@ -60,9 +60,13 @@ export const classesToIcs = (classes, { title = 'Timetable', weeks = 16 } = {}) 
   return calendar(events, title);
 };
 
+const reminder = (trigger, text) => ['BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsText(text)}`, `TRIGGER:${trigger}`, 'END:VALARM'];
+
+// Each exam carries its own reminders: the day before, and two hours before when the time is known.
 export const examsToIcs = (records) => calendar(records.map((record) => {
   const date = record.date.replaceAll('-', '');
-  const timing = record.start !== null && record.start !== undefined
+  const timed = record.start !== null && record.start !== undefined;
+  const timing = timed
     ? [`DTSTART:${date}T${icsTime(record.start)}`, `DTEND:${date}T${icsTime(record.end ?? Math.min(record.start + 180, 23 * 60 + 59))}`]
     : [`DTSTART;VALUE=DATE:${date}`];
   return [
@@ -73,6 +77,8 @@ export const examsToIcs = (records) => calendar(records.map((record) => {
     `SUMMARY:${icsText(`Exam: ${record.code ? `${record.code} ` : ''}${record.subject !== record.code ? record.subject : ''}`.trim())}`,
     record.room ? `LOCATION:${icsText(record.room)}` : '',
     record.program ? `DESCRIPTION:${icsText(record.program)}` : '',
+    ...reminder('-P1D', `Exam tomorrow: ${record.subject}`),
+    ...(timed ? reminder('-PT2H', `Exam in 2 hours: ${record.subject}`) : []),
     'END:VEVENT'
   ].filter(Boolean).join('\r\n');
 }), 'Exams');

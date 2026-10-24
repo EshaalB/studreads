@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import * as XLSX from 'xlsx';
-import { parseWorkbook } from '../src/utils/spreadsheetParser.js';
-import { docxXmlToRows, extractExams, hasAmbiguousNumericDates, normalizeExamDate, parseExamMatrix, parseExamWorkbook, positionedItemsToRows, textToRows } from '../src/utils/examParser.js';
+import { parseWorkbook } from '../src/parsers/spreadsheetParser.js';
+import { docxXmlToRows, extractExams, parseExamWorkbook, positionedItemsToRows, textToRows } from '../src/parsers/examParser.js';
 import { importClasses, isDuplicateClass, normalizeClass, validateClass } from '../src/utils/classes.js';
-import { buildTimetableShare, readTimetablePayload } from '../src/utils/transfer.js';
+import { buildTimetableShare, readTimetablePayload } from '../src/export/transfer.js';
 import { checkOverlap, parseTime } from '../src/utils/timeUtils.js';
 
 const fixtures = [
-  { path: './src/FSC TT Spring 2026 v1.1.xlsx', minimumRows: 700 },
-  { path: './src/Spring_26 FSM Time Table.xlsx', minimumRows: 600 }
+  { path: './fixtures/timetables/FSC TT Spring 2026 v1.1.xlsx', minimumRows: 700 },
+  { path: './fixtures/timetables/Spring_26 FSM Time Table.xlsx', minimumRows: 600 }
 ];
 
 fixtures.forEach(({ path, minimumRows }) => {
@@ -36,19 +36,20 @@ const examMatrix = [
   ['CS-204', 'Data Structures', '18/05/2026', 'Monday', '9:00 AM - 12:00 PM', 'Hall B'],
   ['SE-301', 'Software Engineering', '21/05/2026', 'Thursday', '2:00 PM - 5:00 PM', 'Lab 4']
 ];
-const parsedExams = parseExamMatrix(examMatrix, 'Test sheet');
+const parsedExams = extractExams(examMatrix, 'Test sheet').records;
 assert.equal(parsedExams.length, 2);
 assert.equal(parsedExams[0].subject, 'Data Structures');
 assert.equal(parsedExams[0].date, '2026-05-18');
 assert.equal(parsedExams[1].room, 'Lab 4');
-assert.equal(normalizeExamDate('7 June 2026'), '2026-06-07');
-assert.equal(normalizeExamDate('05/18/2026'), '2026-05-18');
-assert.equal(hasAmbiguousNumericDates([['03/04/2026']]), true);
-assert.equal(hasAmbiguousNumericDates([['18/05/2026']]), false);
+const dateOf = (text) => extractExams([['Subject', 'Date'], ['Physics', text]]).records[0]?.date;
+assert.equal(dateOf('7 June 2026'), '2026-06-07');
+assert.equal(dateOf('05/18/2026'), '2026-05-18');
+assert.equal(extractExams([['Subject', 'Date'], ['Physics', '03/04/2026']]).ambiguousDates, true);
+assert.equal(extractExams([['Subject', 'Date'], ['Physics', '18/05/2026']]).ambiguousDates, false);
 
-const loosePdfRows = parseExamMatrix([
+const loosePdfRows = extractExams([
   ['18/05/2026', 'Monday', 'CS-204', 'Data Structures', '9:00 AM - 12:00 PM', 'Hall B']
-], 'Text PDF');
+], 'Text PDF').records;
 assert.equal(loosePdfRows.length, 1);
 assert.equal(loosePdfRows[0].code, 'CS-204');
 assert.equal(loosePdfRows[0].subject, 'Data Structures');
@@ -290,7 +291,7 @@ const faqSchema = graph.find((node) => node['@type'] === 'FAQPage').mainEntity;
 assert.deepEqual(faqSchema.map((q) => [q.name, q.acceptedAnswer.text]), FAQ.map((item) => [item.question, item.answer]));
 FAQ.forEach((item) => assert.ok(indexHtml.includes(`<h3>${item.question}</h3>`) && indexHtml.includes(item.answer), `fallback page includes "${item.question}"`));
 assert.equal((indexHtml.match(/<h1[\s>]/g) || []).length, 1);
-['llms.txt', 'robots.txt', 'sitemap.xml', 'privacy.html', 'og-image.png'].forEach((file) => assert.ok(readFileSync(`./public/${file}`).length > 0, file));
+['llms.txt', 'robots.txt', 'sitemap.xml', 'privacy.html', 'og-image.png', 'manifest.webmanifest', 'sw.js', 'icon-192.png', 'icon-512.png'].forEach((file) => assert.ok(readFileSync(`./public/${file}`).length > 0, file));
 console.log('✓ SEO files and FAQ in step');
 
 // Messy input: scanner misreads, letter-spaced PDF text, full-width digits, ligatures,
@@ -306,3 +307,38 @@ assert.equal(messy([['Subject', 'Date', 'Time'], ['Deﬁnitions of Finance', '18
 assert.deepEqual(messy(textToRows('18/05/2026  CS-204 Data Structures  0900 hrs - 1200 hrs  Hall B')), [['2026-05-18', '9:00 AM – 12:00 PM', 'CS-204', 'Data Structures']]);
 assert.deepEqual(messy([['Subject', 'Date', 'Time'], ['Physics', '', '9:00 AM'], ['Chemistry', '19/05/2026', '9:00 AM']]).map((r) => r[3]).sort(), ['Chemistry', 'Physics']);
 console.log('✓ messy date sheets');
+
+// A revised date sheet: picked exams are found again and their changes listed.
+const { findExamChanges } = await import('../src/utils/examChanges.js');
+const exam = (id, code, subject, date, time, room = '') => ({ id, code, subject, date, time, room, start: time ? 540 : null, end: null });
+const revised = findExamChanges(
+  [exam('a', 'CS-204', 'Data Structures', '2026-12-07', '9:00 AM', 'Hall A'), exam('b', 'MA-101', 'Calculus', '2026-12-08', '9:00 AM'), exam('c', 'PH-100', 'Physics', '2026-12-09', '')],
+  [exam('n1', 'CS204', 'Data Structures', '2026-12-10', '9:00 AM', 'Hall A'), exam('n2', '', 'Calculus', '2026-12-08', '9:00 AM'), exam('n3', 'EE-100', 'Circuits', '2026-12-09', '')]
+);
+assert.deepEqual(revised.ids, ['n1', 'n2']);
+assert.deepEqual(revised.changed.map((item) => item.differences.map((d) => `${d.field} ${d.from}→${d.to}`)), [['Date 2026-12-07→2026-12-10']]);
+assert.equal(revised.unchanged, 1);
+assert.deepEqual(revised.missing.map((item) => item.subject), ['Physics']);
+console.log('✓ revised date sheets');
+
+// A classmate link carries the uploaded timetable and every exam in the sheet.
+const { buildClassmateShare, readClassmatePayload } = await import('../src/export/transfer.js');
+const classmate = readClassmatePayload(buildClassmateShare({
+  title: 'BSCS',
+  source: { name: 'tt.xlsx', mapping: { courseName: 'Course', day: 'Day', startTime: 'Time', endTime: 'Time', section: 'Sec', _combinedTime: 'Time' }, columns: ['Course', 'Day', 'Time', 'Sec'], rows: [['Physics', 'Monday', '9:00 - 10:00', 'A'], ['<b>Chem</b>', 'Tuesday', '10:00 - 11:00', 'B']] },
+  exams: [exam('x', 'PH-100', 'Physics', '2026-12-09', '9:00 AM')],
+  examFile: 'sheet.pdf'
+}));
+assert.equal(classmate.source.rows.length, 2);
+assert.equal(classmate.source.rows[1].Course, 'bChem/b', 'markup is stripped');
+assert.equal(classmate.source.mapping._combinedTime, 'Time');
+assert.equal(classmate.exams[0].subject, 'Physics');
+assert.equal(classmate.examFile, 'sheet.pdf');
+assert.equal(readClassmatePayload({ t: { h: [], r: [], m: {} } }), null);
+console.log('✓ classmate links');
+
+// Dated items come first in date order; weekly classes follow by weekday.
+const { plannerColumns } = await import('../src/utils/calendarItems.js');
+assert.deepEqual(plannerColumns([{ column: 'Friday' }]).map((c) => c.key), ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+assert.deepEqual(plannerColumns([{ column: 'Friday' }, { date: '2026-12-09' }, { date: '2026-12-02' }]).map((c) => c.key), ['date:2026-12-02', 'date:2026-12-09', 'Friday']);
+console.log('✓ planner columns in date order');

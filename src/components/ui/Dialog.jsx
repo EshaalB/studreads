@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import { useId } from 'react';
 import { createPortal } from 'react-dom';
-import { useModalAccessibility } from '../../utils/useModalAccessibility';
+import { useModalAccessibility } from '../../hooks/useModalAccessibility';
 
 // Centred modal on wide screens, bottom sheet on phones. `side` turns it into a side panel.
 // `bare` lets the content supply its own .dialog-body and .dialog-footer.

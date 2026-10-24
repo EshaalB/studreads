@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { showSuccess } from './errorHandler.js';
-import { formatClock } from './examParser.js';
-import { readStored, writeStored } from './storage.js';
+import { showSuccess } from '../utils/errorHandler.js';
+import { findExamChanges } from '../utils/examChanges.js';
+import { formatClock } from '../parsers/examParser.js';
+import { readStored, writeStored } from '../utils/storage.js';
 
 const STORAGE_KEY = 'studreads_exams_v1';
 
 export const isAddedByHand = (record) => record.source === 'Added by you';
-export const byDateAndTime = (a, b) => a.date.localeCompare(b.date) || (a.start ?? 0) - (b.start ?? 0);
+const byDateAndTime = (a, b) => a.date.localeCompare(b.date) || (a.start ?? 0) - (b.start ?? 0);
 
 const todayIso = () => {
   const now = new Date();
@@ -42,12 +43,18 @@ export const useExams = () => {
   const clashes = useMemo(() => findClashes(mine), [mine]);
   const nextExam = mine.find((record) => record.date >= todayIso()) || null;
 
-  // A new date sheet replaces the old one, but exams typed in by hand are kept.
-  const loadDateSheet = useCallback((nextRecords, info, selected = []) => {
+  // A new date sheet replaces the old one, but exams typed in by hand are kept. Without an
+  // explicit selection, exams picked from the previous sheet are found again in the new one
+  // and the differences are returned, so a revised sheet never silently moves an exam.
+  const loadDateSheet = useCallback((nextRecords, info, selected = null) => {
+    const manualIds = selectedIds.filter((id) => records.some((record) => record.id === id && isAddedByHand(record)));
+    const previous = records.filter((record) => selectedIds.includes(record.id) && !isAddedByHand(record));
+    const revision = selected === null && previous.length ? findExamChanges(previous, nextRecords) : null;
     setRecords((current) => [...current.filter(isAddedByHand), ...nextRecords].sort(byDateAndTime));
-    setSelectedIds((current) => [...current.filter((id) => records.some((record) => record.id === id && isAddedByHand(record))), ...selected]);
+    setSelectedIds([...manualIds, ...(selected ?? revision?.ids ?? [])]);
     setFileInfo(info);
-  }, [records]);
+    return revision;
+  }, [records, selectedIds]);
 
   const setPicked = useCallback((ids) => setSelectedIds((current) => {
     const manual = current.filter((id) => records.some((record) => record.id === id && isAddedByHand(record)));

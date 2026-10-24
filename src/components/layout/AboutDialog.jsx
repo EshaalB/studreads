@@ -1,3 +1,4 @@
+import { SITE } from '../../content/site';
 import Dialog from '../ui/Dialog';
 
 const AboutDialog = ({ isOpen, onClose }) => (
@@ -7,8 +8,8 @@ const AboutDialog = ({ isOpen, onClose }) => (
     title="About StudReads"
     width={520}
     footer={<>
-      <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" className="btn">Source code</a>
-      <a href="mailto:eshaalrehamat@gmail.com" className="btn btn-primary">Email me</a>
+      <a href={SITE.repo} target="_blank" rel="noopener noreferrer" className="btn">Source code</a>
+      <a href={`mailto:${SITE.email}`} className="btn btn-primary">Email me</a>
     </>}
   >
     <div className="prose">

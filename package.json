@@ -8,6 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "node scripts/test-parsers.mjs",
+    "benchmark": "node scripts/benchmark.mjs",
+    "set-domain": "node scripts/set-domain.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

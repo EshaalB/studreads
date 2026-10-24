@@ -8,9 +8,11 @@ StudReads is a privacy-first timetable and exam planner for university students.
 - Opens straight to the week grid, modelled on a paper planner, with labelled actions beside it; upload or drop a file onto it at any time
 - Import grid-style or column-based `.xlsx`, `.xls`, `.ods` and `.csv` timetables, confirm the columns, then tick your courses (including courses taken with another section)
 - Or start from scratch: click an empty time slot or "Add class"; click any class to edit it, change its colour or delete it
-- Week and list views, clash detection, and a Customise panel: palettes or any colour per course, filled or tinted classes, row height, days shown, visible details, 12 or 24-hour clock
+- Week and list views, clash detection, and a Customise panel: palettes or any colour per course, filled or tinted classes, row height, which details to show (only those your classes have), 12 or 24-hour clock
 - Save an image or print exactly what is on screen, or export a calendar (`.ics`) or backup (`.json`) that can be imported again
-- Share links that open as an editable copy; light and dark mode
+- Share a link to your planner (opens as an editable copy), or a link for classmates that carries the uploaded files so each person picks their own courses and exams
+- Saved images and prints carry a small "Made with StudReads" line
+- Installs as an app and works offline after the first visit; light and dark mode
 
 **Exams (on the same screen)**
 - Reads date sheets from PDF (text or scanned), Excel, OpenDocument, CSV, Word `.docx`, photos and screenshots, or pasted text
@@ -21,7 +23,10 @@ StudReads is a privacy-first timetable and exam planner for university students.
 - Uses printed weekdays to tell day/month from month/day
 - Upload a date sheet from the Upload menu or drop it on the planner; spreadsheets with real dates are recognised as date sheets automatically
 - Exams matching the courses on your timetable are suggested and pre-ticked; search adds any others
-- Exams sit on the same grid and list as your classes, on their weekday with a date badge, with clash warnings, editing, remove and Undo
+- Exams sit on the same grid and list as your classes: one column per exam date in date order, then weekly classes by day, with clash warnings, editing, remove and Undo
+- Edit courses and Edit exams change your picks at any time without uploading again
+- Upload a revised date sheet and StudReads finds your exams in it and shows what moved (date, time or room) and what is missing
+- Calendar export includes reminders the day before and two hours before each exam
 - One Export menu saves an image or PDF, a single calendar file with classes and exams, or a backup; share links carry both
 - Copes with scanner misreads (O for 0, l for 1), letter-spaced PDF text, full-width digits, ligatures and rows printed before their merged date cell
 
@@ -38,8 +43,16 @@ Open the local URL shown by Vite. A sample timetable is available in the upload 
 
 ```bash
 npm run lint
+npm test
+npm run benchmark
 npm run build
 ```
+
+## Accuracy
+
+`npm run benchmark` reads every date sheet in `fixtures/datesheets` and checks each exam's course, date and start time against `expected.json`. The fixtures cover a header table with merged dates and notes, time-slot columns, dates across the top, a notice-board text, scanner noise (O for 0, letter spacing, "0900 hrs") and codes with a separate legend.
+
+Current result: 49 of 49 exams read correctly, no extras. To check sheets you cannot publish, put them in a folder with their own `expected.json` and run `npm run benchmark -- path/to/folder`. Layouts that read wrong can be reported from the exam picker.
 
 ## Supported file shapes
 
@@ -57,14 +70,21 @@ For exam date sheets, every source is reduced to rows of cells (PDF text and OCR
 ```
 src/
   components/
-    layout/     app shell, header, footer, about and privacy dialogs
-    timetable/  editor, column-check, class and course dialogs, customise panel
-    exams/      exam picker and exam form
+    layout/     app shell, header, footer, about dialog, FAQ
+    timetable/  planner screen, file handling, class and course dialogs, customise panel
+    exams/      exam picker, exam form, revised-sheet summary
     calendar/   TimeGrid and AgendaList, shared by classes and exams
-    ui/         shared controls: Dialog, Menu, Segmented, Dropzone, ColorField, ThemeToggle
-  context/      timetable state (one list of classes, the imported file, colours, settings)
-  utils/        parsers, exporters, share links and other plain functions
-  styles/       tokens, base, components, layout, timetable, exams, print
+    ui/         shared controls: Dialog, Menu, Segmented, PushButton, ColorField, ThemeToggle
+  context/      timetable state (classes, the imported file, colours, settings)
+  hooks/        exams state, light/dark appearance, dialog focus handling
+  parsers/      reading timetables and exam date sheets from any file
+  export/       images, calendar files, backups and share links
+  content/      FAQ text and the site's public addresses
+  utils/        small shared helpers: times, classes, colours, storage, calendar items
+  styles/       tokens, base, components, layout, calendar, timetable, print
+fixtures/       sample timetables and date sheets used by the tests and the benchmark
+scripts/        tests, the accuracy benchmark and the domain switcher
+public/         icons, offline service worker, app manifest, SEO and privacy files
 ```
 
 ## Search and AI discoverability
@@ -75,7 +95,7 @@ src/
 - `index.html`: meta and link-preview tags, a PNG share image, JSON-LD (WebSite, WebApplication, Person, FAQPage), and a no-JavaScript copy of the heading and FAQ
 - `src/content/faq.js`: the FAQ shown in the app; `npm test` checks it matches the structured data
 
-The site address `university-timetable-gen.vercel.app` appears in `index.html`, `llms.txt`, `robots.txt`, `sitemap.xml` and `privacy.html`. Update all of them if the domain changes.
+To move to a new domain, run `npm run set-domain -- example.com`. It rewrites the address in `src/content/site.js`, `index.html` and the files in `public/`.
 
 ## Privacy
 

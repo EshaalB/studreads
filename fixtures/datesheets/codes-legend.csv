@@ -1,0 +1,13 @@
+Date,9:00 AM - 12:00 PM,2:00 PM - 5:00 PM
+07/12/2026,CS-201,CS-205
+08/12/2026,MA-203,HU-101
+09/12/2026,,CS-301
+10/12/2026,SE-310,
+,,
+Course Code,Course Title,
+CS-201,Object Oriented Programming,
+CS-205,Digital Logic Design,
+MA-203,Linear Algebra,
+HU-101,Islamic Studies,
+CS-301,Operating Systems,
+SE-310,Software Quality Engineering,

@@ -114,8 +114,9 @@ const nextDateFor = (day) => {
 };
 
 // Adding asks whether it is a weekly class or a one-off exam; editing goes straight to the form.
+// A slot in a date column starts as an exam on that date.
 const AddOrEdit = ({ item, exams, onClose }) => {
-  const [mode, setMode] = useState('class');
+  const [mode, setMode] = useState(item.date ? 'exam' : 'class');
   if (item.id) return <ClassForm item={item} onClose={onClose} />;
   const start = parseTime(item.startTime);
   return (
@@ -129,14 +130,14 @@ const AddOrEdit = ({ item, exams, onClose }) => {
       />
       {mode === 'class'
         ? <ClassForm item={item} onClose={onClose} />
-        : <ExamForm exam={{ subject: '', date: nextDateFor(item.day), start, end: start === null ? null : Math.min(start + 180, 23 * 60 + 59) }} onSave={(values) => exams.saveExam(values, {})} onDelete={() => {}} onClose={onClose} />}
+        : <ExamForm exam={{ subject: '', date: item.date || nextDateFor(item.day), start, end: start === null ? null : Math.min(start + 180, 23 * 60 + 59) }} onSave={(values) => exams.saveExam(values, {})} onDelete={() => {}} onClose={onClose} />}
     </div>
   );
 };
 
 const ClassDialog = ({ item, exams, onClose }) => (
   <Dialog isOpen={Boolean(item)} onClose={onClose} title={item?.id ? 'Edit class' : 'Add to your timetable'} width={460}>
-    {item && <AddOrEdit key={item.id || `${item.day}-${item.startTime}`} item={item} exams={exams} onClose={onClose} />}
+    {item && <AddOrEdit key={item.id || `${item.date || item.day}-${item.startTime}`} item={item} exams={exams} onClose={onClose} />}
   </Dialog>
 );
 

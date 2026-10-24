@@ -2,11 +2,40 @@
 import { DAYS } from './constants.js';
 import { displayTimeRange, parseTime } from './timeUtils.js';
 
-// days: 'auto' shows Monday to Friday plus any weekend day in use,
-// 'six' Monday to Saturday, 'all' the whole week. items: anything with a `column` day.
-export const weekColumns = (items, days = 'auto') => DAYS
-  .filter((day, index) => days === 'all' || index < 5 || (days === 'six' && index === 5) || items.some((item) => item.column === day))
-  .map((day) => ({ key: day, label: day, short: day.slice(0, 3) }));
+const DATE_KEY = 'date:';
+
+const formatDate = (isoDate, options) => new Intl.DateTimeFormat('en-GB', { ...options, timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
+
+export const weekdayOf = (isoDate) => formatDate(isoDate, { weekday: 'long' });
+
+// Column keys are a weekday ("Monday") or a date ("date:2026-11-02").
+export const dateFromColumn = (key) => (key.startsWith(DATE_KEY) ? key.slice(DATE_KEY.length) : '');
+
+/**
+ * Anything with a date (exams) gets a column per date, in date order. Weekly classes keep
+ * weekday columns after them: Monday to Friday plus any weekend day in use, or only the
+ * days with classes when dates are also shown, so no empty columns are added.
+ */
+export const plannerColumns = (items) => {
+  const dates = [...new Set(items.filter((item) => item.date).map((item) => item.date))].sort();
+  const weekly = items.filter((item) => !item.date);
+  const dateColumns = dates.map((date) => ({
+    key: `${DATE_KEY}${date}`,
+    label: formatDate(date, { weekday: 'short', day: 'numeric', month: 'short' }),
+    short: formatDate(date, { day: 'numeric', month: 'short' }),
+    groupLabel: formatDate(date, { weekday: 'long', day: 'numeric', month: 'long' })
+  }));
+  const dayColumns = DAYS
+    .filter((day, index) => weekly.some((item) => item.column === day) || (!dates.length && index < 5))
+    .map((day, index) => ({
+      key: day,
+      label: dates.length ? `Every ${day.slice(0, 3)}` : day,
+      short: day.slice(0, 3),
+      groupLabel: dates.length ? `Every ${day}` : day,
+      divided: dates.length > 0 && index === 0
+    }));
+  return [...dateColumns, ...dayColumns];
+};
 
 export const classToItem = (cls, { getColor, displayOptions, conflicts }) => ({
   id: cls.id,
@@ -26,32 +55,26 @@ export const classToItem = (cls, { getColor, displayOptions, conflicts }) => ({
   clash: conflicts.has(cls.id)
 });
 
-export const groupByColumn = (columns, items) => columns
-  .map((column) => ({
-    key: column.key,
-    label: column.groupLabel || column.label,
-    items: items.filter((item) => item.column === column.key).sort((a, b) => (a.start ?? -1) - (b.start ?? -1) || (a.date || '').localeCompare(b.date || ''))
-  }))
-  .filter((group) => group.items.length > 0);
-
-const dateLabel = (isoDate, options) => new Intl.DateTimeFormat('en-GB', { ...options, timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
-
-const weekdayOf = (isoDate) => new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${isoDate}T00:00:00Z`));
-
-// Exams sit on the same week grid as classes, in the column for their weekday, marked
-// with their date so exams from different weeks stay distinguishable.
 export const examToItem = (exam, { getColor, clashes }) => ({
   id: exam.id,
   kind: 'exam',
-  column: weekdayOf(exam.date),
+  column: `${DATE_KEY}${exam.date}`,
   date: exam.date,
   start: exam.start ?? null,
   // Exams without an end time are drawn as three hours long.
   end: exam.start === null || exam.start === undefined ? null : exam.end ?? exam.start + 180,
-  badge: `Exam · ${dateLabel(exam.date, { day: 'numeric', month: 'short' })}`,
+  badge: 'Exam',
   title: exam.subject,
   time: exam.time,
   details: [exam.code !== exam.subject && exam.code, exam.room].filter(Boolean),
   color: getColor(exam.subject),
   clash: clashes.has(exam.id)
 });
+
+export const groupByColumn = (columns, items) => columns
+  .map((column) => ({
+    key: column.key,
+    label: column.groupLabel || column.label,
+    items: items.filter((item) => item.column === column.key).sort((a, b) => (a.start ?? -1) - (b.start ?? -1))
+  }))
+  .filter((group) => group.items.length > 0);

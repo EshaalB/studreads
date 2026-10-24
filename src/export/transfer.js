@@ -1,6 +1,6 @@
 // Formats for share links and backup files. Share links use compact arrays; backups use
 // readable objects so the file still makes sense if opened in a text editor.
-import { COLOR_THEMES, isHexColor } from './themes.js';
+import { COLOR_THEMES, isHexColor } from '../utils/themes.js';
 
 const text = (value, max = 120) => String(value ?? '').replace(/[<>]/g, '').trim().slice(0, max);
 const usedColors = (classes, colorMap = {}) => Object.fromEntries(
@@ -36,7 +36,7 @@ export const buildTimetableBackup = ({ classes, title, colorMap, theme, display,
 
 const DISPLAY_KEYS = {
   showTeacher: 'boolean', showRoom: 'boolean', showCredits: 'boolean', showSection: 'boolean',
-  timeFormat: 'string', view: 'string', days: 'string', rowHeight: 'string', blockStyle: 'string'
+  timeFormat: 'string', view: 'string', rowHeight: 'string', blockStyle: 'string'
 };
 
 // Accepts a share payload, a backup file or a link from the previous format.
@@ -67,6 +67,34 @@ export const readTimetablePayload = (data) => {
     .filter(([key, value]) => DISPLAY_KEYS[key] && typeof value === DISPLAY_KEYS[key]));
 
   return { title: text(data.n ?? data.title ?? (data.userName ? `${data.userName}'s timetable` : ''), 60), classes, colors, theme, display };
+};
+
+// A link for classmates carries the uploaded files rather than one person's picks: the
+// timetable cut down to its mapped columns, and every exam in the date sheet.
+export const buildClassmateShare = ({ title, source, exams = [], examFile }) => ({
+  v: 1,
+  n: title || undefined,
+  t: source ? { f: source.name, m: source.mapping, h: source.columns, r: source.rows } : undefined,
+  e: exams.length ? examRows(exams) : undefined,
+  x: exams.length ? examFile : undefined
+});
+
+const MAPPING_KEYS = ['courseName', 'section', 'day', 'startTime', 'endTime', 'instructor', 'room', 'credits'];
+
+export const readClassmatePayload = (data) => {
+  if (!data || typeof data !== 'object') return null;
+  let source = null;
+  const table = data.t;
+  if (table && Array.isArray(table.h) && Array.isArray(table.r) && table.m && typeof table.m === 'object') {
+    const columns = table.h.map((column) => text(column, 80));
+    const mapping = Object.fromEntries(MAPPING_KEYS.filter((key) => columns.includes(table.m[key])).map((key) => [key, table.m[key]]));
+    if (table.m._combinedTime) mapping._combinedTime = text(table.m._combinedTime, 80);
+    const rows = table.r.filter(Array.isArray).map((row) => Object.fromEntries(columns.map((column, index) => [column, text(row[index], 120)])));
+    if (mapping.courseName && mapping.day && rows.length) source = { name: text(table.f, 120) || 'Shared timetable', mapping, rows };
+  }
+  const exams = readExamPayload(data);
+  if (!source && !exams.length) return null;
+  return { title: text(data.n, 60), source, exams, examFile: text(data.x, 120) || 'Shared date sheet' };
 };
 
 export const readExamPayload = (data) => {

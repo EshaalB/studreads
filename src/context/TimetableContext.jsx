@@ -4,7 +4,7 @@ import { DAY_ORDER } from '../utils/constants';
 import { COLOR_THEMES, getThemeColors } from '../utils/themes';
 import { coursesForSection, findSections, legacySelectionToClasses } from '../utils/timetableSource';
 import { readStored, writeStored } from '../utils/storage';
-import { parseTime } from '../utils/timeUtils';
+import { checkOverlap, parseTime } from '../utils/timeUtils';
 import { sanitizeObject, sanitizeString } from '../utils/validation';
 import { TimetableContext } from './useTimetable';
 
@@ -30,7 +30,6 @@ const DEFAULT_DISPLAY = {
   showSection: false,
   timeFormat: '12h',
   view: 'grid',
-  days: 'auto',
   rowHeight: 'regular',
   blockStyle: 'filled'
 };
@@ -85,6 +84,13 @@ export const TimetableProvider = ({ children }) => {
     writeStored(KEYS.source, next);
   }, []);
 
+  // The imported file cut down to its mapped columns, small enough to share in a link.
+  const shareableSource = useCallback(() => {
+    if (!source?.data?.length) return null;
+    const columns = [...new Set(Object.entries(source.mapping).filter(([key, column]) => !key.startsWith('_') && typeof column === 'string' && column).map(([, column]) => column))];
+    return { name: source.meta?.name || '', mapping: source.mapping, columns, rows: source.data.map((row) => columns.map((column) => row[column] ?? '')) };
+  }, [source]);
+
   const rootSections = useMemo(() => (source ? findSections(source.data, source.mapping) : []), [source]);
   const getCoursesForSection = useCallback((section) => (source ? coursesForSection(source.data, source.mapping, section) : []), [source]);
 
@@ -104,9 +110,7 @@ export const TimetableProvider = ({ children }) => {
   const conflicts = useMemo(() => {
     const clashing = new Set();
     sortedClasses.forEach((a, index) => sortedClasses.slice(index + 1).forEach((b) => {
-      if (a.day !== b.day) return;
-      const [s1, e1, s2, e2] = [a.startTime, a.endTime, b.startTime, b.endTime].map(parseTime);
-      if ([s1, e1, s2, e2].every((value) => value !== null) && s1 < e2 && e1 > s2) {
+      if (checkOverlap(a, b)) {
         clashing.add(a.id);
         clashing.add(b.id);
       }
@@ -144,6 +148,7 @@ export const TimetableProvider = ({ children }) => {
     source: source?.meta || null,
     hasSource: Boolean(source?.data?.length),
     loadSource,
+    shareableSource,
     rootSections,
     activeSection,
     setActiveSection,

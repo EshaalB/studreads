@@ -370,17 +370,6 @@ input[type="checkbox"] {
   font-weight: 600;
 }
 
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border-strong);
-  border-top-color: var(--text);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
 /* Menu (components/ui/Menu.jsx): rendered in <body>, positioned against its button */
 .menu-popover {
   position: fixed;
@@ -482,6 +471,13 @@ input[type="checkbox"] {
   padding: var(--space-3) var(--space-5);
   border-top: 1px solid var(--border);
 }
+
+.dialog-footer > .link-btn:first-child { margin-right: auto; }
+
+/* Before → after, for exams that moved in a revised date sheet */
+.change-list { display: grid; gap: 4px; }
+.change-list li { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface-2); font-size: var(--text-sm); }
+.change-list s { color: var(--text-3); }
 
 .dialog-footer .muted { margin-right: auto; font-size: var(--text-sm); }
 

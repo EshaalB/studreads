@@ -109,6 +109,24 @@
 }
 
 .canvas-summary { color: var(--text-2); font-size: var(--text-sm); }
+.canvas-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Same height as the Week / List switch beside it (its buttons plus 3px padding). */
+  height: calc(var(--control-sm) + 6px);
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.chip-btn svg { color: var(--text-2); }
+.chip-btn:hover { background: var(--surface-2); }
 .canvas-hint { margin-top: var(--space-3); color: var(--text-3); font-size: var(--text-sm); text-align: center; }
 
 /* Shown on an empty timetable: the quickest ways to fill it */

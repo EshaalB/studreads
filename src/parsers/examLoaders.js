@@ -1,5 +1,5 @@
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { docxXmlToRows, extractExams, parseExamWorkbook, positionedItemsToRows, textToRows } from './examParser';
+import { docxXmlToRows, extractExams, parseExamWorkbook, positionedItemsToRows, textToRows } from './examParser.js';
 
 export const EXAM_FILE_ACCEPT = '.pdf,.xlsx,.xls,.xlsm,.ods,.csv,.tsv,.txt,.docx,.png,.jpg,.jpeg,.webp,.bmp,.gif,image/*';
 const MAX_EXAM_FILE_SIZE = 25 * 1024 * 1024;

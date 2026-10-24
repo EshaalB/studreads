@@ -6,7 +6,7 @@ let counter = 0;
 export const newClassId = () => globalThis.crypto?.randomUUID?.() || `class-${Date.now()}-${counter++}`;
 
 // "mon", "Monday", "MONDAY " -> "Monday"
-export const canonicalDay = (value) => {
+const canonicalDay = (value) => {
   const text = String(value || '').trim().toLowerCase();
   return (text && DAYS.find((day) => day.toLowerCase().startsWith(text.slice(0, 3)))) || '';
 };

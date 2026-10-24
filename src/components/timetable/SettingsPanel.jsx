@@ -3,17 +3,19 @@ import Dialog from '../ui/Dialog';
 import Segmented from '../ui/Segmented';
 
 const FIELDS = [
-  ['showRoom', 'Room'],
-  ['showTeacher', 'Teacher'],
-  ['showCredits', 'Credits'],
-  ['showSection', 'Section']
+  ['showRoom', 'Room', 'room'],
+  ['showTeacher', 'Teacher', 'teacher'],
+  ['showCredits', 'Credits', 'credits'],
+  ['showSection', 'Section', 'section']
 ];
 
-// Every visual choice in one place. Layout and colour settings also apply to "My exams".
+// Every visual choice in one place, for classes and exams alike. A detail can only be
+// shown or hidden when at least one class has it.
 const SettingsPanel = ({ isOpen, onClose }) => {
-  const { displayOptions, setDisplayOptions, selectedTheme, setSelectedTheme, COLOR_THEMES, colorMap, setColorMap } = useTimetable();
+  const { classes, displayOptions, setDisplayOptions, selectedTheme, setSelectedTheme, COLOR_THEMES, colorMap, setColorMap } = useTimetable();
   const setOption = (key) => (value) => setDisplayOptions((current) => ({ ...current, [key]: value }));
   const hasCustomColours = Object.keys(colorMap).length > 0;
+  const fields = FIELDS.filter(([, , field]) => classes.some((cls) => String(cls[field] ?? '').trim()));
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose} title="Customise" side>
@@ -34,8 +36,8 @@ const SettingsPanel = ({ isOpen, onClose }) => {
       </section>
 
       <section className="settings-section">
-        <h3>Class style</h3>
-        <Segmented full label="Class style" value={displayOptions.blockStyle} onChange={setOption('blockStyle')}
+        <h3>Style</h3>
+        <Segmented full label="Style" value={displayOptions.blockStyle} onChange={setOption('blockStyle')}
           options={[{ value: 'filled', label: 'Filled' }, { value: 'tinted', label: 'Tinted' }]} />
       </section>
 
@@ -45,22 +47,17 @@ const SettingsPanel = ({ isOpen, onClose }) => {
           options={[{ value: 'compact', label: 'Compact' }, { value: 'regular', label: 'Regular' }, { value: 'large', label: 'Large' }]} />
       </section>
 
-      <section className="settings-section">
-        <h3>Days shown</h3>
-        <Segmented full label="Days shown" value={displayOptions.days} onChange={setOption('days')}
-          options={[{ value: 'auto', label: 'Mon–Fri' }, { value: 'six', label: 'Mon–Sat' }, { value: 'all', label: 'All 7' }]} />
-        <p className="muted small">Weekend days with classes always appear.</p>
-      </section>
-
-      <section className="settings-section" aria-labelledby="details-title">
-        <h3 id="details-title">Show on classes</h3>
-        {FIELDS.map(([key, label]) => (
-          <label className="toggle" key={key}>
-            <span>{label}</span>
-            <input type="checkbox" role="switch" checked={Boolean(displayOptions[key])} onChange={(event) => setOption(key)(event.target.checked)} />
-          </label>
-        ))}
-      </section>
+      {fields.length > 0 && (
+        <section className="settings-section" aria-labelledby="details-title">
+          <h3 id="details-title">Show on classes</h3>
+          {fields.map(([key, label]) => (
+            <label className="toggle" key={key}>
+              <span>{label}</span>
+              <input type="checkbox" role="switch" checked={Boolean(displayOptions[key])} onChange={(event) => setOption(key)(event.target.checked)} />
+            </label>
+          ))}
+        </section>
+      )}
 
       <section className="settings-section">
         <h3>Clock</h3>

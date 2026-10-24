@@ -29,6 +29,9 @@ const CODE_PATTERN = /\b(?!(?:HALL|ROOM|LAB|BLOCK|AUDI|PAGE|SEM|SR|NO)\b)([A-Z]{
 const ROOM_HINT = /\b(room|hall|lab|labs|block|auditorium|audi|venue|building|floor|campus)\b|^[A-Z]{1,2}-?\d{1,3}[A-Z]?$/i;
 const PROGRAM_HINT = /\b(bs|ms|ba|ma|bba|mba|bsc|msc|phd|be|semester|sem|batch|section|programme|program|class|year|level|department|dept)\b/i;
 const NOISE_LINE = /^(note|notes|nb|page|signature|signed|controller|registrar|instructions?|important|remarks?|prepared by|approved by|copy to|cc)\b|^(-|_|=|\*|\.){3,}$/i;
+// Instructions printed around the schedule ("Students must bring their ID cards.").
+const INSTRUCTION = /^(students|candidates|please|kindly|mobile|no student)\b|\b(must|not allowed|are required|is required|should be|strictly)\b/i;
+const isNoise = (text) => NOISE_LINE.test(text) || (INSTRUCTION.test(text) && !CODE_PATTERN.test(text));
 
 const HEADER_RULES = [
   ['code', /\b(course|subject|paper|module|class|crs)\s*(code|no|number|id|#)\b|^(code|codes|c code|course #)$/],
@@ -123,20 +126,6 @@ const findDate = (text, options = {}) => {
   const best = candidates.filter((candidate) => candidate.iso).sort((a, b) => a.match.index - b.match.index)[0];
   return best ? { iso: best.iso, index: best.match.index, length: best.match[0].length } : null;
 };
-
-export const normalizeExamDate = (value, options = {}) => {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return toIsoDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
-  }
-  return findDate(value, options)?.iso || '';
-};
-
-export const hasAmbiguousNumericDates = (matrix) => Array.isArray(matrix) && matrix.some((row) =>
-  Array.isArray(row) && row.some((cell) => {
-    const match = flat(cellText(cell)).match(NUMERIC_DATE);
-    return Boolean(match && !flat(cellText(cell)).match(ISO_DATE) && Number(match[1]) <= 12 && Number(match[2]) <= 12 && match[1] !== match[2]);
-  })
-);
 
 // ---------------------------------------------------------------------------
 // Times
@@ -319,7 +308,7 @@ const tidySubject = (text) => flat(text)
 const isUsefulSubject = (text) => {
   if (!text || text.length < 2 || text.length > 140) return false;
   if (!/[a-z]/i.test(text)) return false;
-  if (NOISE_LINE.test(text)) return false;
+  if (isNoise(text)) return false;
   const stripped = text.replace(DAY_PATTERN, '').replace(/\b(exam|exams|paper|morning|evening|afternoon|session|break|holiday|off|no exam|reserved)\b/gi, '').replace(/[^a-z]/gi, '');
   return stripped.length >= 2;
 };
@@ -620,7 +609,7 @@ const parseTable = (rows, source, dateOptions) => {
 // time or room.
 const pickTitle = (text) => clean(text).split('\n')
   .map((line) => line.trim())
-  .filter((line) => line.length >= 4 && /[a-z]{3}/i.test(line) && !isCodeOnly(line) && !findDate(line) && !findTime(line) && !ROOM_HINT.test(line) && !NOISE_LINE.test(line))
+  .filter((line) => line.length >= 4 && /[a-z]{3}/i.test(line) && !isCodeOnly(line) && !findDate(line) && !findTime(line) && !ROOM_HINT.test(line) && !isNoise(line))
   .sort((a, b) => b.length - a.length)[0] || '';
 
 // ---------------------------------------------------------------------------
@@ -721,7 +710,7 @@ const parseLoose = (rows, source, dateOptions) => {
   rows.forEach((row, rowIndex) => {
     const cells = row.map((cell) => flat(cell.text));
     const line = cells.join('  ');
-    if (!line || NOISE_LINE.test(line) || line.length > 220) return;
+    if (!line || isNoise(line) || line.length > 220) return;
     // A header row ("Course Code | Course Title") starts a legend, not more exams.
     if (row.filter((cell) => matchHeader(cell.text)).length >= 2) { context.date = ''; return; }
     // A row listing several dates or times is a column header, not an exam.
@@ -808,7 +797,7 @@ const isCodeOnly = (text) => {
 
 const collectCourseTitles = (rows, titles = new Map()) => {
   const looksLikeTitle = (text) => text.length >= 4 && /[a-z]{3}/i.test(text) && !CODE_PATTERN.test(text)
-    && !findDate(text) && !findTime(text) && !ROOM_HINT.test(text) && !matchHeader(text) && !NOISE_LINE.test(text);
+    && !findDate(text) && !findTime(text) && !ROOM_HINT.test(text) && !matchHeader(text) && !isNoise(text);
   const remember = (code, title) => {
     const key = codeKey(code);
     const cleaned = tidySubject(title);
@@ -851,14 +840,13 @@ export const extractExams = (matrix, source = 'Uploaded file') => {
   return { records: dedupeAndSort(records), mode: best.mode, ambiguousDates: dateOptions.ambiguous };
 };
 
-export const parseExamMatrix = (matrix, source = 'Uploaded file') => extractExams(matrix, source).records;
 
 // ---------------------------------------------------------------------------
 // Source adapters
 
 // Spreadsheet cells are read directly so date serials are decoded without timezone drift
 // and merged cells (a date spanning several rows) are copied down.
-export const sheetToMatrix = (XLSX, sheet) => {
+const sheetToMatrix = (XLSX, sheet) => {
   if (!sheet?.['!ref']) return [];
   const range = XLSX.utils.decode_range(sheet['!ref']);
   const matrix = [];

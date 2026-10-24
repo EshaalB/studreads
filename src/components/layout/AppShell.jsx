@@ -1,6 +1,7 @@
 import { Github } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useAppearance } from '../../utils/useAppearance';
+import { SITE } from '../../content/site';
+import { useAppearance } from '../../hooks/useAppearance';
 import TimetableTool from '../timetable/TimetableTool';
 import ThemeToggle from '../ui/ThemeToggle';
 import AboutDialog from './AboutDialog';
@@ -12,7 +13,8 @@ const launchParams = new URLSearchParams(window.location.search);
 const LAUNCH = {
   timetable: launchParams.get('t'),
   legacyTimetable: launchParams.get('s'),
-  exams: launchParams.get('x')
+  exams: launchParams.get('x'),
+  classmates: launchParams.get('c')
 };
 
 const AppShell = () => {
@@ -20,7 +22,7 @@ const AppShell = () => {
   const [theme, toggleTheme] = useAppearance();
 
   useEffect(() => {
-    if (LAUNCH.timetable || LAUNCH.legacyTimetable || LAUNCH.exams) {
+    if (Object.values(LAUNCH).some(Boolean)) {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -38,7 +40,7 @@ const AppShell = () => {
           <div className="header-actions">
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <button type="button" className="header-link" onClick={() => setIsAboutOpen(true)}>About</button>
-            <a className="icon-btn" href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer" aria-label="Source code on GitHub">
+            <a className="icon-btn" href={SITE.repo} target="_blank" rel="noopener noreferrer" aria-label="Source code on GitHub">
               <Github size={17} />
             </a>
           </div>
@@ -47,7 +49,7 @@ const AppShell = () => {
 
       <main className="page" id="main-content">
         <h1 className="visually-hidden">StudReads: university timetable maker and exam date sheet finder</h1>
-        <TimetableTool sharedTimetable={LAUNCH.timetable} legacyTimetable={LAUNCH.legacyTimetable} sharedExams={LAUNCH.exams} />
+        <TimetableTool launch={LAUNCH} />
         <Faq />
       </main>
 

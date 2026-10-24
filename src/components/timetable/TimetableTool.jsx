@@ -3,13 +3,15 @@ import { useTimetable } from '../../context/useTimetable';
 import { importClasses } from '../../utils/classes';
 import { DEMO_TIMETABLE_DATA } from '../../utils/demoData';
 import { showError, showSuccess } from '../../utils/errorHandler';
-import { EXAM_FILE_ACCEPT, readExamFile, readExamText } from '../../utils/examLoaders';
-import { parseExamWorkbook } from '../../utils/examParser';
-import { decodeLegacyState, decodeShare } from '../../utils/sharingUtils';
-import { parseWorkbook } from '../../utils/spreadsheetParser';
-import { readExamPayload, readTimetablePayload } from '../../utils/transfer';
-import { useExams } from '../../utils/useExams';
+import { EXAM_FILE_ACCEPT, readExamFile, readExamText } from '../../parsers/examLoaders';
+import { parseExamWorkbook } from '../../parsers/examParser';
+import { decodeLegacyState, decodeShare } from '../../export/sharingUtils';
+import { parseWorkbook } from '../../parsers/spreadsheetParser';
+import { readClassmatePayload, readExamPayload, readTimetablePayload } from '../../export/transfer';
+import { useExams } from '../../hooks/useExams';
+import { ACCEPTED_FILE_TYPES } from '../../utils/constants';
 import { validateFile } from '../../utils/validation';
+import RevisionDialog from '../exams/RevisionDialog';
 import Dialog from '../ui/Dialog';
 import PushButton from '../ui/PushButton';
 import Editor from './Editor';
@@ -43,19 +45,28 @@ const looksLikeDateSheet = (XLSX, workbook) => {
   }
 };
 
-const useToggle = () => {
+const useToggle = (onClose) => {
   const [isOpen, setIsOpen] = useState(false);
-  return { isOpen, open: () => setIsOpen(true), close: () => setIsOpen(false) };
+  return { isOpen, open: () => setIsOpen(true), close: () => { setIsOpen(false); onClose?.(); } };
 };
 
-const TimetableTool = ({ sharedTimetable, legacyTimetable, sharedExams }) => {
+// launch: codes from the opening URL — ?t= a planner, ?c= files shared with classmates,
+// and ?s= / ?x= from older versions.
+const TimetableTool = ({ launch }) => {
   const { classes, loadSource, replaceTimetable, setDisplayOptions, setColorMap, setSelectedTheme } = useTimetable();
   const exams = useExams();
   const [pendingImport, setPendingImport] = useState(null);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
   const [pasteText, setPasteText] = useState('');
-  const coursePicker = useToggle();
+  const [revision, setRevision] = useState(null);
+  // Opening a classmate link with both files shows the exam step after the course step.
+  const afterCourses = useRef(null);
+  const coursePicker = useToggle(() => {
+    const next = afterCourses.current;
+    afterCourses.current = null;
+    next?.();
+  });
   const examPicker = useToggle();
   const paste = useToggle();
   const timetableInput = useRef(null);
@@ -78,21 +89,36 @@ const TimetableTool = ({ sharedTimetable, legacyTimetable, sharedExams }) => {
     showSuccess(`Opened ${payload?.title || `the ${label}`}.`);
   }, [classes.length, exams, replaceTimetable, setSelectedTheme, setColorMap, setDisplayOptions]);
 
-  useEffect(() => {
-    if (sharedAppliedRef.current || (!sharedTimetable && !legacyTimetable && !sharedExams)) return;
-    sharedAppliedRef.current = true;
-    (async () => {
-      const code = sharedTimetable || sharedExams;
-      openShared(code ? await decodeShare(code) : decodeLegacyState(legacyTimetable), 'shared link');
-    })();
-  }, [sharedTimetable, legacyTimetable, sharedExams, openShared]);
-
   const applyTimetable = useCallback((parsed) => {
     loadSource(parsed.rows, parsed.mapping, { name: parsed.name, sheetName: parsed.sheetName });
     setPendingImport(null);
     setError('');
     coursePicker.open();
   }, [loadSource, coursePicker]);
+
+  // A first date sheet opens the picker; a revised one shows what changed in your exams.
+  const applyDateSheet = useCallback((records, info, { later = false } = {}) => {
+    const changes = exams.loadDateSheet(records, info);
+    const show = () => (changes ? setRevision({ ...changes, name: info.name }) : examPicker.open());
+    if (later) afterCourses.current = show; else show();
+  }, [exams, examPicker]);
+
+  const openClassmates = useCallback((data) => {
+    const shared = readClassmatePayload(data);
+    if (!shared) { showError('The shared link is empty or damaged.'); return; }
+    if (shared.exams.length) applyDateSheet(shared.exams, { name: shared.examFile }, { later: Boolean(shared.source) });
+    if (shared.source) applyTimetable({ rows: shared.source.rows, mapping: shared.source.mapping, name: shared.source.name, sheetName: '' });
+  }, [applyDateSheet, applyTimetable]);
+
+  useEffect(() => {
+    if (sharedAppliedRef.current || !Object.values(launch).some(Boolean)) return;
+    sharedAppliedRef.current = true;
+    (async () => {
+      if (launch.classmates) { openClassmates(await decodeShare(launch.classmates)); return; }
+      const code = launch.timetable || launch.exams;
+      openShared(code ? await decodeShare(code) : decodeLegacyState(launch.legacyTimetable), 'shared link');
+    })();
+  }, [launch, openShared, openClassmates]);
 
   const loadTimetable = async (file, prepared) => {
     const validation = validateFile(file);
@@ -108,11 +134,11 @@ const TimetableTool = ({ sharedTimetable, legacyTimetable, sharedExams }) => {
     }
   };
 
+
   const loadExams = async (file) => {
     const result = await readExamFile(file, (message) => setBusy(`${message}…`));
-    exams.loadDateSheet(result.records, { name: file.name });
+    applyDateSheet(result.records, { name: file.name });
     if (result.hasAmbiguousDates) showSuccess('Dates like 03/04 were read as day/month. Check them if your exams look a month off.');
-    examPicker.open();
   };
 
   const loadBackup = async (file) => {
@@ -150,11 +176,10 @@ const TimetableTool = ({ sharedTimetable, legacyTimetable, sharedExams }) => {
   const submitPaste = () => {
     try {
       const result = readExamText(pasteText);
-      exams.loadDateSheet(result.records, { name: 'Pasted text' });
       setPasteText('');
       setError('');
       paste.close();
-      examPicker.open();
+      applyDateSheet(result.records, { name: 'Pasted text' });
     } catch (pasteError) {
       setError(pasteError.message);
     }
@@ -171,7 +196,7 @@ const TimetableTool = ({ sharedTimetable, legacyTimetable, sharedExams }) => {
 
   return (
     <>
-      <input ref={timetableInput} type="file" hidden accept=".xlsx,.xls,.xlsm,.ods,.csv,.json" onChange={(event) => handleFile(event.target.files?.[0], 'timetable')} aria-label="Upload a class timetable or backup" />
+      <input ref={timetableInput} type="file" hidden accept={[...ACCEPTED_FILE_TYPES, '.json'].join(',')} onChange={(event) => handleFile(event.target.files?.[0], 'timetable')} aria-label="Upload a class timetable or backup" />
       <input ref={examInput} type="file" hidden accept={EXAM_FILE_ACCEPT} onChange={(event) => handleFile(event.target.files?.[0], 'exams')} aria-label="Upload an exam date sheet" />
       <Editor
         busy={busy}
@@ -199,6 +224,7 @@ const TimetableTool = ({ sharedTimetable, legacyTimetable, sharedExams }) => {
         onCancel={() => { setPendingImport(null); setError(''); }}
         onUpdateMapping={(field, column) => setPendingImport((current) => ({ ...current, mapping: { ...current.mapping, [field]: column } }))}
       />
+      <RevisionDialog revision={revision} onClose={() => setRevision(null)} onEdit={() => { setRevision(null); examPicker.open(); }} />
       <Dialog
         isOpen={paste.isOpen}
         onClose={() => { paste.close(); setError(''); }}

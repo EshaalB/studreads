@@ -1,3 +1,5 @@
+import { SITE } from '../../content/site';
+
 const Footer = ({ onOpenAbout }) => (
   <footer className="app-footer">
     <p>
@@ -6,8 +8,8 @@ const Footer = ({ onOpenAbout }) => (
     <nav aria-label="Footer">
       <button type="button" className="link-btn" onClick={onOpenAbout}>About</button>
       <a href="/privacy.html">Privacy</a>
-      <a href="https://github.com/EshaalB/University-timetable-gen" target="_blank" rel="noopener noreferrer">Source</a>
-      <a href="mailto:eshaalrehamat@gmail.com">Contact</a>
+      <a href={SITE.repo} target="_blank" rel="noopener noreferrer">Source</a>
+      <a href={`mailto:${SITE.email}`}>Contact</a>
     </nav>
   </footer>
 );

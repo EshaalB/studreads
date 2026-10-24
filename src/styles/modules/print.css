@@ -29,9 +29,9 @@
   }
 
   [data-print-target] .capture-head { display: flex; }
+  [data-print-target] .capture-foot { display: block; }
   [data-print-target] .grid-scroll { overflow: visible; }
   [data-print-target] .time-grid { min-width: 0; }
-  [data-print-target] .agenda-row-remove,
-  [data-print-target] .no-capture { display: none; }
+  [data-print-target] .agenda-row-remove { display: none; }
   .grid-block, .agenda-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
 }
