@@ -1,0 +1,101 @@
+/* Design tokens: the eshaaldev brand kit (Regal Navy, Blush Pink, Soft Linen, Deep Navy Ink,
+   Raspberry Rose). Light by default; [data-theme="dark"] is set from the device or the user's choice. */
+
+:root {
+  color-scheme: light;
+
+  /* Brand kit */
+  --navy: #234071;       /* Regal Navy */
+  --pink: #f1a5bc;       /* Blush Pink */
+  --linen: #f8f3e4;      /* Soft Linen */
+  --ink: #131f33;        /* Deep Navy Ink */
+  --raspberry: #bf5b86;  /* Raspberry Rose */
+
+  /* Surfaces and text: linen paper, ink text, navy actions */
+  --bg: var(--linen);
+  --surface: #fdfaf2;
+  --surface-2: #f0e9d6;
+  --surface-3: #e5dcc3;
+  --text: var(--ink);
+  --text-2: #3d4b63;
+  --text-3: #5f697c;
+  --border: #e4dcc6;
+  --border-strong: #c9bea2;
+  --block-line: #000;        /* outline on classes and exams */
+
+  /* Interaction */
+  --accent: var(--navy);
+  --accent-hover: #2c4f88;
+  --accent-text: var(--linen);
+  --focus: var(--raspberry);
+  --header-bg: var(--navy);
+
+  /* States */
+  --danger: #b4332b;
+  --danger-bg: #fbeeea;
+  --on-danger: #fff;
+  --warn: #8a5300;
+  --warn-bg: #fbf0d6;
+  --warn-line: #d9a23a;
+
+  --overlay: rgba(19, 31, 51, 0.42);
+  --shadow-pop: 0 1px 2px rgba(19, 31, 51, 0.06), 0 12px 28px rgba(19, 31, 51, 0.14);
+
+  /* Type: Akzidenz-Grotesk for headings where it is installed, with Archivo (the closest
+     free face) standing in elsewhere; Helvetica for everything else. */
+  --font: Helvetica, 'Helvetica Neue', Arial, ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Akzidenz-Grotesk Pro', 'Akzidenz-Grotesk', 'Akzidenz Grotesk', 'Archivo', Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+
+  /* Space, shape, size */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 4px;
+  --radius: 6px;
+  --radius-lg: 8px;
+  --control: 36px;
+  --control-sm: 30px;
+  --content: 1120px;
+
+  --z-sticky: 10;
+  --z-menu: 30;
+  --z-overlay: 40;
+  --z-toast: 60;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: var(--ink);
+  --surface: #1a2a45;
+  --surface-2: #223454;
+  --surface-3: #2b3f63;
+  --text: var(--linen);
+  --text-2: #c9cdd6;
+  --text-3: #9ba4b6;
+  --border: #2a3b5a;
+  --border-strong: #3b5079;
+  --block-line: #fff;
+  --accent: var(--pink);
+  --accent-hover: #f5bccd;
+  --accent-text: var(--ink);
+  --focus: var(--pink);
+  --header-bg: #0d1626;
+  --danger: #ff9a90;
+  --danger-bg: #3a1c2a;
+  --on-danger: #2a0d0d;
+  --warn: #f2c66d;
+  --warn-bg: #2f2c25;
+  --overlay: rgba(6, 10, 18, 0.6);
+  --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.45);
+}

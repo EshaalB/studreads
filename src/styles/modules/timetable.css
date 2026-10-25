@@ -1,0 +1,214 @@
+/* Timetable editor: one framed schedule, like a paper planner */
+
+.schedule {
+  max-width: var(--content);
+  margin: 0 auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+/* Title bar: the timetable's name on the left, New and Customise on the right */
+.schedule-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--surface-2);
+}
+
+.schedule-title {
+  /* Edits in place: plain text until hovered or focused, and only as wide as the name. */
+  field-sizing: content;
+  width: 240px;
+  min-width: 140px;
+  max-width: min(420px, 100%);
+  height: var(--control);
+  margin-right: auto;
+  padding: 0 var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.schedule-title:hover { border-color: var(--border-strong); background: var(--surface); }
+.schedule-title::placeholder { color: var(--text-3); }
+.schedule-title:focus { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+
+
+.bar-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: var(--control);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.bar-button:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.bar-button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.schedule-body {
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr);
+}
+
+/* Action rail: every action is a visible, labelled button. All of them share one
+   height, radius, padding, icon size and gap so their icons and labels line up. */
+.schedule-actions {
+  --rail-height: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-right: 1px solid var(--border);
+}
+
+.action,
+.schedule-actions .push-front {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  height: var(--rail-height);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.action {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.action:hover:not(:disabled) { background: var(--surface-2); }
+.action:disabled { opacity: 0.45; }
+.action svg { flex: none; color: var(--text-2); }
+.action .action-chevron { margin-left: auto; opacity: 0.6; }
+
+/* The raised button's face sits 4px above its box; the margin keeps the spacing even. */
+.schedule-actions .push { width: 100%; }
+
+.schedule-canvas { min-width: 0; padding: var(--space-4); }
+
+.canvas-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.canvas-summary { color: var(--text-2); font-size: var(--text-sm); }
+.canvas-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* Same height as the Week / List switch beside it (its buttons plus 3px padding). */
+  height: calc(var(--control-sm) + 6px);
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.chip-btn svg { color: var(--text-2); }
+.chip-btn:hover { background: var(--surface-2); }
+.preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--text-2); font-size: var(--text-sm); }
+.preview-bar span { flex: 1; min-width: 200px; }
+
+.canvas-hint { margin-top: var(--space-3); color: var(--text-3); font-size: var(--text-sm); text-align: center; }
+
+/* Shown on an empty timetable: the quickest ways to fill it */
+.welcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.welcome > div:first-child { display: grid; gap: 2px; max-width: 52ch; }
+.welcome strong { font-family: var(--font-display); font-size: var(--text-lg); }
+.welcome span { color: var(--text-2); font-size: var(--text-sm); }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Dropping a file anywhere on the timetable */
+.schedule.is-dragging { outline: 2px dashed var(--focus); outline-offset: 4px; }
+
+/* Settings */
+.settings-section { display: grid; gap: var(--space-3); padding-bottom: var(--space-5); }
+.settings-section + .settings-section { padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.settings-section h3 { color: var(--text-2); font-family: var(--font); font-size: var(--text-sm); font-weight: 500; }
+.settings-section .link-btn { justify-self: start; }
+
+.palette-list { display: grid; gap: 2px; }
+
+.palette-option {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 7px 8px;
+  border-radius: var(--radius);
+  text-align: left;
+}
+
+.palette-option:hover { background: var(--surface-2); }
+.palette-option[aria-checked="true"] { background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border-strong); }
+
+.palette-strip { display: flex; height: 16px; border-radius: var(--radius-sm); overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.palette-strip span { flex: 1; }
+
+@media (max-width: 760px) {
+  .schedule { border-radius: var(--radius-lg); }
+  .schedule-body { grid-template-columns: minmax(0, 1fr); }
+
+  /* The rail becomes one row of four equal buttons that always fits the screen. */
+  .schedule-actions {
+    --rail-height: 36px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: var(--space-3) var(--space-2) var(--space-2);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .action,
+  .schedule-actions .push { width: 100%; margin: 0; }
+  .action,
+  .schedule-actions .push-front { justify-content: center; gap: 6px; padding: 0 var(--space-2); }
+  .action .action-chevron { display: none; }
+  .schedule-canvas { padding: var(--space-2); }
+  .bar-button span { display: none; }
+  .schedule-title { font-size: var(--text-md); }
+}
+
+/* Reading a file (components/ui/ImportProgress.jsx) */
+.import-progress { height: 3px; margin: calc(var(--space-2) * -1) 0 var(--space-3); overflow: hidden; border-radius: 2px; background: var(--surface-2); }
+.import-progress span { display: block; height: 100%; background: var(--accent); transform-origin: left; transition: transform 0.3s ease-out; }
+.import-progress.is-waiting span { width: 35%; animation: import-waiting 1.2s ease-in-out infinite; }
+@keyframes import-waiting { from { transform: translateX(-100%); } to { transform: translateX(300%); } }

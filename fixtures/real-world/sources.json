@@ -1,0 +1,80 @@
+[
+  {
+    "file": "CS_Fall-2026_2.pdf",
+    "kind": "timetable",
+    "university": "BS CS Fall 2026, aSc PDF (your file)",
+    "url": null
+  },
+  {
+    "file": "BS Spring 2026 Timetable Final.xlsx",
+    "kind": "timetable",
+    "university": "Department of Education (your file)",
+    "url": null
+  },
+  {
+    "file": "cust-bmt-mmt-timetable.pdf",
+    "kind": "timetable",
+    "university": "CUST Islamabad",
+    "url": "https://cust.edu.pk/wp-content/uploads/2025/08/BMT-and-MMT-Timetable-Fall-2025.pdf"
+  },
+  {
+    "file": "pucit-bs-3rd-semester.xlsx",
+    "kind": "timetable",
+    "university": "Punjab University FCIT",
+    "url": "https://pucit.edu.pk/wp-content/uploads/2026/09/BS-Time-Table-3rd-semester-FCIT-New-Campus-04-09-2026.xlsx"
+  },
+  {
+    "file": "pucit-dcs-old-campus.xls",
+    "kind": "timetable",
+    "university": "Punjab University FCIT (legacy .xls)",
+    "url": "https://pucit.edu.pk/wp-content/uploads/2026/09/DCS-Time-Table-Spring-2026-Ist3rd5th-7th-Semester-Old-Campus-Fall-2026-1.xls"
+  },
+  {
+    "file": "umt-cs-timetable.xlsx",
+    "kind": "timetable",
+    "university": "UMT Lahore (CS)",
+    "url": "https://admin.umt.edu.pk/Media/Site/sst1/FileManager/2024/2024/F2024%20Time%20Table-CS,%20Ver1.xlsx"
+  },
+  {
+    "file": "umt-se-timetable.xlsx",
+    "kind": "timetable",
+    "university": "UMT Lahore (SE)",
+    "url": "https://admin.umt.edu.pk/Media/Site/sst1/FileManager/2024/2024/time%20table%20%20Fall%202024%20SE-%20(Updated).xlsx"
+  },
+  {
+    "file": "uconn-schedule-of-classes.xlsx",
+    "kind": "timetable",
+    "university": "University of Connecticut",
+    "url": "https://scheduling.uconn.edu/wp-content/uploads/sites/2481/2020/02/1203_Day-10-Schedule-of-Classes_WF.xlsx"
+  },
+  {
+    "file": "qau-terminal-datesheet.pdf",
+    "kind": "datesheet",
+    "university": "Quaid-i-Azam University",
+    "url": "https://qau.edu.pk/wp-content/uploads/2025/12/Final-Datesheet-Terminal-Exam-Fall-2025.pdf"
+  },
+  {
+    "file": "nutech-mid-datesheet.pdf",
+    "kind": "datesheet",
+    "university": "NUTECH Islamabad",
+    "url": "https://nutech.edu.pk/uploads/files/exam-datesheets/Date%20Sheet%20Mid%20Sem%20Exam%20Fall%202025%20%28BS%20%26%20BET%20-Civ%29.pdf"
+  },
+  {
+    "file": "sarhad-datesheet-programwise.xlsx",
+    "kind": "datesheet",
+    "university": "Sarhad University (program-wise)",
+    "url": "https://suit.edu.pk/uploads/datesheets/Date-Sheet-Spring-2026-Programwise.xlsx"
+  },
+  {
+    "file": "sarhad-datesheet-simple.xlsx",
+    "kind": "datesheet",
+    "university": "Sarhad University (simple)",
+    "url": "https://suit.edu.pk/uploads/datesheets/Date-Sheet-Spring-2026-Simple.xlsx"
+  },
+  {
+    "file": "vupune-exam-timetable.pdf",
+    "kind": "datesheet",
+    "university": "Vishwakarma University, Pune",
+    "url": "https://www.vupune.ac.in/images/AY-2024-25/Examination/2025_04_016.pdf"
+  }
+]

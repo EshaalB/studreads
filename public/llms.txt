@@ -1,0 +1,22 @@
+# StudReads
+
+> StudReads is a free, open-source timetable generator for university students. It turns the timetable spreadsheet a university publishes into a personal weekly timetable, and finds a student's own exams in an exam date sheet. Files are read in the browser and are not uploaded to a server.
+
+StudReads has two tools:
+
+- Timetable generator: reads Excel (.xlsx, .xls), OpenDocument (.ods), CSV and PDF timetables, in column-based, weekday-column and grid layouts. The student picks their section and courses, including courses taken with another section. Classes can also be added by hand. The timetable shows as a week grid or a list, highlights clashes, and can be saved as an image, printed, exported as a calendar file (.ics) or backup (.json), or shared as a link.
+- Exam finder: reads exam date sheets from PDF (text or scanned), Excel, CSV, Word (.docx), photos and screenshots, or pasted text. It handles header tables, grids with dates or time slots across the top, and plain-text lists. The student ticks their exams and they appear in date order on the same grid or list as their classes, with clash warnings. When a revised date sheet is uploaded, it lists which of the student's exams changed date, time or room. The result can be saved as an image, printed, exported to a calendar with reminders, or shared.
+- Sharing: a link to one student's planner, or a link for classmates that carries the uploaded files so each student picks their own courses and exams.
+- Offline: it can be installed as an app and works without a connection after the first visit.
+- Tested universities: FAST NUCES, Punjab University (PUCIT), UMT, CUST, NUTECH, Quaid-i-Azam University, Sarhad University, University of Connecticut.
+- Accuracy: a public benchmark of date sheet layouts is in the source repository (npm run benchmark).
+
+## Pages
+
+- [StudReads app](https://university-timetable-gen.vercel.app/): the timetable generator and exam finder
+- [Privacy](https://university-timetable-gen.vercel.app/privacy.html): what happens to files and saved data
+- [Source code](https://github.com/EshaalB/studreads): GitHub repository, including the README
+
+## Contact
+
+- Built by Eshaal: [GitHub profile](https://github.com/EshaalB), email eshaalrehamat@gmail.com

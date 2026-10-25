@@ -1,0 +1,21 @@
+# Search engines and AI assistants are welcome to read every page.
+User-agent: *
+Allow: /
+
+# AI crawlers, listed explicitly so their access is unambiguous.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://university-timetable-gen.vercel.app/sitemap.xml

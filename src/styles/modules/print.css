@@ -1,0 +1,36 @@
+/* Printing shows the same capture area as "Save image",
+   on a light background so it does not use a page of ink in dark mode. */
+
+@media print {
+  @page { margin: 12mm; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f3ead0;
+    --text: #131f33;
+    --text-2: #43597c;
+    --text-3: #6f7d94;
+    --border: #e6d9b8;
+    --border-strong: #cdbd94;
+  }
+
+  html, body { background: #fff !important; }
+  body * { visibility: hidden; }
+
+  [data-print-target],
+  [data-print-target] * { visibility: visible; }
+
+  [data-print-target] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  [data-print-target] .capture-head { display: flex; }
+  [data-print-target] .grid-scroll { overflow: visible; max-height: none; }
+  [data-print-target] .time-grid { min-width: 0; }
+  [data-print-target] .agenda-row-remove { display: none; }
+  .grid-block, .agenda-row { -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; }
+}

@@ -1,0 +1,9 @@
+@import './modules/tokens.css';
+@import './modules/base.css';
+@import './modules/components.css';
+@import './modules/forms.css';
+@import './modules/dialogs.css';
+@import './modules/layout.css';
+@import './modules/calendar.css';
+@import './modules/timetable.css';
+@import './modules/print.css';

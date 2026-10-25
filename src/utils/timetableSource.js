@@ -1,0 +1,60 @@
+// Getting classes out of an uploaded timetable.
+import { EXCLUDED_COURSES } from './constants.js';
+import { inferClassTimes } from './timeUtils.js';
+import { sanitizeString } from './validation.js';
+
+// Fields a class row can have. Parsed files already use these as column names.
+export const TIMETABLE_FIELDS = ['courseName', 'section', 'day', 'startTime', 'endTime', 'instructor', 'room', 'credits'];
+export const STANDARD_MAPPING = Object.fromEntries(TIMETABLE_FIELDS.map((field) => [field, field]));
+
+export const findSections = (data, mapping) => {
+  const sectionCol = mapping.section;
+  if (!sectionCol) return data.length ? ['All'] : [];
+  const sections = new Set();
+  data.forEach((item) => {
+    const value = item[sectionCol]?.toString().trim();
+    if (value && value.length <= 50) sections.add(sanitizeString(value));
+  });
+  return [...sections].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+};
+
+const cellText = (item, column) => (column ? sanitizeString(item[column]?.toString() || '') : '');
+
+// All classes for one section, including rows marked "All".
+export const coursesForSection = (data, mapping, section) => {
+  if (!section || !data.length) return [];
+  const wanted = sanitizeString(section).toUpperCase();
+  const combinedTime = mapping._combinedTime && mapping.startTime === mapping.endTime;
+
+  return data
+    .filter((item) => {
+      if (!mapping.section) return true;
+      const itemSection = cellText(item, mapping.section).toUpperCase();
+      return itemSection === wanted || itemSection === 'ALL';
+    })
+    .filter((item) => {
+      const name = cellText(item, mapping.courseName).toUpperCase();
+      return name && !EXCLUDED_COURSES.some((word) => name.includes(word));
+    })
+    .map((item, index) => {
+      let startTime = cellText(item, mapping.startTime);
+      let endTime = cellText(item, mapping.endTime);
+      if (combinedTime) {
+        [startTime = '', endTime = ''] = startTime.split(/\s*(?:-|–|to)\s*/i).map((part) => part.trim());
+      }
+      ({ startTime, endTime } = inferClassTimes(startTime, endTime));
+      const name = cellText(item, mapping.courseName);
+      const day = cellText(item, mapping.day);
+      return {
+        id: `${name}-${day}-${startTime}-${index}`,
+        name,
+        section: mapping.section ? cellText(item, mapping.section) : 'All',
+        day,
+        startTime,
+        endTime,
+        teacher: cellText(item, mapping.instructor),
+        room: cellText(item, mapping.room),
+        credits: cellText(item, mapping.credits)
+      };
+    });
+};
