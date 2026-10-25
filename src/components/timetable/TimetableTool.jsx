@@ -156,11 +156,14 @@ const TimetableTool = ({ launch }) => {
     setBusy('Reading file…');
     try {
       const progress = (message) => { if (!signal.aborted) setBusy(`${message}…`); };
-      if (/\.pdf$/i.test(file.name) && kind === 'timetable') {
-        const parsed = await readTimetablePdf(file, progress, signal);
+      if (/\.pdf$/i.test(file.name) && kind !== 'exams') {
+        // A dropped PDF could be either; try it as a timetable first, it's quick.
+        const parsed = await readTimetablePdf(file, progress, signal).catch((pdfError) => {
+          if (kind === 'timetable' || signal.aborted) throw pdfError;
+          return null;
+        });
         signal.throwIfAborted();
-        loadTimetable(file, parsed);
-        return;
+        if (parsed) { loadTimetable(file, parsed); return; }
       }
       if (!SPREADSHEET.test(file.name) && kind !== 'timetable') {
         const result = await readExamFile(file, progress, signal);

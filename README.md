@@ -1,6 +1,6 @@
 # StudReads
 
-A university timetable and exam planner that runs entirely in the browser.
+A free timetable generator and exam planner for university students. It runs entirely in the browser.
 
 Universities publish timetables and exam date sheets as huge spreadsheets, PDFs and scans. StudReads reads those files, lets a student tick their own courses and exams, and puts everything on one week grid. Nothing is uploaded: files are read on the device.
 
@@ -9,13 +9,20 @@ Universities publish timetables and exam date sheets as huge spreadsheets, PDFs 
 ## What it does
 
 ### Classes
-- Reads timetable files in `.xlsx`, `.xls`, `.ods` or `.csv`, as a table (Course, Day, Start, End…) or as a grid (days down the side, time slots across the top).
+- Reads timetables in `.xlsx`, `.xls`, `.ods`, `.csv` or **PDF**, in the layouts universities actually use:
+  - a table (Course, Day, Start, End…)
+  - a grid (days down the side, time slots across the top), including cells that stack course, teacher, time and room
+  - one course per row with a column for each weekday (`Mon`, `Tue`… holding times like `2:00-3:15(Room)`, or Y/N flags with start and end columns)
+  - PDF grids, including aSc Timetables exports where one class spans several slots
+- **Paste text**: type or paste a timetable ("Monday / 9:00-10:30 Data Structures, B-11") and it becomes classes. Dates in the text mean it's read as an exam list instead. The dialog says which before anything is added.
+- Times without AM/PM are read as daytime, so "2:00 - 5:00" is the afternoon and "11:00 - 1:00" ends at 1 PM.
 - After an upload, the student picks a section and ticks courses. Courses from another section can be found with search and tried out first: they show dashed, clashes are marked, and the student keeps or discards them.
 - "Edit courses" reopens the picker at any time without uploading again.
 - Classes can also be added by hand: click an empty slot, or use Add. A class can be marked as every other week, with the week it starts; fortnightly classes on opposite weeks don't count as a clash.
 
 ### Exams
 - Reads date sheets in PDF (typed or scanned), Excel, CSV, Word `.docx`, photos and screenshots, or pasted text.
+- The whole date sheet is in a collapsible list, 25 exams a page, and search shows every match, paged too. Big sheets stay fast.
 - Suggests the exams that match the student's courses. Sure matches (same code or name) are ticked; possible ones (shared words, abbreviations like OOP) are shown but left for the student. Search finds any others, and "Edit exams" changes the picks later.
 - Long imports (scanned PDFs, photos) can be cancelled, and a newer file always replaces one still being read. Spreadsheets are read in a background worker, so the page never freezes.
 - If a sheet's dates could be read either way (03/04 as 3 April or 4 March), the app asks which order the sheet uses.
@@ -30,6 +37,7 @@ Universities publish timetables and exam date sheets as huge spreadsheets, PDFs 
 - Click any class or exam to edit it, including its colour.
 - Customise: colour palettes, filled or tinted blocks, row height, which details to show, 12 or 24-hour clock.
 - Light and dark mode in the eshaaldev brand colours.
+- Dialogs, toggles and switches move on spring curves (damped harmonic motion, like iOS), done in plain CSS with `linear()`. Older browsers get a normal ease-out, and "reduce motion" turns it off.
 
 ### Getting it out
 - Save as an image or print/PDF. Images are always drawn at the desktop layout, so one saved on a phone matches one saved on a laptop. In a PDF the title links back to the site.
@@ -49,7 +57,17 @@ Universities publish timetables and exam date sheets as huge spreadsheets, PDFs 
 
 Every file, whatever its format, is first turned into rows of cells. PDF text and OCR results keep each word's position so columns can be rebuilt.
 
-**Timetables** (`src/parsers/spreadsheetParser.js`): if time ranges appear across a row, the sheet is read as a grid (`heuristicParser.js`). Otherwise it is read as a table. `columnDetector.js` matches headers first, then finds the day and time columns from their values when the headers are unusual. Anything missing or found only from values is shown in a short check, with an example from each column.
+**Timetables** (`src/parsers/spreadsheetParser.js`) try each reader in turn:
+
+| Reader | For sheets like |
+| --- | --- |
+| `weekdayTable.js` | One course per row, a column per weekday (UMT, UConn) |
+| `heuristicParser.js` | Grids with time slots across the top (FAST, PUCIT) |
+| `columnDetector.js` | Plain tables; headers first, then day and time columns found from their values |
+| `pdfTimetable.js` | PDF grids. For aSc exports it uses the cell borders drawn in the PDF to see which slots a class covers, and text size to tell the title from the teacher and room |
+| `textTimetable.js` | Pasted or typed text |
+
+Workbooks with one sheet per batch are combined, unless the sheets repeat the same sections. Anything found only from values is shown in a short check.
 
 **Exam date sheets** (`src/parsers/examParser.js`) are read in three ways, and the best result wins:
 
@@ -96,6 +114,25 @@ npm run benchmark -- path/to/folder
 
 Layouts that read wrong can be reported from the exam picker.
 
+## Real university files
+
+`fixtures/real-world/sources.json` lists real timetables and date sheets from other universities. `npm run fetch-real-world` downloads them (they aren't committed) and `npm run real-world` reads each one through the app's own code:
+
+| File | Result |
+| --- | --- |
+| FAST NUCES (FSC, FSM) | 772 and 665 entries |
+| Punjab University FCIT (.xlsx and old .xls) | 112 and 78 classes |
+| UMT Lahore (CS, SE) | 511 and 475 classes |
+| University of Connecticut (18k rows) | 12,534 classes |
+| CUST (PDF) | 14 classes |
+| BS CS Fall 2026 (aSc PDF, 25 pages) | 190 classes, 25 sections |
+| Department of Education (Mon/Tue headings) | 67 classes |
+| Quaid-i-Azam University, NUTECH (PDF date sheets) | 401 and 320 exams, all with times |
+| Sarhad University (two Excel date sheets) | 1,496 and 552 exams |
+| VU Pune | scanned, needs OCR in the browser |
+
+The two files without a download link (the aSc PDF and the Education sheet) were shared privately, so only this machine has them. The check currently counts classes and flags impossible ones; it doesn't compare every name and room yet.
+
 ## Run it locally
 
 ```bash
@@ -108,8 +145,10 @@ The empty planner has a "Try the sample" link if you don't have a timetable file
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Development server |
-| `npm test` | Parser, storage, sharing and FAQ checks |
+| `npm test` | Parser, pasted text, storage, sharing and FAQ checks |
 | `npm run benchmark` | Date sheet accuracy |
+| `npm run fetch-real-world` | Downloads the real university files |
+| `npm run real-world` | Reads every real file and reports what it found |
 | `npm run perf` | Import speed and memory |
 | `npm run lint` | ESLint, including the React Compiler rules |
 | `npm run build` | Production build in `dist/` |
@@ -132,8 +171,8 @@ src/
   utils/        small helpers: dates, times, text clean-up, classes, colours, storage
   content/      FAQ text and the site's addresses
   styles/       tokens, base, components (buttons), forms, dialogs, layout, calendar, timetable, print
-fixtures/       real timetables and sample date sheets for tests and the benchmark
-scripts/        tests, benchmark, domain switcher
+fixtures/       real timetables, sample date sheets, and the list of real university files
+scripts/        tests, benchmark, real-file check, domain switcher
 public/         icons, service worker, app manifest, SEO and privacy pages
 ```
 
@@ -151,6 +190,12 @@ public/         icons, service worker, app manifest, SEO and privacy pages
 - `public/llms.txt` is a plain summary for AI assistants.
 - `public/robots.txt` and `public/sitemap.xml` list the pages. `robots.txt` allows AI crawlers.
 - `npm test` checks that the FAQ in the app and the FAQ in `index.html` match.
+
+## Known limits
+
+- Scanned (image-only) timetable PDFs can't be read yet; scanned exam date sheets can.
+- PDF timetables need class times across the top and days down the side.
+- Rooms in PDFs without cell borders (like CUST's) come from the nearest label, so a few may be off.
 
 ## Built with
 

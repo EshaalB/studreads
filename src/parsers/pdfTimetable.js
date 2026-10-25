@@ -2,6 +2,7 @@
 // each class written as a code line then its title (CUST).
 // Side labels are usually centred, so each class takes the nearest day and room.
 import { STANDARD_MAPPING } from '../utils/timetableSource.js';
+import { DATE } from './textTimetable.js';
 
 const SLOT = /^(\d{1,2}[:.]\d{2})\s*(?:-|–|—|to)\s*(\d{1,2}[:.]\d{2})$/i;
 const WEEKDAY = /^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i;
@@ -129,6 +130,9 @@ const classesFromBoxedPage = (rows, rules) => {
 };
 
 export const timetableFromPdf = ({ rows, lines = [] }) => {
+  // Lots of different dates means it's an exam date sheet, not a weekly timetable.
+  const dates = new Set(rows.flat().map((cell) => cell.text.match(DATE)?.[0]).filter(Boolean));
+  if (dates.size >= 3) return null;
   const pages = [...new Set(rows.map((row) => row[0].page ?? 0))];
   const boxed = pages.flatMap((page) => classesFromBoxedPage(rows.filter((row) => (row[0].page ?? 0) === page), lines.filter((line) => line.page === page)));
   const classes = boxed.length ? boxed : classesFromPdfRows(rows);
