@@ -1,6 +1,20 @@
 /* Design tokens: the eshaaldev brand kit (Regal Navy, Blush Pink, Soft Linen, Deep Navy Ink,
    Raspberry Rose). Light by default; [data-theme="dark"] is set from the device or the user's choice. */
 
+/* Spring curves (damped harmonic motion), like iOS. --spring settles with almost no
+   overshoot; --spring-bouncy overshoots a little, for small controls you flick.
+   Browsers without linear() keep the plain ease-out curve. */
+:root {
+  --spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring-bouncy: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring: linear(0, 0.065, 0.207, 0.372, 0.528, 0.661, 0.768, 0.849, 0.907, 0.947, 0.974, 0.99, 0.999, 1.004, 1.006, 1.006, 1.006, 1.005, 1.004, 1.003, 1);
+    --spring-bouncy: linear(0, 0.041, 0.14, 0.269, 0.409, 0.545, 0.668, 0.773, 0.859, 0.925, 0.974, 1.008, 1.029, 1.041, 1.046, 1.045, 1.041, 1.036, 1.03, 1.023, 1.017, 1.012, 1.008, 1.004, 1);
+  }
+}
+
 :root {
   color-scheme: light;
 

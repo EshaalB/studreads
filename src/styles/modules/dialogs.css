@@ -61,7 +61,7 @@
   background: var(--surface);
   box-shadow: var(--shadow-pop);
   overflow: hidden;
-  animation: rise 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: rise 0.4s var(--spring);
 }
 
 .dialog-side {
